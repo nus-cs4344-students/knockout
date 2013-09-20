@@ -3,12 +3,16 @@
 var LIB_PATH = "./";
 require(LIB_PATH + "Player.js");
 
-function GameSession() {
+function GameSession(id) {
 	//Private variables
 	var playersArray = new Array(); //Array that stores the players
 	
 	//Public variables
 	this.sessionName; //Name of the session (can be duplicate)
+	this.SessionID;
+	
+	//Constructor
+	this.SessionID = id;
 	
 	this.broadcast = function (msg) {
         var id;

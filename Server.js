@@ -29,7 +29,8 @@ function Server(){
 				
 				 conn.on('close', function () {
 					if(currentPlayer!=null){
-						gameLobby.removePlayer(currentPlayer);
+						gameLobby.removePlayer(currentPlayer);//This function will remove player from gameSessions as well
+						gameLobby.broadcast({type:"removeLobbyPlayer", id:currentPlayer.playerID});
 					}
 				 });
 				 
@@ -40,17 +41,23 @@ function Server(){
 						 case "updatePlayerName":
 							currentPlayer = gameLobby.createNewPlayer(conn,message.name);
 							if(currentPlayer==null){
+								//inform failure
 								unicast(conn, {type:"failPlayerName", content:"Username: " + message.content +" was already taken"});
 							}else{
+								//inform success
 								unicast(conn, {type:"successPlayerName", content:"Successful login!"});
-								//TODO update lobby players of new player
-								//TODO update lobby list of players and sessions for currentPlayer
-								
+								//update lobby players of the new player
+								gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);
+								//update list of players
+								unicast(conn, {type:"updateLobbyPlayers", abstractPlayers:gameLobby.getJSONAbstractPlayers(currentPlayer)});
+								//TODO update list of sessions
+								//unicast(conn, {type:"updateLobbySessions", content:"Successful login!"});
 							}
 						 break;
 						 
 						 case "sendLobbyMessage":
 							if(currentPlayer!=null){
+								//TODO whether to change to to broadcastExcept
 								gameLobby.broadcast({type:"lobbyMessage", name:currentPlayer.playerName, msg:message.msg});
 							}
 						 break;
@@ -58,6 +65,8 @@ function Server(){
 						 case "createGameSession":
 							if(currentPlayer!=null){
 								gameLobby.createGameSession(currentPlayer);
+								//inform success
+								unicast(conn, {type:"successCreateGameSession", content:"You have created a game Session"});
 							}
 						 break;
 						 

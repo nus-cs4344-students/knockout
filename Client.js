@@ -1,8 +1,12 @@
 // enforce strict/clean programming
 "use strict"; 
 
-function Client(){
+var LIB_PATH = "./";
+require(LIB_PATH + "AbstractPlayer.js");
 
+function Client(){
+	var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (including this client name)
+	
 	var sendToServer = function (msg) {
         socket.send(JSON.stringify(msg));
     }
@@ -28,29 +32,48 @@ function Client(){
 					//name of user stored in [message.name]
 					//message is stored in [message.msg]
 				break;
-				
-				case "updateLobbyPlayerNames":
+				case "addLobbyPlayer":
+					var newAbstractPlayer = new AbstractPlayer(message.name, message.id);
+					abstractPlayersArray.push(newAbstractPlayer);
+				break;
+				case "removeLobbyPlayer":
+					for(var i=0; i<abstractPlayersArray.length; i++)
+					{
+						//TODO use another algo to search for the id for efficiency
+						if(abstractPlayersArray[i].playerID == message.id){
+							abstractPlayersArray.splice(i,1);
+						}
+					}
+				break;
+				case "updateLobbyPlayers":
+					//abstractPlayers does not include this client
+					abstractPlayersArray.splice(0,abstractPlayersArray.length);//empty the array
+					for(var i=0; i<message.abstractPlayers.length ; i++){
+						var newAbstractPlayer = new AbstractPlayer(message.abstractPlayers[i].name, message.abstractPlayers[i].id);
+						abstractPlayersArray.push(newAbstractPlayer);
+					}
 				break;
 				
 				case "updateLobbySessions":
 				break;
 				
-				case "addLobbyPlayer":
-				break;
-				
-				case "removeLobbyPlayer":
+				case "successCreateGameSession":
+					//has successfully created a game session
 				break;
 				
 				case "receiveInvite":
 					//receive invitation to join game session
+					//TODO
 				break;
 
 				case "updateCurrentSession":
-				
+					//TODO
 				break;
                 case "updateGame":
 					//update the game values
+					//TODO
                 break;
+				
                 default: 
 					//un-handled message type, show error
 				break;
@@ -73,6 +96,9 @@ function Client(){
 		sendToServer({type:"createGameSession"});
 	}
 	
+	var joinGameSession = function(id){
+		sendToServer({type:"joinGameSession", sessionID:id});
+	}
 	
 	this.start = function() {
 		initNetwork();
