@@ -10,11 +10,10 @@ function GameSession() {
 	//Public variables
 	this.sessionName; //Name of the session (can be duplicate)
 	
-	
 	this.broadcast = function (msg) {
         var id;
-        for (id in playersArray) {
-            playersArray[id].socket.write(JSON.stringify(msg));
+        for (var i=0; i<playersArray.length; i++){
+            playersArray[i].socket.write(JSON.stringify(msg));
         }
     }
 	
@@ -25,8 +24,8 @@ function GameSession() {
 	this.addPlayer = function(player){
 		//Check if name already exist, return false if exist, else return true
 		var id;
-		for(id in playersArray){
-			if(playersArray[id].playerName==player.playerName)
+		for (var i=0; i<playersArray.length; i++){
+			if(playersArray[i].playerName==player.playerName)
 				return false;
 		}
 		playersArray.push(player);

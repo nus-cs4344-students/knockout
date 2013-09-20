@@ -9,11 +9,10 @@ function Lobby() {
 	var sessionsArray = new Array(); //Used to store game sessions
 
 	this.broadcast = function (msg) {
-        var id;
-        for (id in playersArray) {
+        for (var i=0; i<playersArray.length; i++){
 		//Only broadcast messages if user is not playing (in lobby)
-			if(playersArray[id].bol_isPlaying == false)
-				playersArray[id].socket.write(JSON.stringify(msg));
+			if(playersArray[i].bol_isPlaying == false)
+				playersArray[i].socket.write(JSON.stringify(msg));
         }
     }
 	
@@ -21,12 +20,9 @@ function Lobby() {
         socket.write(JSON.stringify(msg));
     }
 	
-	this.removePlayerAtIndex = function(index){
-		playersArray.splice(index,1);
-	}
-	
-	this.getPlayerIndex = function(playerName){
-		return playersArray.indexOf(playerName);
+	this.removePlayer = function(player){
+		playerArray.splice(playerArray.indexOf(player),1);
+		//TODO remove from gameSessions as well
 	}
 	
 	this.getSessionIndex - function(session){
@@ -36,18 +32,19 @@ function Lobby() {
 	this.createNewPlayer = function(socket,playerName){
 		//Check if name already exist, return false if exist, else return true
 		var id;
-		for(id in playersArray){
-			if(playersArray[id].playerName==playerName)
-				return false;
+		for (var i=0; i<playersArray.length; i++){
+			if(playersArray[i].playerName==playerName)
+				return null;
 		}
-		playersArray.push(new Player(socket,playerName));
-		return true;
+		var newPlayer = new Player(socket,playerName)
+		playersArray.push(newPlayer);
+		return newPlayer;
 	}
 	
-	this.createGameSession = function(playerIndex){
+	this.createGameSession = function(player){
 		//Creates a Game session, must have at least 1 player in each session
 		var newGameSession = new GameSession();
-		newGameSession.addPlayer(playersArray[playerIndex]);
+		newGameSession.addPlayer(player);
 		sessionsArray.push(newGameSession);
 		//TODO Create game session (Between 4 to 1 players, include bots if got time) 
 	}

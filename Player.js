@@ -6,6 +6,7 @@ function Player(s, n){
 	this.socket;
 	this.playerName;
 	this.bol_isPlaying = false;
+	this.currentGameSession = null;
 	
 	//constructor
 	this.socket = s;

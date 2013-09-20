@@ -14,19 +14,46 @@ function Client(){
             socket.onmessage = function (e) {
                 var message = JSON.parse(e.data);
                 switch (message.type) {
-				case "lobbymessage":
+				case "successConnection":
+					//Has successfully connected to server
+				break;
+				case "successPlayerName":
+					//User has input valid playerName that no one else is using
+				break;
+				case "failPlayerName":
+					//User has input invalid playerName that someone else was already using
+				break;
+				case "lobbyMessage":
 					//chat messages in lobby
-					//message is stored in [message.content]
-					break;
+					//name of user stored in [message.name]
+					//message is stored in [message.msg]
+				break;
+				
+				case "updateLobbyPlayerNames":
+				break;
+				
+				case "updateLobbySessions":
+				break;
+				
+				case "addLobbyPlayer":
+				break;
+				
+				case "removeLobbyPlayer":
+				break;
+				
 				case "receiveInvite":
 					//receive invitation to join game session
-					break;
-                case "update":
+				break;
+
+				case "updateCurrentSession":
+				
+				break;
+                case "updateGame":
 					//update the game values
-                    break;
+                break;
                 default: 
-					//unhandled message type, show error
-					break;
+					//un-handled message type, show error
+				break;
                 }
             }
         } catch (e) {
@@ -34,9 +61,18 @@ function Client(){
         }
     }
 	
-	var updatePlayerName = function(name){
-		 sendToServer({type:"updatePlayerName",name});
+	var updatePlayerName = function(playerName){
+		sendToServer({type:"updatePlayerName",name:playerName});
 	}
+	
+	var sendLobbyMessage = function(msg){
+		sendToServer({type:"sendLobbyMessage",message:msg});
+	}
+	
+	var createGameSession = function(){
+		sendToServer({type:"createGameSession"});
+	}
+	
 	
 	this.start = function() {
 		initNetwork();

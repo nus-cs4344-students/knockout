@@ -65,3 +65,6 @@ function Sphere(){
 
 //Static variables
 Sphere.DIAMETER = 20;
+
+// For node.js require
+global.Sphere = Sphere;

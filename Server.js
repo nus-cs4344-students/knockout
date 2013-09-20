@@ -3,12 +3,17 @@
 
 var LIB_PATH = "./";
 require(LIB_PATH + "Lobby.js");
+require(LIB_PATH + "Player.js");
 
 function Server(){
-	//private variables
+	//Private variables
 	var gameLobby = new Lobby();
 	
-	//Priviledge method
+	var unicast = function (socket, msg) {
+        socket.write(JSON.stringify(msg));
+    }
+	
+	//Privilege method
     this.start = function () {
 		try {
 			var express = require('express');
@@ -16,18 +21,50 @@ function Server(){
 			var sockjs = require('sockjs');
 			var sock = sockjs.createServer();
 			
-			
 			// Upon connection established from a client socket
 			sock.on('connection', function (conn){
-				
+				var currentPlayer = null;
 				console.log("connection established");
-				unicast(conn, {type:"message", content:"Connected to Server, please enter username"});
+				unicast(conn, {type:"successConnection", content:"Connected to Server, please enter username"});
 				
 				 conn.on('close', function () {
-						
+					if(currentPlayer!=null){
+						gameLobby.removePlayer(currentPlayer);
+					}
 				 });
 				 
 				 conn.on('data', function (data) {
+					var message = JSON.parse(data)
+
+                    switch (message.type) {
+						 case "updatePlayerName":
+							currentPlayer = gameLobby.createNewPlayer(conn,message.name);
+							if(currentPlayer==null){
+								unicast(conn, {type:"failPlayerName", content:"Username: " + message.content +" was already taken"});
+							}else{
+								unicast(conn, {type:"successPlayerName", content:"Successful login!"});
+								//TODO update lobby players of new player
+								//TODO update lobby list of players and sessions for currentPlayer
+								
+							}
+						 break;
+						 
+						 case "sendLobbyMessage":
+							if(currentPlayer!=null){
+								gameLobby.broadcast({type:"lobbyMessage", name:currentPlayer.playerName, msg:message.msg});
+							}
+						 break;
+						 
+						 case "createGameSession":
+							if(currentPlayer!=null){
+								gameLobby.createGameSession(currentPlayer);
+							}
+						 break;
+						 
+						 default:
+						 //Report unknown message type
+						 break;
+					}
 				 });
 			});
 			
@@ -43,9 +80,7 @@ function Server(){
 			console.log("Error: " + e);
 		}
 	}
-	
-	
-	
+
 }
 
 
