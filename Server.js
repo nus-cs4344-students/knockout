@@ -50,8 +50,8 @@ function Server(){
 								gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);
 								//update list of players
 								unicast(conn, {type:"updateLobbyPlayers", abstractPlayers:gameLobby.getJSONAbstractPlayers(currentPlayer)});
-								//TODO update list of sessions
-								//unicast(conn, {type:"updateLobbySessions", content:"Successful login!"});
+								//update list of sessions
+								unicast(conn, {type:"updateLobbySessions", abstractGameSessions:gameLobby.getJSONAbstractGameSessions()});
 							}
 						 break;
 						 
@@ -64,10 +64,18 @@ function Server(){
 						 
 						 case "createGameSession":
 							if(currentPlayer!=null){
-								gameLobby.createGameSession(currentPlayer);
+								gameLobby.createGameSession(currentPlayer,message.name);
 								//inform success
 								unicast(conn, {type:"successCreateGameSession", content:"You have created a game Session"});
 							}
+						 break;
+						 
+						 
+						 case "joinGameSession":
+						 break;
+						 
+						 case "leaveGameSession":
+							gameLobby.removePlayerFromSession(currentPlayer);
 						 break;
 						 
 						 default:
@@ -82,7 +90,7 @@ function Server(){
             var app = express();
             var httpServer = http.createServer(app);
             sock.installHandlers(httpServer, {prefix:'/knockout'});
-            httpServer.listen(GameConstants.PORT, '0.0.0.0');
+            httpServer.listen(GameConstants.PORT, '0.0.0.0'); //TODO consider changing this to GameConstants.ServerName
             app.use(express.static(__dirname));	
 		}
 		catch (e) {

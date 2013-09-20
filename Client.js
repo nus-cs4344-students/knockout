@@ -3,9 +3,11 @@
 
 var LIB_PATH = "./";
 require(LIB_PATH + "AbstractPlayer.js");
+require(LIB_PATH + "AbstractGameSession.js");
 
 function Client(){
-	var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (including this client name)
+	var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (does not include this client)
+	var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
 	
 	var sendToServer = function (msg) {
         socket.send(JSON.stringify(msg));
@@ -55,6 +57,10 @@ function Client(){
 				break;
 				
 				case "updateLobbySessions":
+					abstractSessionArray.splice(0,abstractSessionArray.length);//empty the array
+					for(var i=0; i<message.abstractGameSessions.length ; i++){
+						//TODO
+					}
 				break;
 				
 				case "successCreateGameSession":
@@ -92,12 +98,16 @@ function Client(){
 		sendToServer({type:"sendLobbyMessage",message:msg});
 	}
 	
-	var createGameSession = function(){
-		sendToServer({type:"createGameSession"});
+	var createGameSession = function(sessionName){
+		sendToServer({type:"createGameSession", name:sessionName});
 	}
 	
 	var joinGameSession = function(id){
 		sendToServer({type:"joinGameSession", sessionID:id});
+	}
+	
+	var leaveGameSession = function(){
+		sendToServer({type:"leaveGameSession"});
 	}
 	
 	this.start = function() {

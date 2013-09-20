@@ -13,8 +13,8 @@ function Lobby() {
 	//Broadcast message to all players
 	this.broadcast = function (msg) {
         for (var i=0; i<playersArray.length; i++){
-		//Only broadcast messages if user is not playing (in lobby)
-			if(playersArray[i].bol_isPlaying == false)
+		//Only broadcast messages if user is not playing and not in game session(in lobby)
+			if(playersArray[i].bol_isPlaying == false && playerArray[i].currentGameSession== null)
 				playersArray[i].socket.write(JSON.stringify(msg));
         }
     }
@@ -22,8 +22,8 @@ function Lobby() {
 	//Broadcast message to all players except 1
 	this.broadcastExcept = function (msg,player) {
         for (var i=0; i<playersArray.length; i++){
-		//Only broadcast messages if user is not playing (in lobby)
-			if(playersArray[i].bol_isPlaying == false && playersArray[i].playerID != player.playerID)
+		//Only broadcast messages if user is not playing and not in game session(in lobby)
+			if(playersArray[i].bol_isPlaying == false && playerArray[i].currentGameSession== null && playersArray[i].playerID != player.playerID)
 				playersArray[i].socket.write(JSON.stringify(msg));
         }
     }
@@ -53,17 +53,23 @@ function Lobby() {
 		return newPlayer;
 	}
 	
-	this.createGameSession = function(player){
+	this.createGameSession = function(player,sessionName){
 		//Creates a Game session, must have at least 1 player in each session
 		var newGameSession = new GameSession(nextSessionID);
 		nextSessionID++;
 		newGameSession.addPlayer(player);
 		sessionsArray.push(newGameSession);
-		//TODO Create game session (Between 4 to 1 players, include bots if got time) 
+		newGameSession.sessionName = sessionName;
 	}
 	
 	this.addPlayerToSession = function(player,session){
 		return session.addPlayer(player);
+	}
+	
+	this.removePlayerFromSession = function(player){
+		player.currentGameSession.removePlayer(player);
+		player.currentGameSession = null;
+		player.bol_isPlaying = false;
 	}
 	
 	this.getJSONAbstractPlayers(exceptPlayer){
@@ -71,11 +77,23 @@ function Lobby() {
 		var JSONstring = "[";
 		for (var i=0; i<playersArray.length; i++){
 			if(playersArray[i].playerID != exceptPlayer.playerID){
-				JSONstring += playersArray[i].getAbstractPlayerText()+", ";
+				JSONstring += playersArray[i].getAbstractPlayerText()+",";
 			}
 		}
 		JSONstring = JSONstring.slice(0,-1);// remove the last comma
 		JSONstring+="]";
 		return JSONstring;
+	}
+	
+	this.getJSONAbstractGameSessions(){
+		//returns a JSON string to stringify at Server.js, includes all GameSessions
+		var JSONstring = "[";
+		for (var i=0; i<sessionsArray.length; i++){
+			JSONstring += sessionsArray[i].getAbstractGameSessionText()+",";
+		}
+		JSONstring = JSONstring.slice(0,-1);// remove the last comma
+		JSONstring+="]";
+		return JSONstring;
+	
 	}
 }

@@ -9,10 +9,10 @@ function GameSession(id) {
 	
 	//Public variables
 	this.sessionName; //Name of the session (can be duplicate)
-	this.SessionID;
+	this.sessionID;
 	
 	//Constructor
-	this.SessionID = id;
+	this.sessionID = id;
 	
 	this.broadcast = function (msg) {
         var id;
@@ -29,12 +29,32 @@ function GameSession(id) {
 		//Check if name already exist, return false if exist, else return true
 		var id;
 		for (var i=0; i<playersArray.length; i++){
-			if(playersArray[i].playerName==player.playerName)
+			if(playersArray[i].playerID==player.playerID){
 				return false;
+			}
 		}
 		playersArray.push(player);
+		player.currentGameSession = this;
+		//player is not playing yet, only in session
 		return true;
 	}
 	
+	this.removePlayer = function(player){
+		for (var i=0; i<playersArray.length; i++){
+			if(playersArray[i].playerID==player.playerID){
+				playersArray.splice(i,1);
+			}
+		}
+	}
 	
+	//privilege method
+	this.getAbstractGameSessionText = function () {
+		var playerIDs = "[";
+		for (var i=0; i<playersArray.length; i++){
+			playerIDs+= playersArray[i].playerID+",";
+		}
+		playerIDs = playerIDs.slice(0,-1);// remove the last comma
+		playerIDs+="]";
+		return "{id:"sessionID+", name:"+sessionName+", playerIDs:"+playerIDs+"}";
+	}
 }
