@@ -11,6 +11,13 @@ function Sphere(){
 	this.x;
 	this.y;
 	this.z;
+	//Server values of this sphere
+	this.serverVX;
+	this.serverVY;
+	this.serverVZ;
+	this.serverX;
+	this.serverY;
+	this.serverZ;
 	
 	//constructors
 	var that = this;
@@ -48,6 +55,7 @@ function Sphere(){
 	//priviledged method
 	//Called periodically to animate the movement of the sphere according to velocity input by clients
 	this.animateNext = function(){
+		//try to converge here
 		that.x += vx;
 		that.y += vy;
 		that.z += vz;
