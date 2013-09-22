@@ -64,18 +64,38 @@ function Server(){
 						 
 						 case "createGameSession":
 							if(currentPlayer!=null){
-								gameLobby.createGameSession(currentPlayer,message.name);
+								var newGameSession = gameLobby.createGameSession(currentPlayer,message.name);
+								//inform everybody of new game session
+								gameLobby.broadcast({type:"updateSingleLobbySession", content:newGameSession.getAbstractGameSessionText()});
 								//inform success
 								unicast(conn, {type:"successCreateGameSession", content:"You have created a game Session"});
 							}
 						 break;
 						 
-						 
 						 case "joinGameSession":
+							if(currentPlayer!=null){
+								if(gameLobby.addPlayerToSessionID(currentPlayer,message.sessionID)){
+									//Inform game session to everyone
+									var tempGameSession = gameLobby.getSessionWithID(message.sessionID);
+									gameLobby.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
+									//Inform Success
+									unicast(conn, {type:"successJoinGameSession", content:"You have successfully joined a game session"});
+								}else{
+									//Inform Failure
+									unicast(conn, {type:"failJoinGameSession", content:"You have failed to join a game session"});
+								}
+							}
 						 break;
 						 
 						 case "leaveGameSession":
-							gameLobby.removePlayerFromSession(currentPlayer);
+							var tempGameSession = gameLobby.removePlayerFromSession(currentPlayer);
+							if(tempGameSession.hasNoPlayers){
+								//Server will inform others if the session has no players left and to be removed
+								gameLobby.broadcast({type:"removeLobbySession", id:tempGameSession.sessionID});
+								gameLobby.removeGameSession(tempGameSession);
+							}else{
+								gameLobby.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
+							}
 						 break;
 						 
 						 default:

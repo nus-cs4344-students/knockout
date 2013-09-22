@@ -33,12 +33,14 @@ function Lobby() {
     }
 	
 	this.removePlayer = function(player){
+		//Remove from the session
+		removePlayerFromSession(player);
+		//Remove from array
 		playerArray.splice(playerArray.indexOf(player),1);
-		//TODO remove from gameSessions as well
 	}
 	
-	this.getSessionIndex - function(session){
-		return sessionsArray.indexOf(session);
+	this.removeGameSession = function(session){
+		sessionsArray.splice(sessionsArray.indexOf(session),1);
 	}
 	
 	this.createNewPlayer = function(socket,playerName){
@@ -60,16 +62,36 @@ function Lobby() {
 		newGameSession.addPlayer(player);
 		sessionsArray.push(newGameSession);
 		newGameSession.sessionName = sessionName;
+		return newGameSession;
 	}
 	
-	this.addPlayerToSession = function(player,session){
-		return session.addPlayer(player);
+	this.addPlayerToSessionID = function(player,id){
+		var session = getSessionWithID(id);
+		if(session==null){
+			return false;
+		}else{
+			return session.addPlayer(player);
+		}
+	}
+	
+	this.getSessionWithID = function(id){
+		//TODO use better algo
+		for(var i=0; i<sessionsArray.length; i++)
+		{
+			if(sessionsArray[i].sessionID==id){
+				return sessionsArray[i];
+			}
+		}
+		return null;
 	}
 	
 	this.removePlayerFromSession = function(player){
-		player.currentGameSession.removePlayer(player);
+		var tempGameSession = player.currentGameSession;
+		tempGameSession.removePlayer(player);
 		player.currentGameSession = null;
 		player.bol_isPlaying = false;
+		
+		return tempGameSession;
 	}
 	
 	this.getJSONAbstractPlayers(exceptPlayer){

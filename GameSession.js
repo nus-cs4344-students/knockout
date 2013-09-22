@@ -47,6 +47,10 @@ function GameSession(id) {
 		}
 	}
 	
+	this.hasNoPlayers = function(){
+		return (playersArray.length==0);
+	}
+	
 	//privilege method
 	this.getAbstractGameSessionText = function () {
 		var playerIDs = "[";

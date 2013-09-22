@@ -55,33 +55,79 @@ function Client(){
 						abstractPlayersArray.push(newAbstractPlayer);
 					}
 				break;
-				
 				case "updateLobbySessions":
 					abstractSessionArray.splice(0,abstractSessionArray.length);//empty the array
-					for(var i=0; i<message.abstractGameSessions.length ; i++){
-						//TODO
+					for(var i=0; i<message.abstractGameSessions.length; i++){
+						var newAbstractGameSession = new AbstractGameSession(message.abstractGameSessions[i].name,message.abstractGameSessions[i].id);	
+						
+						var playerIDs = message.abstractGameSessions[i].playerIDs;
+						for(var j=0; j<playerIDs.length; j++)
+						{
+							var player = getPlayerWithID(playerIDs[j]);
+							if(player!=null){
+								newAbstractGameSession.addAbstractPlayer(player);
+							}else{
+								//TODO Show error that player ID was not found
+							}
+						}
+						abstractSessionArray.push(newAbstractGameSession);
 					}
 				break;
-				
+				case "updateSingleLobbySession":
+					//includes this client's current session
+					//create new playerList
+					var playerIDs = message.content.playerIDs;
+					var playerList = new Array();
+					for(var i=0; i<playerIDs.length; i++)
+					{
+						var player = getPlayerWithID(playerIDs[i]);
+						if(player!=null){
+							playerList.push(player);
+						}else{
+							//TODO Show error that player ID was not found
+						}
+					}
+					
+					var tempGameSession = getSessionWithID(message.content.id);
+					if(tempGameSession != null){
+						//edit old
+						tempGameSession.name = message.content.name;
+						tempGameSession.abstractPlayersArray = playerList;
+						abstractSessionArray.splice(abstractSessionArray.indexOf(tempGameSession),1);
+					}else{
+						//create new session
+						var newAbstractGameSession = new AbstractGameSession(message.content.name,message.content.id);
+						newAbstractGameSession.abstractPlayersArray = playerList;
+						abstractSessionArray.push(newAbstractGameSession);
+					}
+				break;	
+				case "removeLobbySession":
+					for(var i=0; i<abstractSessionArray.length; i++)
+					{
+						//TODO use another algo to search for the id for efficiency
+						if(abstractSessionArray[i].sessionID == message.id){
+							abstractSessionArray.splice(i,1);
+						}
+					}
+				break;	
 				case "successCreateGameSession":
 					//has successfully created a game session
 				break;
+				case "successJoinGameSession":
+					//has successfully join a game session
+				break;
+				case "failJoinGameSession":
+					//failed to join a game session
+				break;
 				
-				case "receiveInvite":
-					//receive invitation to join game session
-					//TODO
-				break;
-
-				case "updateCurrentSession":
-					//TODO
-				break;
+				
                 case "updateGame":
 					//update the game values
 					//TODO
                 break;
 				
                 default: 
-					//un-handled message type, show error
+					//TODO un-handled message type, show error
 				break;
                 }
             }
@@ -108,6 +154,26 @@ function Client(){
 	
 	var leaveGameSession = function(){
 		sendToServer({type:"leaveGameSession"});
+	}
+	
+	var getPlayerWithID = function(id){
+		//TODO use better algo
+		for(var i=0; i<abstractPlayersArray.length; i++)
+		{
+			if(abstractPlayersArray[i].playerID == id)
+				return abstractPlayersArray[i];
+		}
+		return null;
+	}
+	
+	var getSessionWithID = function(id){
+		//TODO use better algo
+		for(var i=0; i<abstractSessionArray.length; i++)
+		{
+			if(abstractSessionArray[i].sessionID == id)
+				return abstractSessionArray[i];
+		}
+		return null;
 	}
 	
 	this.start = function() {
