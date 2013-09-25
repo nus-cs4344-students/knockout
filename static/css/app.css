@@ -1,0 +1,70 @@
+body {
+  background: #313541;
+  font-family: "Lato", Helvetica, Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Lato", "Helvetica", Helvetica, Arial, sans-serif;
+}
+
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  /*color: #313541;*/
+  font-size: 4em;
+  font-weight: 900;
+  margin: 10px 0;
+}
+
+.grid {
+  border-radius: 10px;
+  text-align: center;
+  padding: 20% 0;
+}
+
+.room .grid {
+  padding: 10% 0;
+}
+
+.grid h2 {
+  font-weight: 300;
+  margin: -2%;
+}
+
+.grid h3 {
+  margin: 0;
+}
+
+.button {
+  width: 100%;
+  margin: 0;
+}
+
+.button.alert.disabled {
+  opacity: 1;
+}
+
+.button.success.disabled {
+  opacity: 1;
+}
+
+.chat-container {
+  border-radius: 10px;
+  background: #F1F1F1;
+  color: #313541;
+  padding: 20px 20px 8px;
+}
+
+.chatbox {
+  height: 200px;
+  overflow-y: scroll;
+  margin-bottom: 20px;
+}
+
+.chatbox p {
+  margin: 0;
+}
