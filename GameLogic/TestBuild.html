@@ -1,0 +1,90 @@
+<html>
+	<head>
+		<title>My first Three.js app</title>
+		<style>
+			body { background-color: black;}
+			#gameCanvas { background-color: black; width: 640; height: 360 ; align: center; }
+			#instruction {text-align: center; font-family: Segoe UI, Helvetica, Ubuntu, sans-serif; color: white; }</style>
+	</head>
+	<body>
+		<div id = 'gameCanvas' align = 'center'> </div>
+		<script src="three.min.js"></script>
+		<script src="keyboard.js"></script>
+		<script>
+			init();
+			animate();
+
+		function init() {
+
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight,0.1, 1000 );
+        camera.position.z = 10;
+
+        scene = new THREE.Scene();
+
+        geometry = new THREE.CubeGeometry( 1, 1, 0.5 );
+        material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        player1 = new THREE.Mesh( geometry, material );
+        scene.add( player1 );
+		player2 = new THREE.Mesh ( geometry, material1 );
+		scene.add( player2 );
+		playField = new THREE.Mesh (new THREE.PlaneGeometry ( 10, 10 ), material2);
+		scene.add( playField );
+		
+        renderer = new THREE.CanvasRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.body.appendChild( renderer.domElement );
+
+    }
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+		
+		player1.position.z = 0.5;
+		player2.position.z = 0.5;	
+				if( Key.isDown(Key.A)) {
+					player1.position.x -= 0.1;
+				}
+				if (Key.isDown(Key.D)) {
+					player1.position.x += 0.1;
+				}
+				if ( Key.isDown(Key.S)) {
+					player1.position.y -= 0.1;
+				}
+				if ( Key.isDown(Key.W)) {
+					player1.position.y += 0.1;
+				}
+				if( Key.isDown(Key.J)) {
+					player2.position.x -= 0.1;
+				}
+				if (Key.isDown(Key.L)) {
+					player2.position.x += 0.1;
+				}
+				if ( Key.isDown(Key.K)) {
+					player2.position.y -= 0.1;
+				}
+				if ( Key.isDown(Key.I)) {
+					player2.position.y += 0.1;
+				}
+				
+        renderer.render( scene, camera );
+
+    }
+		</script>
+		<div id = 'instruction'>
+		<h1> Player 1
+		<br> A - move left
+		<br> D - move right
+		<br> W - move up
+		<br> S - move down </h1>
+		<h2> Player 2
+		<br> J - move left
+		<br> D - move right
+		<br> I - move up
+		<br> K - move down </h2>
+		</div>
+	</body>
+</html>
