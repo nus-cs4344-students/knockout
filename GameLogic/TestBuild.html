@@ -21,7 +21,7 @@
 
         scene = new THREE.Scene();
 
-        geometry = new THREE.CubeGeometry( 1, 1, 0.5 );
+        geometry = new THREE.SphereGeometry(1,10,10);
         material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 		material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
@@ -45,34 +45,93 @@
 		
 		player1.position.z = 0.5;
 		player2.position.z = 0.5;	
-				if( Key.isDown(Key.A)) {
-					player1.position.x -= 0.1;
-				}
-				if (Key.isDown(Key.D)) {
-					player1.position.x += 0.1;
-				}
-				if ( Key.isDown(Key.S)) {
-					player1.position.y -= 0.1;
-				}
-				if ( Key.isDown(Key.W)) {
-					player1.position.y += 0.1;
-				}
-				if( Key.isDown(Key.J)) {
-					player2.position.x -= 0.1;
-				}
-				if (Key.isDown(Key.L)) {
-					player2.position.x += 0.1;
-				}
-				if ( Key.isDown(Key.K)) {
-					player2.position.y -= 0.1;
-				}
-				if ( Key.isDown(Key.I)) {
-					player2.position.y += 0.1;
-				}
+		if( Key.isDown(Key.A)) {
+			player1.position.x -= 0.1;
+			player1.rotation.z -= 0.1;
+		}
+		if (Key.isDown(Key.D)) {
+			player1.position.x += 0.1;
+			player1.rotation.z += 0.1;
+		}
+		if ( Key.isDown(Key.S)) {
+			player1.position.y -= 0.1;
+			player1.rotation.x += 0.1;
+		}
+		if ( Key.isDown(Key.W)) {
+			player1.position.y += 0.1;
+			player1.rotation.x -= 0.1;
+		}
+		if( Key.isDown(Key.J)) {
+			player2.position.x -= 0.1;
+			player2.rotation.z -= 0.1;
+		}
+		if (Key.isDown(Key.L)) {
+			player2.position.x += 0.1;
+			player2.rotation.z += 0.1;
+		}
+		if ( Key.isDown(Key.K)) {
+			player2.position.y -= 0.1;
+			player2.rotation.x += 0.1;
+		}
+		if ( Key.isDown(Key.I)) {
+			player2.position.y += 0.1;
+			player2.rotation.x -= 0.1;
+		}
+		
+		if(test_collision(player1,player2)){
+			if(player1.position.x > player2.position.x){
+				player1.position.x += 0.4;
+				player2.position.x -= 0.4;
+			}else{
+				player1.position.x -= 0.4;
+				player2.position.x += 0.4;
+			}
+			
+			if(player1.position.y > player2.position.y){
+				player1.position.y += 0.4;
+				player2.position.y -= 0.4;
+			}else{
+				player1.position.y -= 0.4;
+				player2.position.y += 0.4;
+			}
+		}
+		
+		if(isOutOfBounds(player1)){
+			player1.position.x = 0;
+			player1.position.y = 0;
+		}
+		
+		if(isOutOfBounds(player2)){
+			player2.position.x = 0;
+			player2.position.y = 0;
+		}
 				
         renderer.render( scene, camera );
 
     }
+	
+	
+	function test_collision(p1,p2){
+		var dx = Math.abs(p1.position.x - p2.position.x);
+		var dy = Math.abs(p1.position.y - p2.position.y);
+		var dz = Math.abs(p1.position.z - p2.position.z);
+		
+		if(dx < 1.5 && dy < 1.5 && dz < 1.5){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
+	function isOutOfBounds(p){
+		if((p.position.x < playField.position.x - playField.geometry.width/2 || p.position.x > playField.position.x + playField.geometry.width/2) ||
+			(p.position.y < playField.position.y - playField.geometry.height/2|| p.position.y > playField.position.y + playField.geometry.height/2)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	
 		</script>
 		<div id = 'instruction'>
 		<h1> Player 1
