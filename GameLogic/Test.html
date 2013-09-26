@@ -1,0 +1,71 @@
+<html>
+	<head>
+		<title> CS4344 Prototype </title>
+		<style> canvas { background-color: black;
+				width: 640px;
+				height: 360px;
+				margin: auto;
+				align: center;}</style>
+	</head>
+	<body onload='setup();'>
+		<script src="three.min.js"></script>
+		<script src="keyboard.js"></script>
+		<script>
+		
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+
+			var geometry = new THREE.CubeGeometry(1,1,0.5);
+			var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+			var cube = new THREE.Mesh(geometry, material);
+			scene.add(cube);
+			var geometry1 = new THREE.CubeGeometry(1,1,0.5);
+			var material1 = new THREE.MeshBasicMaterial({color: 0xff0000});
+			var cube1 = new THREE.Mesh(geometry1, material1);
+			scene.add(cube1);
+			var material2 = new THREE.MeshBasicMaterial({color: 0x0000ff});
+			var plane = new THREE.Mesh(new THREE.PlaneGeometry(10,10),material2);
+			scene.add(plane);
+			
+			camera.position.z = 10;
+
+			var render = function () {
+				requestAnimationFrame(render);
+				cube.position.z = 0.5;
+				cube1.position.z = 0.5;	
+				if( Key.isDown(Key.A)) {
+					cube.position.x -= 0.1;
+				}
+				if (Key.isDown(Key.D)) {
+					cube.position.x += 0.1;
+				}
+				if ( Key.isDown(Key.S)) {
+					cube.position.y -= 0.1;
+				}
+				if ( Key.isDown(Key.W)) {
+					cube.position.y += 0.1;
+				}
+				if( Key.isDown(Key.J)) {
+					cube1.position.x -= 0.1;
+				}
+				if (Key.isDown(Key.L)) {
+					cube1.position.x += 0.1;
+				}
+				if ( Key.isDown(Key.K)) {
+					cube1.position.y -= 0.1;
+				}
+				if ( Key.isDown(Key.I)) {
+					cube1.position.y += 0.1;
+				}
+				
+				renderer.render(scene, camera);
+			};
+
+			render();
+			</script>
+	</body>
+</html>
