@@ -9,9 +9,16 @@ function Client(){
 	var socket;
 	var playerName="";
 	
-	var sendToServer = function (msg) {
+	var sendToServer = function(msg) {
         socket.send(JSON.stringify(msg));
     }
+	
+	var appendToChat = function (msg) {
+		//check if chatbox exist
+		if($('#chatbox').length>0){
+			$('#chatbox').append('<p>'+msg+'</p>');
+		}
+	}
 	
 	var showLoginHTML = function(){
 		var html = "";
@@ -21,14 +28,15 @@ function Client(){
 		html+='</div>'+"\n";
 		$('html').append(html);
 		$('#username').tooltip();
-		$( "#user-login" ).dialog({
+		$('#user-login').dialog({
 			autoOpen: true,
 			closeOnEscape: false,
 			modal: true,
+			draggable: false,
 			height: 300,
 			width: 400,
 			open: function() { 
-				$(".ui-dialog-titlebar-close").remove(); //remove the close button
+				$('.ui-dialog-titlebar-close').remove(); //remove the close button
 			},
 			buttons:{
 				"Login": function(){
@@ -38,7 +46,7 @@ function Client(){
 					}else{
 						playerName = $('#username').val();
 						updatePlayerName(playerName);
-						$(this).dialog("close");
+						$(this).dialog('close');
 						$('#user-login').remove(); //remove the added html
 						showProcessing();
 					}
@@ -48,7 +56,7 @@ function Client(){
 	}
 	
 	var showProcessing = function(){
-		if(document.getElementById("processing") !== null){
+		if($('#processing').length==0){
 			return;
 		}
 		var html = "";
@@ -56,22 +64,62 @@ function Client(){
 		html+='<p class=\"validateTips\">Please Wait</p>'+"\n";
 		html+='</div>'+"\n";
 		$('html').append(html);
-		$( "#processing" ).dialog({
+		$('#processing').dialog({
 			autoOpen: true,
 			closeOnEscape: false,
+			draggable: false,
 			modal: true,
 			height: 100,
 			width: 400,
 			open: function() { 
-				$(".ui-dialog-titlebar-close").remove(); //remove the close button
+				$('.ui-dialog-titlebar-close').remove(); //remove the close button
 			}
 		});
 	}
 	
 	var hideProcessing = function(){
-		if(document.getElementById("processing") !== null){
+		//check if the id exist
+		if($('#processing').length>0){
 			$('#processing').dialog("close");
 			$('#processing').remove();
+		}
+	}
+	
+	var initSetup = function() {
+		//Add chat function
+		if($('.button.postfix.radius').length>0){
+			$('.button.postfix.radius').button().click( function(event){
+				event.preventDefault();
+				if($('#inputChat').val().trim().length>0){
+					sendLobbyMessage($('#inputChat').val().trim());
+					$('#inputChat').val('');
+					$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+				}
+				$('#inputChat').focus();
+			});
+			//Make button UI look nicer
+			$('.button.postfix.radius').removeClass('ui-widget');
+			$('.button.postfix.radius').removeClass('ui-state-default');
+			$('#inputChat').focus();
+			
+			//Make enter to press button as well
+			$(document).keypress(function(event) {
+				//Cross browser compatibility
+				
+				var keycode = (event.keyCode ? event.keyCode : event.which);
+				if(keycode == '13') {
+					
+					if($('#user-login').length>0){
+						console.log("in");
+						$('#user-login').parent().find('button').click();
+					}else if($('.button.postfix.radius').length>0){
+						//Simulate click on chat button when press enter
+						$('.button.postfix.radius').click();  
+					}
+					
+					
+				}
+			});
 		}
 	}
 	
@@ -101,19 +149,27 @@ function Client(){
 				break;
 				case "lobbyMessage":
 					//chat messages in lobby
-					//name of user stored in [message.name]
-					//message is stored in [message.msg]
+					appendToChat(message.name+': '+message.msg);
+					//if chatbox exist
+					if($('#chatbox').length>0 && ($('#chatbox')[0].scrollHeight-$('#chatbox').scrollTop())<=226){
+						//Need [0] to access DOM object
+						//Manually measured 226
+						$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+					}
 				break;
 				case "addLobbyPlayer":
 					var newAbstractPlayer = new AbstractPlayer(message.name, message.id);
 					abstractPlayersArray.push(newAbstractPlayer);
+					appendToChat('['+message.name+' has logined]');
 				break;
 				case "removeLobbyPlayer":
 					for(var i=0; i<abstractPlayersArray.length; i++)
 					{
 						//TODO use another algo to search for the id for efficiency
 						if(abstractPlayersArray[i].playerID == message.id){
+							appendToChat('['+message.name+' has left the game]');
 							abstractPlayersArray.splice(i,1);
+							break;
 						}
 					}
 				break;
@@ -249,7 +305,7 @@ function Client(){
 	
 	this.start = function() {
 		initNetwork();
-		//initGUI();
+		initSetup();
 
         // Start drawing 
         //setInterval(function() {render();}, 1000/Pong.FRAME_RATE);

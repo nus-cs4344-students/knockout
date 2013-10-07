@@ -90,17 +90,13 @@
     </div>
     <h2>Global Chat</h2>
     <div class="chat-container">
-      <div class="chatbox">
-        <p>Lorem: ipsum dolor sit amet, consectetur adipiscing elit. Duis in nibh commodo, imperdiet magna ut, tempus sapien.</p>
-        <p>Donec: sapien felis, volutpat sit amet libero ut, convallis molestie nisl. Donec eget diam sed turpis condimentum blandit. Pellentesque sed aliquet neque.</p>
-        <p>Donec: venenatis diam nec mauris tempus, ut semper felis posuere. Morbi sit amet tellus nulla. Nam fringilla dui eget orci rutrum, consequat sollicitudin ante venenatis.</p>
-        <p>Suspendisse: lobortis erat quis neque gravida, ut vulputate massa tristique. Integer mattis tellus massa, a malesuada nisi congue vitae. In lacinia fringilla augue id volutpat.</p>
-        <p>Vivamus: facilisis dictum justo a tempus. Nullam scelerisque et turpis ut varius. Donec sapien libero, vehicula quis malesuada eu, pellentesque ac lorem. Nam eu dignissim velit. Mauris vestibulum sapien id odio tempor venenatis.</p>
+      <div class="chatbox" id="chatbox">
+	  <p>Welcome</p>
       </div>
 
       <div class="row collapse">
         <div class="small-10 large-11 columns">
-          <input type="text" placeholder="Hello World">
+          <input type="text" id="inputChat" placeholder="Type Your Message Here">
         </div>
         <div class="small-2 large-1 columns">
           <a href="#" class="button postfix radius">Enter</a>
@@ -111,7 +107,8 @@
   </div>	
 </body>
 <script type="text/javascript" src="../GameConstants.js"></script>
+<script type="text/javascript" src="../AbstractPlayer.js"></script>
+<script type="text/javascript" src="../AbstractGameSession.js"></script>
 <script type="text/javascript" src="../Sphere.js"></script>
 <script type="text/javascript" src="../Client.js"></script>
-
 </html>

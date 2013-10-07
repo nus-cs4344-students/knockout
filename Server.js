@@ -64,7 +64,7 @@ function Server(){
 						 case "sendLobbyMessage":
 							if(currentPlayer!=null){
 								//TODO whether to change to to broadcastExcept
-								gameLobby.broadcast({type:"lobbyMessage", name:currentPlayer.playerName, msg:message.msg});
+								gameLobby.broadcast({type:"lobbyMessage", name:currentPlayer.playerName, msg:message.message});
 							}
 						 break;
 						 

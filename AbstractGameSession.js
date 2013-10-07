@@ -1,7 +1,5 @@
 // enforce strict/clean programming
 "use strict"; 
-var LIB_PATH = "./";
-require(LIB_PATH + "AbstractPlayer.js");
 
 function AbstractGameSession(name, id) {
 	//Private variables
