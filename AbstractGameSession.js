@@ -3,7 +3,7 @@
 var LIB_PATH = "./";
 require(LIB_PATH + "AbstractPlayer.js");
 
-function GameSession(name, id) {
+function AbstractGameSession(name, id) {
 	//Private variables
 	this.abstractPlayersArray = new Array(); //Array that stores the abstractPlayers
 	
@@ -19,3 +19,5 @@ function GameSession(name, id) {
 		abstractPlayersArray.push(abstractplayer);
 	}
 }
+
+global.AbstractGameSession = AbstractGameSession;

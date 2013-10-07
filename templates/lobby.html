@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
+	
 <head>
   <meta name="viewport" content="width=device-width">
   <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="../static/css/normalize.css" type="text/css" />
-  <link rel="stylesheet" href="../static/css/foundation.css" type="text/css" />
-  <link rel="stylesheet" href="../static/css/app.css" type="text/css" />
+  <link rel="stylesheet" href="../css/normalize.css" type="text/css" />
+  <link rel="stylesheet" href="../css/foundation.css" type="text/css" />
+  <link rel="stylesheet" href="../css/app.css" type="text/css" />
   <title>KnockOut | Lobby</title>
+  <script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+  <script type="text/javascript">
+		var global = {}; // For node.js require
+  </script>
+  <script src="../jquery-1.9.1.js"></script>
+  <script src="../jquery-ui-1.10.3.custom.min.js"></script>
+  <link rel="stylesheet" href="../css/dot-luv/jquery-ui-1.10.3.custom.min.css"/>
 </head>
 
 <body>
@@ -100,6 +108,10 @@
       </div>
     </div>
 
-  </div>
+  </div>	
 </body>
+<script type="text/javascript" src="../GameConstants.js"></script>
+<script type="text/javascript" src="../Sphere.js"></script>
+<script type="text/javascript" src="../Client.js"></script>
+
 </html>

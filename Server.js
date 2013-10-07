@@ -4,6 +4,9 @@
 var LIB_PATH = "./";
 require(LIB_PATH + "Lobby.js");
 require(LIB_PATH + "Player.js");
+require(LIB_PATH + "GameConstants.js");
+//require(LIB_PATH + "AbstractPlayer.js");
+//require(LIB_PATH + "AbstractGameSession.js");
 
 function Server(){
 	//Private variables
@@ -39,12 +42,15 @@ function Server(){
 
                     switch (message.type) {
 						 case "updatePlayerName":
+							console.log("updatePlayerName");
 							currentPlayer = gameLobby.createNewPlayer(conn,message.name);
 							if(currentPlayer==null){
 								//inform failure
+								console.log("reject playerName:"+message.name);
 								unicast(conn, {type:"failPlayerName", content:"Username: " + message.content +" was already taken"});
 							}else{
 								//inform success
+								console.log("accept playerName:"+message.name);
 								unicast(conn, {type:"successPlayerName", content:"Successful login!"});
 								//update lobby players of the new player
 								gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);
@@ -108,8 +114,14 @@ function Server(){
 			// Standard code to starts the Pong server and listen
             // for connection
             var app = express();
+			app.get('/', function (req, res) {
+				res.sendfile(__dirname + '/templates/lobby.html');
+			});
+			//Access from http is http://localhost:8111
+			
             var httpServer = http.createServer(app);
             sock.installHandlers(httpServer, {prefix:'/knockout'});
+			
             httpServer.listen(GameConstants.PORT, '0.0.0.0'); //TODO consider changing this to GameConstants.ServerName
             app.use(express.static(__dirname));	
 		}

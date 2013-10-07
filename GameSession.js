@@ -59,6 +59,8 @@ function GameSession(id) {
 		}
 		playerIDs = playerIDs.slice(0,-1);// remove the last comma
 		playerIDs+="]";
-		return "{id:"sessionID+", name:"+sessionName+", playerIDs:"+playerIDs+"}";
+		return "{id:"+sessionID+", name:"+sessionName+", playerIDs:"+playerIDs+"}";
 	}
 }
+
+global.GameSession = GameSession;

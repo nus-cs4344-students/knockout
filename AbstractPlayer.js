@@ -12,3 +12,5 @@ function AbstractPlayer(n, id){
 	this.playerName = n;
 	this.playerID = id;
 }
+
+global.AbstractPlayer = AbstractPlayer;

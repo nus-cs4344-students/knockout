@@ -1,33 +1,94 @@
 // enforce strict/clean programming
 "use strict"; 
 
-var LIB_PATH = "./";
-require(LIB_PATH + "AbstractPlayer.js");
-require(LIB_PATH + "AbstractGameSession.js");
+//Client will require the html to have jQuery installed
 
 function Client(){
 	var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (does not include this client)
 	var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
+	var socket;
+	var playerName="";
 	
 	var sendToServer = function (msg) {
         socket.send(JSON.stringify(msg));
     }
 	
+	var showLoginHTML = function(){
+		var html = "";
+		html+='<div id=\"user-login\" title=\"Login\">'+"\n";
+		html+='<p class=\"validateTips\">Please Enter A Username</p>'+"\n";
+		html+='<input type=\"text\" name=\"username\" id=\"username\" class=\"text ui-widget-content ui-corner-all\" />'+"\n";
+		html+='</div>'+"\n";
+		$('html').append(html);
+		$( "#user-login" ).dialog({
+			autoOpen: true,
+			closeOnEscape: false,
+			modal: true,
+			height: 300,
+			width: 400,
+			open: function() { 
+				$(".ui-dialog-titlebar-close").remove(); //remove the close button
+			},
+			buttons:{
+				"Login": function(){
+					playerName = $('#username').val();
+					updatePlayerName(playerName);
+					$(this).dialog("close");
+					$('#user-login').remove(); //remove the added html
+					showProcessing();
+				}
+			}
+		});
+	}
+	
+	var showProcessing = function(){
+		if(document.getElementById("processing") !== null){
+			return;
+		}
+		var html = "";
+		html+='<div id=\"processing\" title=\"Processing\">'+"\n";
+		html+='<p class=\"validateTips\">Please Wait</p>'+"\n";
+		html+='</div>'+"\n";
+		$('html').append(html);
+		$( "#processing" ).dialog({
+			autoOpen: true,
+			closeOnEscape: false,
+			modal: true,
+			height: 100,
+			width: 400,
+			open: function() { 
+				$(".ui-dialog-titlebar-close").remove(); //remove the close button
+			}
+		});
+	}
+	
+	var hideProcessing = function(){
+		if(document.getElementById("processing") !== null){
+			$('#processing').dialog("close");
+			$('#processing').remove();
+		}
+	}
+	
 	var initNetwork = function() {
         // Attempts to connect to game server
         try {
-            socket = new SockJS("http://" + GameConstants.SERVER_NAME + ":" + GameConstants.PORT + "/knockout");
+            socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
             socket.onmessage = function (e) {
                 var message = JSON.parse(e.data);
                 switch (message.type) {
 				case "successConnection":
+					console.log("successfully connected to server");
 					//Has successfully connected to server
+					showLoginHTML();
 				break;
 				case "successPlayerName":
 					//User has input valid playerName that no one else is using
+					hideProcessing();
+					alert("Welcome "+playerName);
 				break;
 				case "failPlayerName":
 					//User has input invalid playerName that someone else was already using
+					playerName="";
 				break;
 				case "lobbyMessage":
 					//chat messages in lobby
@@ -133,6 +194,7 @@ function Client(){
             }
         } catch (e) {
             console.log("Failed to connect to " + "http://" + GameConstants.SERVER_NAME + ":" + GameConstants.PORT);
+			console.log("Error: "+e);
         }
     }
 	
@@ -187,6 +249,8 @@ function Client(){
 
 // Run Client. Give leeway of 0.5 second for libraries to load
 var gameClient = new Client();
-setTimeout(function() {gameClient.start();}, 500);
+$( document ).ready(function() {
+gameClient.start();
+});
 
 
