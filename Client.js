@@ -17,9 +17,10 @@ function Client(){
 		var html = "";
 		html+='<div id=\"user-login\" title=\"Login\">'+"\n";
 		html+='<p class=\"validateTips\">Please Enter A Username</p>'+"\n";
-		html+='<input type=\"text\" name=\"username\" id=\"username\" class=\"text ui-widget-content ui-corner-all\" />'+"\n";
+		html+='<input type=\"text\" name=\"username\" id=\"username\" class=\"text ui-widget-content ui-corner-all\" title=\"\" />'+"\n";
 		html+='</div>'+"\n";
 		$('html').append(html);
+		$('#username').tooltip();
 		$( "#user-login" ).dialog({
 			autoOpen: true,
 			closeOnEscape: false,
@@ -31,11 +32,16 @@ function Client(){
 			},
 			buttons:{
 				"Login": function(){
-					playerName = $('#username').val();
-					updatePlayerName(playerName);
-					$(this).dialog("close");
-					$('#user-login').remove(); //remove the added html
-					showProcessing();
+					if($('#username').val().trim().length==0){
+						$('#username').prop('title', 'Username cannot be empty');
+						$('#username').tooltip('open');
+					}else{
+						playerName = $('#username').val();
+						updatePlayerName(playerName);
+						$(this).dialog("close");
+						$('#user-login').remove(); //remove the added html
+						showProcessing();
+					}
 				}
 			}
 		});
@@ -88,6 +94,9 @@ function Client(){
 				break;
 				case "failPlayerName":
 					//User has input invalid playerName that someone else was already using
+					showLoginHTML();
+					$('#username').prop('title', 'Username already taken, please try another Username');
+					$('#username').tooltip('open');
 					playerName="";
 				break;
 				case "lobbyMessage":
