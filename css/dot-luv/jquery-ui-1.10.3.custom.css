@@ -823,7 +823,7 @@ body .ui-tooltip {
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
 	border: 1px solid #333333;
-	background: #333333 url(images/ui-bg_dots-small_20_333333_2x2.png) 50% 50% repeat;
+	/*background: #333333 url(images/ui-bg_dots-small_20_333333_2x2.png) 50% 50% repeat;*/
 	font-weight: bold;
 	color: #ffffff;
 }
@@ -840,7 +840,7 @@ body .ui-tooltip {
 .ui-widget-content .ui-state-focus,
 .ui-widget-header .ui-state-focus {
 	border: 1px solid #222222;
-	background: #00498f url(images/ui-bg_dots-small_40_00498f_2x2.png) 50% 50% repeat;
+	/*background: #00498f url(images/ui-bg_dots-small_40_00498f_2x2.png) 50% 50% repeat;*/
 	font-weight: bold;
 	color: #ffffff;
 }

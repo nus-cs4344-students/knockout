@@ -66,8 +66,8 @@ function Lobby() {
 		var newGameSession = new GameSession(nextSessionID);
 		nextSessionID++;
 		newGameSession.addPlayer(player);
-		sessionsArray.push(newGameSession);
 		newGameSession.sessionName = sessionName;
+		sessionsArray.push(newGameSession);
 		return newGameSession;
 	}
 	

@@ -159,10 +159,10 @@ function Client(){
 	}
 	
 	var refreshLobbySessions = function(){
+		console.log("refreshLobbySessions - refresh Room display");
 		//Check if the display exist
 		if($('#sessionDisplay').length>0){
 			$('#sessionDisplay').empty()//remove all the sessions inside
-			
 			for(var i=0;i<abstractSessionArray.length;i++){
 				var html="";
 				html+='<li>';
@@ -171,6 +171,7 @@ function Client(){
 				}else{
 					html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
 				}
+				html+='<h5>'+abstractSessionArray[i].sessionName+'</h5>';
 				html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/4</h2>';
 				if(abstractSessionArray[i].bol_isPlaying==false){
 					html+='<h3>Waiting</h3>';
@@ -180,6 +181,7 @@ function Client(){
 				html+='</a>';
 				html+='</li>';
 			}
+			$('#sessionDisplay').append(html);
 		}
 	}
 	
@@ -214,8 +216,8 @@ function Client(){
 				$('#inputChat').focus();
 			});
 			//Make button UI look nicer
-			$('.button.postfix.radius').removeClass('ui-widget');
-			$('.button.postfix.radius').removeClass('ui-state-default');
+			//$('.button.postfix.radius').removeClass('ui-widget');
+			//$('.button.postfix.radius').removeClass('ui-state-default');
 			$('#inputChat').focus();
 			
 			//Make enter to press button as well
@@ -243,8 +245,8 @@ function Client(){
 				promptSessionName();
 			});
 			//Make button look nicer
-			$('#btn_new_room').removeClass('ui-widget');
-			$('#btn_new_room').removeClass('ui-state-default');
+			//$('#btn_new_room').removeClass('ui-widget');
+			//$('#btn_new_room').removeClass('ui-state-default');
 			
 			$('#btn_quick_join').button().click( function(event){
 				event.preventDefault();
@@ -252,8 +254,8 @@ function Client(){
 				alert('quick join');
 			});
 			//Make button look nicer
-			$('#btn_quick_join').removeClass('ui-widget');
-			$('#btn_quick_join').removeClass('ui-state-default');
+			//$('#btn_quick_join').removeClass('ui-widget');
+			//$('#btn_quick_join').removeClass('ui-state-default');
 			
 			refreshLobbySessions();
 		});
@@ -325,10 +327,10 @@ function Client(){
 					}
 				break;
 				case "updateLobbySessions":
+					console.log("updateLobbySessions");
 					abstractSessionArray.splice(0,abstractSessionArray.length);//empty the array
 					for(var i=0; i<message.abstractGameSessions.length; i++){
 						var newAbstractGameSession = new AbstractGameSession(message.abstractGameSessions[i].name,message.abstractGameSessions[i].id);	
-						
 						var playerIDs = message.abstractGameSessions[i].playerIDs;
 						for(var j=0; j<playerIDs.length; j++)
 						{
@@ -336,6 +338,7 @@ function Client(){
 							if(player!=null){
 								newAbstractGameSession.addAbstractPlayer(player);
 							}else{
+								console.log("playerID "+playerIDs[j]+" was not found");
 								//TODO Show error that player ID was not found
 							}
 						}
@@ -375,6 +378,7 @@ function Client(){
 					refreshLobbySessions();
 				break;	
 				case "removeLobbySession":
+					console.log("removeLobbySession");
 					for(var i=0; i<abstractSessionArray.length; i++)
 					{
 						//TODO use another algo to search for the id for efficiency

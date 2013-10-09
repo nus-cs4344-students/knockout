@@ -57,7 +57,7 @@ function Server(){
 								//update list of players
 								unicast(conn, {type:"updateLobbyPlayers", abstractPlayers: gameLobby.getJSONAbstractPlayers(currentPlayer)});
 								//update list of sessions
-								if(gameLobby.sessionCount>0){
+								if(gameLobby.getSessionCount()>0){
 									unicast(conn, {type:"updateLobbySessions", abstractGameSessions: gameLobby.getJSONAbstractGameSessions()});
 								}
 							}

@@ -15,7 +15,7 @@ function AbstractGameSession(name, id) {
 	this.sessionID = id;
 	
 	this.addAbstractPlayer = function(abstractplayer){
-		abstractPlayersArray.push(abstractplayer);
+		this.abstractPlayersArray.push(abstractplayer);
 	}
 }
 
