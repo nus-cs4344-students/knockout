@@ -48,8 +48,20 @@ function Client(){
 						updatePlayerName(playerName);
 						$(this).dialog('close');
 						$('#user-login').remove(); //remove the added html
+						$(document).unbind();//remove all keypress handler
 						showProcessing();
 					}
+				}
+			}
+		});
+		//Make enter to press button as well
+		$(document).keypress(function(event) {
+			//Cross browser compatibility
+			var keycode = (event.keyCode ? event.keyCode : event.which);
+			if(keycode == '13') {
+				if($('#user-login').length>0){
+					console.log("in");
+					$('#user-login').parent().find('button').click();
 				}
 			}
 		});
@@ -85,42 +97,42 @@ function Client(){
 		}
 	}
 	
-	var initSetup = function() {
+	var initLobby = function() {
 		//Add chat function
-		if($('.button.postfix.radius').length>0){
-			$('.button.postfix.radius').button().click( function(event){
-				event.preventDefault();
-				if($('#inputChat').val().trim().length>0){
-					sendLobbyMessage($('#inputChat').val().trim());
-					$('#inputChat').val('');
-					$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
-				}
-				$('#inputChat').focus();
-			});
-			//Make button UI look nicer
-			$('.button.postfix.radius').removeClass('ui-widget');
-			$('.button.postfix.radius').removeClass('ui-state-default');
-			$('#inputChat').focus();
+		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/lobby.html',function(responseData){
+			//This part of code will run after content has loaded
 			
-			//Make enter to press button as well
-			$(document).keypress(function(event) {
-				//Cross browser compatibility
-				
-				var keycode = (event.keyCode ? event.keyCode : event.which);
-				if(keycode == '13') {
-					
-					if($('#user-login').length>0){
-						console.log("in");
-						$('#user-login').parent().find('button').click();
-					}else if($('.button.postfix.radius').length>0){
-						//Simulate click on chat button when press enter
-						$('.button.postfix.radius').click();  
+			document.title='KnockOut | Lobby';
+			
+			if($('.button.postfix.radius').length>0){
+				$('.button.postfix.radius').button().click( function(event){
+					event.preventDefault();
+					if($('#inputChat').val().trim().length>0){
+						sendLobbyMessage($('#inputChat').val().trim());
+						$('#inputChat').val('');
+						$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
 					}
+					$('#inputChat').focus();
+				});
+				//Make button UI look nicer
+				$('.button.postfix.radius').removeClass('ui-widget');
+				$('.button.postfix.radius').removeClass('ui-state-default');
+				$('#inputChat').focus();
+				
+				//Make enter to press button as well
+				$(document).keypress(function(event) {
+					//Cross browser compatibility
 					
-					
-				}
-			});
-		}
+					var keycode = (event.keyCode ? event.keyCode : event.which);
+					if(keycode == '13') {	
+						if($('.button.postfix.radius').length>0){
+							//Simulate click on chat button when press enter
+							$('.button.postfix.radius').click();  
+						}
+					}
+				});
+			}
+		});
 	}
 	
 	var initNetwork = function() {
@@ -138,6 +150,7 @@ function Client(){
 				case "successPlayerName":
 					//User has input valid playerName that no one else is using
 					hideProcessing();
+					initLobby();
 					alert("Welcome "+playerName);
 				break;
 				case "failPlayerName":
@@ -305,7 +318,7 @@ function Client(){
 	
 	this.start = function() {
 		initNetwork();
-		initSetup();
+		
 
         // Start drawing 
         //setInterval(function() {render();}, 1000/Pong.FRAME_RATE);

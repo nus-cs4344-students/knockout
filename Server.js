@@ -115,7 +115,7 @@ function Server(){
             // for connection
             var app = express();
 			app.get('/', function (req, res) {
-				res.sendfile(__dirname + '/templates/lobby.html');
+				res.sendfile(__dirname + '/templates/index.html');
 			});
 			//Access from http is http://localhost:8111
 			
