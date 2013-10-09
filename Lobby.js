@@ -14,8 +14,6 @@ function Lobby() {
 	//Broadcast message to all players
 	this.broadcast = function (msg) {
         for (var i=0; i<playersArray.length; i++){
-		//Only broadcast messages if user is not playing and not in game session(in lobby)
-			if(playersArray[i].bol_isPlaying == false && playersArray[i].currentGameSession== null)
 				playersArray[i].socket.write(JSON.stringify(msg));
         }
     }
@@ -23,8 +21,7 @@ function Lobby() {
 	//Broadcast message to all players except 1
 	this.broadcastExcept = function (msg,player) {
         for (var i=0; i<playersArray.length; i++){
-		//Only broadcast messages if user is not playing and not in game session(in lobby)
-			if(playersArray[i].bol_isPlaying == false && playersArray[i].currentGameSession== null && playersArray[i].playerID != player.playerID){
+			if(playersArray[i].playerID != player.playerID){
 				playersArray[i].socket.write(JSON.stringify(msg));
 			}
         }

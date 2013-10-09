@@ -125,8 +125,25 @@ function Server(){
 							}
 						 break;
 						 
+						 case "ready":
+							var currentGameSession = currentPlayer.currentGameSession;
+							if(currentGameSession!=null){
+								currentGameSession.setPlayerReady(currentPlayer);
+								currentGameSession.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
+							}
+						 break;
+						 
+						 case "notReady":
+							var currentGameSession = currentPlayer.currentGameSession;
+							if(currentGameSession!=null){
+								currentGameSession.setPlayerNotReady(currentPlayer);
+								currentGameSession.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
+							}
+						 break;
+						 
 						 default:
-						 //Report unknown message type
+							 //Report unknown message type
+							 console.log("unknown message type");
 						 break;
 					}
 				 });

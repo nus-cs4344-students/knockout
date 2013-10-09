@@ -159,6 +159,7 @@ function Client(){
 		});
 	}
 	
+	//This refreshes the lobby display of rooms
 	var refreshSessionDisplay = function(){
 		console.log("refreshSessionDisplay");
 		//Check if the display exist
@@ -217,21 +218,28 @@ function Client(){
 		});
 	}
 	
+	//This refreshes the room display of players
 	var refreshSessionPlayersDisplay = function(){
 		if($('#playerDisplay').length>0){
 			$('#playerDisplay').empty();
 			console.log("refreshSessionPlayersDisplay");
 			
 			if(currentSessionID!=null){
+				//check if 
+				
+				
 				//this session is the abstractGameSession
 				var currentSession = getSessionWithID(currentSessionID);
 				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
 					var html="";
 					//TODO
 					html+='<li>';
+					if(
 					html+='<a class="success button disabled grid" href="#">';
+					// <a class="alert button disabled grid">
 					html+='<h2>Ming Kit</h2>';
 					html+='<h3>Ready</h3>';
+					//<h3>Not Ready</h3>
 					html+='</a>';
 					html+='</li>';
 					
@@ -326,15 +334,29 @@ function Client(){
 					playerName="";
 				break;
 				case "lobbyMessage":
+					if(currentSessionID==null){
+						//chat messages in lobby
+						appendToChat(message.name+': '+message.msg);
+						//if chatbox exist
+						//auto scroll the chatbox only if the scroll is at the bottom
+						if($('#chatbox').length>0 && ($('#chatbox')[0].scrollHeight-$('#chatbox').scrollTop())<=226){
+							//Need [0] to access DOM object
+							//Manually measured 226
+							$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+						}
+					}
+				break;
 				case "sessionMessage":
-					//chat messages in lobby
-					appendToChat(message.name+': '+message.msg);
-					//if chatbox exist
-					//auto scroll the chatbox only if the scroll is at the bottom
-					if($('#chatbox').length>0 && ($('#chatbox')[0].scrollHeight-$('#chatbox').scrollTop())<=226){
-						//Need [0] to access DOM object
-						//Manually measured 226
-						$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+					if(currentSessionID!=null){
+						//chat messages in lobby
+						appendToChat(message.name+': '+message.msg);
+						//if chatbox exist
+						//auto scroll the chatbox only if the scroll is at the bottom
+						if($('#chatbox').length>0 && ($('#chatbox')[0].scrollHeight-$('#chatbox').scrollTop())<=226){
+							//Need [0] to access DOM object
+							//Manually measured 226
+							$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+						}
 					}
 				break;
 				case "addLobbyPlayer":
@@ -421,6 +443,7 @@ function Client(){
 						console.log("create new game session");
 					}
 					refreshSessionDisplay();
+					refreshSessionPlayersDisplay();
 				break;	
 				case "removeLobbySession":
 					console.log("removeLobbySession");
@@ -472,6 +495,14 @@ function Client(){
 	
 	var createGameSession = function(sessionName){
 		sendToServer({type:"createGameSession", name:sessionName});
+	}
+	
+	var sendReady = function(){
+		sendToServer({type:"ready"});
+	}
+	
+	var sendNotReady = function(){
+		sendToServer({type:"notReady"});
 	}
 	
 	var joinGameSession = function(id){

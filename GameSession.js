@@ -16,7 +16,6 @@ function GameSession(id) {
 	this.bol_isPlaying=false;
 	
 	this.broadcast = function (msg) {
-        var id;
         for (var i=0; i<playersArray.length; i++){
             playersArray[i].socket.write(JSON.stringify(msg));
         }
@@ -28,7 +27,6 @@ function GameSession(id) {
 	
 	this.addPlayer = function(player){
 		//Check if name already exist, return false if exist, else return true
-		var id;
 		for (var i=0; i<playersArray.length; i++){
 			if(playersArray[i].playerID==player.playerID){
 				return false;
