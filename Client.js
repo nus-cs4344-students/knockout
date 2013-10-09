@@ -212,7 +212,10 @@ function Client(){
 				initLobby();
 			});
 			
-			//TODO ready and start functions
+			//TODO start functions
+			$('#btn_ready').button().click( function(event){
+				toggleReady();
+			});
 			
 			refreshSessionPlayersDisplay();
 		});
@@ -224,22 +227,31 @@ function Client(){
 			$('#playerDisplay').empty();
 			console.log("refreshSessionPlayersDisplay");
 			
+			var currentSession = getSessionWithID(currentSessionID);
 			if(currentSessionID!=null){
-				//check if 
-				
-				
 				//this session is the abstractGameSession
-				var currentSession = getSessionWithID(currentSessionID);
-				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
+				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){	
+					//check if id is inside readyID list
+					var ready = false;
+					for(var j=0;j<currentSession.abstractReadyArray.length && ready==false;j++){
+						if(currentSession.abstractReadyArray[j]==currentSession.abstractPlayersArray[i].playerID){
+							ready=true;
+						}
+					}
+				
 					var html="";
-					//TODO
 					html+='<li>';
-					if(
-					html+='<a class="success button disabled grid" href="#">';
-					// <a class="alert button disabled grid">
-					html+='<h2>Ming Kit</h2>';
-					html+='<h3>Ready</h3>';
-					//<h3>Not Ready</h3>
+					if(ready==true){
+						html+='<a class="success button disabled grid" href="#">';
+					}else{
+						html+='<a class="alert button disabled grid">';
+					}
+					html+='<h2>'+currentSession.abstractPlayersArray[i].playerName+'</h2>';
+					if(ready==true){
+						html+='<h3>Ready</h3>';
+					}else{
+						html+='<h3>Not Ready</h3>';
+					}
 					html+='</a>';
 					html+='</li>';
 					
@@ -432,13 +444,13 @@ function Client(){
 						//edit old
 						tempGameSession.name = message.content.name;
 						tempGameSession.abstractPlayersArray = playerList;
-						tempGameSession.abstractReadyArray = message.readyIDs;
+						tempGameSession.abstractReadyArray = message.content.readyIDs;
 						console.log("edit game session");
 					}else{
 						//create new session
 						var newAbstractGameSession = new AbstractGameSession(message.content.name,message.content.id);
 						newAbstractGameSession.abstractPlayersArray = playerList;
-						newAbstractGameSession.abstractReadyArray = message.readyIDs;
+						newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
 						abstractSessionArray.push(newAbstractGameSession);
 						console.log("create new game session");
 					}
@@ -497,12 +509,8 @@ function Client(){
 		sendToServer({type:"createGameSession", name:sessionName});
 	}
 	
-	var sendReady = function(){
-		sendToServer({type:"ready"});
-	}
-	
-	var sendNotReady = function(){
-		sendToServer({type:"notReady"});
+	var toggleReady = function(){
+		sendToServer({type:"toggleReady"});
 	}
 	
 	var joinGameSession = function(id){
@@ -529,8 +537,9 @@ function Client(){
 		//TODO use better algo
 		for(var i=0; i<abstractSessionArray.length; i++)
 		{
-			if(abstractSessionArray[i].sessionID == id)
+			if(abstractSessionArray[i].sessionID == id){
 				return abstractSessionArray[i];
+			}
 		}
 		return null;
 	}

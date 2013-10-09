@@ -38,21 +38,7 @@ function GameSession(id) {
 		return true;
 	}
 	
-	this.setPlayerReady = function(player){
-		for(var i=0; i<playersArray.length; i++){
-			if(playersArray[i].playerID==player.playerID){
-				//search for ID in ready Array
-				for(var j=0; j<readyArray.length;j++){
-					if(readyArray[j]==player.playerID){
-						return;
-					}
-				}
-				readyArray.push(player.playerID);
-			}
-		}
-	}
-	
-	this.setPlayerNotReady = function(player){
+	this.togglePlayerReady = function(player){
 		for(var i=0; i<playersArray.length; i++){
 			if(playersArray[i].playerID==player.playerID){
 				//search for ID in ready Array
@@ -62,6 +48,8 @@ function GameSession(id) {
 						return;
 					}
 				}
+				readyArray.push(player.playerID);
+				return;
 			}
 		}
 	}

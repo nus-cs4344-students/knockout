@@ -56,11 +56,11 @@ function Server(){
 							if(currentPlayer==null){
 								//inform failure
 								console.log("reject playerName:"+message.name);
-								unicast(conn, {type:"failPlayerName", content:"Username: " + message.content +" was already taken"});
+								unicast(conn, {type:"failPlayerName"});
 							}else{
 								//inform success
 								console.log("accept playerName:"+message.name);
-								unicast(conn, {type:"successPlayerName", content:"Successful login!"});
+								unicast(conn, {type:"successPlayerName"});
 								//update lobby players of the new player
 								//When adding new player, do not need to send isPlaying because he is definately not playing yet
 								gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);
@@ -125,19 +125,11 @@ function Server(){
 							}
 						 break;
 						 
-						 case "ready":
+						 case "toggleReady":
 							var currentGameSession = currentPlayer.currentGameSession;
 							if(currentGameSession!=null){
-								currentGameSession.setPlayerReady(currentPlayer);
-								currentGameSession.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
-							}
-						 break;
-						 
-						 case "notReady":
-							var currentGameSession = currentPlayer.currentGameSession;
-							if(currentGameSession!=null){
-								currentGameSession.setPlayerNotReady(currentPlayer);
-								currentGameSession.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
+								currentGameSession.togglePlayerReady(currentPlayer);
+								currentGameSession.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
 							}
 						 break;
 						 

@@ -14,6 +14,7 @@ function AbstractGameSession(name, id) {
 	this.sessionName = name;
 	this.sessionID = id;
 	
+	//accepts abstractPlayer, not just id
 	this.addAbstractPlayer = function(abstractplayer){
 		this.abstractPlayersArray.push(abstractplayer);
 	}
