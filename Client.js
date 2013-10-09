@@ -171,7 +171,7 @@ function Client(){
 				}else{
 					html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
 				}
-				html+='<h5>'+abstractSessionArray[i].sessionName+'</h5>';
+				html+='<h6>'+abstractSessionArray[i].sessionName+'</h6>';
 				html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/4</h2>';
 				if(abstractSessionArray[i].bol_isPlaying==false){
 					html+='<h3>Waiting</h3>';
@@ -180,8 +180,14 @@ function Client(){
 				}
 				html+='</a>';
 				html+='</li>';
+				$('#sessionDisplay').append(html);
+				$('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
+				$('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
+					event.preventDefault();
+					//TODO
+					alert("hey");
+				});
 			}
-			$('#sessionDisplay').append(html);
 		}
 	}
 	
@@ -215,9 +221,7 @@ function Client(){
 				}
 				$('#inputChat').focus();
 			});
-			//Make button UI look nicer
-			//$('.button.postfix.radius').removeClass('ui-widget');
-			//$('.button.postfix.radius').removeClass('ui-state-default');
+			
 			$('#inputChat').focus();
 			
 			//Make enter to press button as well
@@ -244,18 +248,12 @@ function Client(){
 				event.preventDefault();
 				promptSessionName();
 			});
-			//Make button look nicer
-			//$('#btn_new_room').removeClass('ui-widget');
-			//$('#btn_new_room').removeClass('ui-state-default');
 			
 			$('#btn_quick_join').button().click( function(event){
 				event.preventDefault();
 				//TODO
 				alert('quick join');
 			});
-			//Make button look nicer
-			//$('#btn_quick_join').removeClass('ui-widget');
-			//$('#btn_quick_join').removeClass('ui-state-default');
 			
 			refreshLobbySessions();
 		});
