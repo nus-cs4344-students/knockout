@@ -126,6 +126,34 @@ function Client(){
 				"Cancel": function(){
 					$(this).dialog('close');
 				}
+			},
+			close: function() { 
+				$('#prompt-sessionname').remove(); //remove the close button
+				$(document).unbind();//remove all keypress handler
+				//Make enter to press button as well
+				$(document).keypress(function(event) {
+					//Cross browser compatibility
+					var keycode = (event.keyCode ? event.keyCode : event.which);
+					if(keycode == '13') {
+						if($('.button.postfix.radius')>0){
+							//Simulate click on chat button when press enter
+							$('.button.postfix.radius').click();  
+						}
+					}
+				});
+			}
+		});
+		
+		$(document).unbind();//remove all keypress handler
+		//Make enter to press button as well
+		$(document).keypress(function(event) {
+			//Cross browser compatibility
+			var keycode = (event.keyCode ? event.keyCode : event.which);
+			if(keycode == '13') {
+				//Make enter to press create
+				if($('#prompt-sessionname').length>0){
+					$('#prompt-sessionname').parent().find('.ui-dialog-buttonpane').find('button:first').click();
+				}
 			}
 		});
 	}
@@ -237,6 +265,8 @@ function Client(){
             socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
             socket.onmessage = function (e) {
                 var message = JSON.parse(e.data);
+				console.log("receive JSON message:");
+				console.log(message);
                 switch (message.type) {
 				case "successConnection":
 					console.log("successfully connected to server");
@@ -293,7 +323,6 @@ function Client(){
 						var newAbstractPlayer = new AbstractPlayer(message.abstractPlayers[i].name, message.abstractPlayers[i].id);
 						abstractPlayersArray.push(newAbstractPlayer);
 					}
-					console.log("final updated lobby players: "+abstractPlayersArray.length);
 				break;
 				case "updateLobbySessions":
 					abstractSessionArray.splice(0,abstractSessionArray.length);//empty the array
@@ -315,6 +344,7 @@ function Client(){
 					refreshLobbySessions();
 				break;
 				case "updateSingleLobbySession":
+					console.log("updateSingleLobbySession");
 					//includes this client's current session
 					//create new playerList
 					var playerIDs = message.content.playerIDs;
@@ -328,6 +358,7 @@ function Client(){
 							//TODO Show error that player ID was not found
 						}
 					}
+					console.log("playerList will have: "+playerList.length);
 					
 					var tempGameSession = getSessionWithID(message.content.id);
 					if(tempGameSession != null){
@@ -409,8 +440,9 @@ function Client(){
 		//TODO use better algo
 		for(var i=0; i<abstractPlayersArray.length; i++)
 		{
-			if(abstractPlayersArray[i].playerID == id)
+			if(abstractPlayersArray[i].playerID == id){
 				return abstractPlayersArray[i];
+			}
 		}
 		return null;
 	}

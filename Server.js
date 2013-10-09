@@ -72,6 +72,7 @@ function Server(){
 						 
 						 case "createGameSession":
 							if(currentPlayer!=null){
+								console.log("creating new game session with name: "+message.name);
 								var newGameSession = gameLobby.createGameSession(currentPlayer,message.name);
 								//inform everybody of new game session
 								gameLobby.broadcast({type:"updateSingleLobbySession", content:newGameSession.getAbstractGameSessionText()});

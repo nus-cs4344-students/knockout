@@ -20,7 +20,7 @@ function Player(s, n, id){
 	this.getAbstractPlayerText = function () {
 		//Returns text form of this Player which will be converted
 		//to AbstractPlayer on client side
-		return "{id:"+this.playerID+", name:"+this.playerName+"}";
+		return '{id:'+this.playerID+', name:'+this.playerName+'}';
 	}
 }
 

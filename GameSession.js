@@ -13,6 +13,7 @@ function GameSession(id) {
 	
 	//Constructor
 	this.sessionID = id;
+	this.bol_isPlaying=false;
 	
 	this.broadcast = function (msg) {
         var id;
@@ -53,13 +54,11 @@ function GameSession(id) {
 	
 	//privilege method
 	this.getAbstractGameSessionText = function () {
-		var playerIDs = "[";
+		var playerIDs = [];
 		for (var i=0; i<playersArray.length; i++){
-			playerIDs+= playersArray[i].playerID+",";
+			playerIDs.push(playersArray[i].playerID);
 		}
-		playerIDs = playerIDs.slice(0,-1);// remove the last comma
-		playerIDs+="]";
-		return "{id:"+this.sessionID+", name:"+this.sessionName+", playerIDs:"+playerIDs+"}";
+		return {id: this.sessionID , name: this.sessionName, 'playerIDs': playerIDs};
 	}
 }
 
