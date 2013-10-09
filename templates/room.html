@@ -14,9 +14,9 @@
     <header>
       <h1>KNOCKOUT</h1>
         <ul class="small-block-grid-2 large-block-grid-6">
-          <li><a href="#" class="radius button">Ready</a></li>
-          <li><a href="#" class="radius button">Start</a></li>
-		  <li><a href="#" class="radius button">Leave</a></li>
+          <li><a href="#" id="btn_ready" class="radius button">Ready</a></li>
+          <li><a href="#" id="btn_start" class="radius button">Start</a></li>
+		  <li><a href="#" id="btn_leave" class="radius button">Leave</a></li>
         </ul>
       
     </header>
@@ -50,7 +50,7 @@
     </div>
     <h2>Room Chat</h2>
     <div class="chat-container">
-      <div class="chatbox">
+      <div id="chatbox" class="chatbox">
         <p>Samantha: Ready up!!</p>
         <p>Juntang: How?</p>
         <p>Ming Kit: Click the button above my slot!</p>
@@ -59,10 +59,10 @@
 
       <div class="row collapse">
         <div class="small-10 large-11 columns">
-          <input type="text" placeholder="Hello World">
+          <input type="text" id="inputChat" placeholder="Type Your Message Here">
         </div>
         <div class="small-2 large-1 columns">
-          <a href="#" class="button prefix">Enter</a>
+          <a href="#" id="btn_sendChat" class="button prefix">Enter</a>
         </div>
       </div>
     </div>

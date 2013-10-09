@@ -7,6 +7,7 @@ function AbstractPlayer(n, id){
 	//public variables
 	this.playerName;
 	this.playerID;
+	this.bol_isPlaying=false;
 	
 	//constructor
 	this.playerName = n;

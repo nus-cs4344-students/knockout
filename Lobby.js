@@ -40,9 +40,10 @@ function Lobby() {
 	
 	this.removePlayer = function(player){
 		//Remove from the session
-		that.removePlayerFromSession(player);
+		var tempGameSession = that.removePlayerFromSession(player);
 		//Remove from array
 		playersArray.splice(playersArray.indexOf(player),1);
+		return tempGameSession;
 	}
 	
 	this.removeGameSession = function(session){
@@ -72,7 +73,7 @@ function Lobby() {
 	}
 	
 	this.addPlayerToSessionID = function(player,id){
-		var session = getSessionWithID(id);
+		var session = this.getSessionWithID(id);
 		if(session==null){
 			return false;
 		}else{
@@ -95,6 +96,10 @@ function Lobby() {
 		var tempGameSession = player.currentGameSession;
 		if(tempGameSession!=null){
 			tempGameSession.removePlayer(player);
+			if(tempGameSession.hasNoPlayers()){
+				this.removeGameSession(tempGameSession);
+				tempGameSession = null;
+			}
 		}
 		player.currentGameSession = null;
 		player.bol_isPlaying = false;
@@ -102,13 +107,11 @@ function Lobby() {
 		return tempGameSession;
 	}
 	
-	this.getJSONAbstractPlayers = function(exceptPlayer){
+	this.getJSONAbstractPlayers = function(){
 		//returns a JSON string to stringify at Server.js, includes every player except the exceptPlayer
 		var JSONarray = [];
 		for (var i=0; i<playersArray.length; i++){
-			if(playersArray[i].playerID != exceptPlayer.playerID){
-				JSONarray.push(playersArray[i].getAbstractPlayerText());
-			}
+			JSONarray.push(playersArray[i].getAbstractPlayerText());
 		}
 		return JSONarray;
 	}

@@ -8,6 +8,7 @@ function Client(){
 	var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
 	var socket;
 	var playerName="";
+	var currentSessionID=null;
 	
 	var sendToServer = function(msg) {
         socket.send(JSON.stringify(msg));
@@ -67,7 +68,7 @@ function Client(){
 	}
 	
 	var showProcessing = function(){
-		if($('#processing').length==0){
+		if($('#processing').length>0){
 			return;
 		}
 		var html = "";
@@ -80,7 +81,7 @@ function Client(){
 			closeOnEscape: false,
 			draggable: false,
 			modal: true,
-			height: 100,
+			height: 200,
 			width: 400,
 			open: function() { 
 				$('.ui-dialog-titlebar-close').remove(); //remove the close button
@@ -135,9 +136,9 @@ function Client(){
 					//Cross browser compatibility
 					var keycode = (event.keyCode ? event.keyCode : event.which);
 					if(keycode == '13') {
-						if($('.button.postfix.radius')>0){
+						if($('#btn_sendChat')>0){
 							//Simulate click on chat button when press enter
-							$('.button.postfix.radius').click();  
+							$('#btn_sendChat').click();  
 						}
 					}
 				});
@@ -158,8 +159,8 @@ function Client(){
 		});
 	}
 	
-	var refreshLobbySessions = function(){
-		console.log("refreshLobbySessions - refresh Room display");
+	var refreshSessionDisplay = function(){
+		console.log("refreshSessionDisplay");
 		//Check if the display exist
 		if($('#sessionDisplay').length>0){
 			$('#sessionDisplay').empty()//remove all the sessions inside
@@ -184,8 +185,8 @@ function Client(){
 				$('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
 				$('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
 					event.preventDefault();
-					//TODO
-					alert("hey");
+					showProcessing();
+					joinGameSession($(this).attr('sessionID'));
 				});
 			}
 		}
@@ -198,8 +199,71 @@ function Client(){
 			
 			document.title='KnockOut | Room';
 			
-			if($('#playerDisplay').length>0){
-				$('#playerDisplay').empty();
+			initChatBox();
+			if($('#chatbox').length>0){
+				$('#chatbox').empty();
+				appendToChat('Welcome '+playerName);
+			}
+			
+			//Set button functions
+			$('#btn_leave').button().click( function(event){
+				leaveGameSession();
+				initLobby();
+			});
+			
+			//TODO ready and start functions
+			
+			refreshSessionPlayersDisplay();
+		});
+	}
+	
+	var refreshSessionPlayersDisplay = function(){
+		if($('#playerDisplay').length>0){
+			$('#playerDisplay').empty();
+			console.log("refreshSessionPlayersDisplay");
+			
+			if(currentSessionID!=null){
+				//this session is the abstractGameSession
+				var currentSession = getSessionWithID(currentSessionID);
+				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
+					var html="";
+					//TODO
+					html+='<li>';
+					html+='<a class="success button disabled grid" href="#">';
+					html+='<h2>Ming Kit</h2>';
+					html+='<h3>Ready</h3>';
+					html+='</a>';
+					html+='</li>';
+					
+					$('#playerDisplay').append(html);
+				}
+			}else{
+				alert("oh no, current session ID is null!");
+			}
+		}
+	}
+	
+	var initChatBox = function(){
+		//initialize chat box function
+		$('#btn_sendChat').button().click( function(event){
+			event.preventDefault();
+			if($('#inputChat').val().trim().length>0){
+				sendMessage($('#inputChat').val().trim());
+				$('#inputChat').val('');
+				$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+			}
+			$('#inputChat').focus();
+		});
+		
+		$('#inputChat').focus();
+		$(document).unbind();
+		//Make enter to press button as well
+		$(document).keypress(function(event) {
+			//Cross browser compatibility
+			var keycode = (event.keyCode ? event.keyCode : event.which);
+			if(keycode == '13') {	
+				//Simulate click on chat button when press enter
+				$('#btn_sendChat').click();  
 			}
 		});
 	}
@@ -211,36 +275,13 @@ function Client(){
 			
 			document.title='KnockOut | Lobby';
 			
-			//initialize chat box function
-			$('.button.postfix.radius').button().click( function(event){
-				event.preventDefault();
-				if($('#inputChat').val().trim().length>0){
-					sendLobbyMessage($('#inputChat').val().trim());
-					$('#inputChat').val('');
-					$('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
-				}
-				$('#inputChat').focus();
-			});
-			
-			$('#inputChat').focus();
-			
-			//Make enter to press button as well
-			$(document).keypress(function(event) {
-				//Cross browser compatibility
-				var keycode = (event.keyCode ? event.keyCode : event.which);
-				if(keycode == '13') {	
-					//Simulate click on chat button when press enter
-					$('.button.postfix.radius').click();  
-				}
-			});
-			
+			initChatBox();
 			
 			//update chatbox
 			if($('#chatbox').length>0){
 				$('#chatbox').empty();
 				appendToChat('Welcome '+playerName);
-				var totalPlayers = 1+abstractPlayersArray.length;
-				appendToChat('[There are '+totalPlayers+' player(s) playing KnockOut right now]');
+				appendToChat('[There are '+abstractPlayersArray.length+' player(s) playing KnockOut right now]');
 			}
 			
 			//Set button functions
@@ -255,7 +296,7 @@ function Client(){
 				alert('quick join');
 			});
 			
-			refreshLobbySessions();
+			refreshSessionDisplay();
 		});
 	}
 	
@@ -265,8 +306,6 @@ function Client(){
             socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
             socket.onmessage = function (e) {
                 var message = JSON.parse(e.data);
-				console.log("receive JSON message:");
-				console.log(message);
                 switch (message.type) {
 				case "successConnection":
 					console.log("successfully connected to server");
@@ -277,7 +316,6 @@ function Client(){
 					//User has input valid playerName that no one else is using
 					hideProcessing();
 					initLobby();
-					alert("Welcome "+playerName);
 				break;
 				case "failPlayerName":
 					//User has input invalid playerName that someone else was already using
@@ -288,6 +326,7 @@ function Client(){
 					playerName="";
 				break;
 				case "lobbyMessage":
+				case "sessionMessage":
 					//chat messages in lobby
 					appendToChat(message.name+': '+message.msg);
 					//if chatbox exist
@@ -301,15 +340,20 @@ function Client(){
 				case "addLobbyPlayer":
 					var newAbstractPlayer = new AbstractPlayer(message.name, message.id);
 					abstractPlayersArray.push(newAbstractPlayer);
-					
-					appendToChat('['+message.name+' has logined]');
+					if($('.lobby').length>0){
+						//Only show message if client is in lobby
+						appendToChat('['+message.name+' has logined]');
+					}
 				break;
 				case "removeLobbyPlayer":
 					for(var i=0; i<abstractPlayersArray.length; i++)
 					{
 						//TODO use another algo to search for the id for efficiency
 						if(abstractPlayersArray[i].playerID == message.id){
-							appendToChat('['+abstractPlayersArray[i].playerName+' has left the game]');
+							if($('.lobby').length>0){
+								//Only show message if client is in lobby
+								appendToChat('['+abstractPlayersArray[i].playerName+' has left the game]');
+							}
 							abstractPlayersArray.splice(i,1);
 							break;
 						}
@@ -321,6 +365,7 @@ function Client(){
 					abstractPlayersArray.splice(0,abstractPlayersArray.length);//empty the array
 					for(var i=0; i<message.abstractPlayers.length ; i++){
 						var newAbstractPlayer = new AbstractPlayer(message.abstractPlayers[i].name, message.abstractPlayers[i].id);
+						newAbstractPlayer.bol_isPlaying=message.abstractPlayers[i].isPlaying;
 						abstractPlayersArray.push(newAbstractPlayer);
 					}
 				break;
@@ -337,12 +382,12 @@ function Client(){
 								newAbstractGameSession.addAbstractPlayer(player);
 							}else{
 								console.log("playerID "+playerIDs[j]+" was not found");
-								//TODO Show error that player ID was not found
 							}
 						}
+						newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
 						abstractSessionArray.push(newAbstractGameSession);
 					}
-					refreshLobbySessions();
+					refreshSessionDisplay();
 				break;
 				case "updateSingleLobbySession":
 					console.log("updateSingleLobbySession");
@@ -356,27 +401,30 @@ function Client(){
 						if(player!=null){
 							playerList.push(player);
 						}else{
-							//TODO Show error that player ID was not found
+							console.log("playerID "+playerIDs[i]+" was not found");
 						}
 					}
-					console.log("playerList will have: "+playerList.length);
 					
 					var tempGameSession = getSessionWithID(message.content.id);
 					if(tempGameSession != null){
 						//edit old
 						tempGameSession.name = message.content.name;
 						tempGameSession.abstractPlayersArray = playerList;
-						abstractSessionArray.splice(abstractSessionArray.indexOf(tempGameSession),1);
+						tempGameSession.abstractReadyArray = message.readyIDs;
+						console.log("edit game session");
 					}else{
 						//create new session
 						var newAbstractGameSession = new AbstractGameSession(message.content.name,message.content.id);
 						newAbstractGameSession.abstractPlayersArray = playerList;
+						newAbstractGameSession.abstractReadyArray = message.readyIDs;
 						abstractSessionArray.push(newAbstractGameSession);
+						console.log("create new game session");
 					}
-					refreshLobbySessions();
+					refreshSessionDisplay();
 				break;	
 				case "removeLobbySession":
 					console.log("removeLobbySession");
+					console.log(message.id);
 					for(var i=0; i<abstractSessionArray.length; i++)
 					{
 						//TODO use another algo to search for the id for efficiency
@@ -384,24 +432,20 @@ function Client(){
 							abstractSessionArray.splice(i,1);
 						}
 					}
-					refreshLobbySessions();
+					refreshSessionDisplay();
 				break;	
 				case "successCreateGameSession":
-					//has successfully created a game session
-					alert("hooray!");
-					hideProcessing();
-					initSession();
-				break;
 				case "successJoinGameSession":
 					//has successfully join a game session
+					currentSessionID=message.sessionID;
+					hideProcessing();
 					initSession();
 				break;
 				case "failJoinGameSession":
 					//failed to join a game session
+					hideProcessing();
 					alert('Failed to join room, sorry :(');
-				break;
-				
-				
+				break;				
                 case "updateGame":
 					//update the game values
 					//TODO
@@ -422,8 +466,8 @@ function Client(){
 		sendToServer({type:"updatePlayerName",name:playerName});
 	}
 	
-	var sendLobbyMessage = function(msg){
-		sendToServer({type:"sendLobbyMessage",message:msg});
+	var sendMessage = function(msg){
+		sendToServer({type:"sendMessage",message:msg});
 	}
 	
 	var createGameSession = function(sessionName){
@@ -436,6 +480,7 @@ function Client(){
 	
 	var leaveGameSession = function(){
 		sendToServer({type:"leaveGameSession"});
+		currentSessionID=null;
 	}
 	
 	var getPlayerWithID = function(id){
