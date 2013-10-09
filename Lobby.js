@@ -30,6 +30,10 @@ function Lobby() {
         }
     }
 	
+	this.getSessionCount = function(){
+		return sessionsArray.length;
+	}
+	
 	this.unicast = function (socket, msg) {
         socket.write(JSON.stringify(msg));
     }
@@ -100,26 +104,22 @@ function Lobby() {
 	
 	this.getJSONAbstractPlayers = function(exceptPlayer){
 		//returns a JSON string to stringify at Server.js, includes every player except the exceptPlayer
-		var JSONstring = "[";
+		var JSONarray = [];
 		for (var i=0; i<playersArray.length; i++){
 			if(playersArray[i].playerID != exceptPlayer.playerID){
-				JSONstring += playersArray[i].getAbstractPlayerText()+",";
+				JSONarray.push(playersArray[i].getAbstractPlayerText());
 			}
 		}
-		JSONstring = JSONstring.slice(0,-1);// remove the last comma
-		JSONstring+="]";
-		return JSONstring;
+		return JSONarray;
 	}
 	
 	this.getJSONAbstractGameSessions = function(){
 		//returns a JSON string to stringify at Server.js, includes all GameSessions
-		var JSONstring = "[";
+		var JSONarray = [];
 		for (var i=0; i<sessionsArray.length; i++){
-			JSONstring += sessionsArray[i].getAbstractGameSessionText()+",";
+			JSONarray.push(sessionsArray[i].getAbstractGameSessionText());
 		}
-		JSONstring = JSONstring.slice(0,-1);// remove the last comma
-		JSONstring+="]";
-		return JSONstring;
+		return JSONarray;
 	}
 }
 

@@ -55,9 +55,11 @@ function Server(){
 								//update lobby players of the new player
 								gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);
 								//update list of players
-								unicast(conn, {type:"updateLobbyPlayers", abstractPlayers:gameLobby.getJSONAbstractPlayers(currentPlayer)});
+								unicast(conn, {type:"updateLobbyPlayers", abstractPlayers: gameLobby.getJSONAbstractPlayers(currentPlayer)});
 								//update list of sessions
-								unicast(conn, {type:"updateLobbySessions", abstractGameSessions:gameLobby.getJSONAbstractGameSessions()});
+								if(gameLobby.sessionCount>0){
+									unicast(conn, {type:"updateLobbySessions", abstractGameSessions: gameLobby.getJSONAbstractGameSessions()});
+								}
 							}
 						 break;
 						 

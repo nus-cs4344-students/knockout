@@ -8,6 +8,7 @@ function AbstractGameSession(name, id) {
 	//Public variables
 	this.sessionName; //Name of the session (can be duplicate)
 	this.sessionID;
+	this.bol_isPlaying=false;
 	
 	//Constructor
 	this.sessionName = name;
