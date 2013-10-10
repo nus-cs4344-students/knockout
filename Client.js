@@ -10,11 +10,16 @@ function Client(){
 	var playerName="";
 	var currentSessionID=null;
 	
-	var sendToServer = function(msg) {
+	//Game Stuffs
+	var camera = null;
+	var scene = null;
+	var renderer = null;
+	
+	var sendToServer = function(msg){
         socket.send(JSON.stringify(msg));
     }
 	
-	var appendToChat = function (msg) {
+	var appendToChat = function(msg){
 		//check if chatbox exist
 		if($('#chatbox').length>0){
 			$('#chatbox').append('<p>'+msg+'</p>');
@@ -42,6 +47,7 @@ function Client(){
 			buttons:{
 				"Login": function(){
 					if($('#username').val().trim().length==0){
+						$('#username').tooltip('close');
 						$('#username').prop('title', 'Username cannot be empty');
 						$('#username').tooltip('open');
 					}else{
@@ -114,6 +120,7 @@ function Client(){
 			buttons:{
 				"Create": function(){
 					if($('#sessionname').val().trim().length==0){
+						$('#sessionname').tooltip('close');
 						$('#sessionname').prop('title', 'Room Name Cannot Be Empty');
 						$('#sessionname').tooltip('open');
 					}else{
@@ -168,13 +175,14 @@ function Client(){
 			for(var i=0;i<abstractSessionArray.length;i++){
 				var html="";
 				html+='<li>';
-				if(abstractSessionArray[i].abstractPlayersArray.length<4){
+				//Only allow clicking the room if it has less than the number of players needed and the game has not started yet
+				if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
 					html+='<a class="success button grid" href="#" sessionID="' +abstractSessionArray[i].sessionID+ '" >';
 				}else{
 					html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
 				}
 				html+='<h6>'+abstractSessionArray[i].sessionName+'</h6>';
-				html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/4</h2>';
+				html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/'+GameConstants.NUM_OF_PLAYERS+'</h2>';
 				if(abstractSessionArray[i].bol_isPlaying==false){
 					html+='<h3>Waiting</h3>';
 				}else{
@@ -184,11 +192,57 @@ function Client(){
 				html+='</li>';
 				$('#sessionDisplay').append(html);
 				$('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
-				$('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
-					event.preventDefault();
-					showProcessing();
-					joinGameSession($(this).attr('sessionID'));
-				});
+				
+				if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
+					//Only allow clicking it if some details satisfy
+					$('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
+						event.preventDefault();
+						showProcessing();
+						joinGameSession($(this).attr('sessionID'));
+					});
+				}
+			}
+		}
+	}
+
+	//This refreshes the room display of players
+	var refreshSessionPlayersDisplay = function(){
+		if($('#playerDisplay').length>0){
+			$('#playerDisplay').empty();
+			console.log("refreshSessionPlayersDisplay");
+			
+			var currentSession = getSessionWithID(currentSessionID);
+			if(currentSessionID!=null){
+				//this session is the abstractGameSession
+				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){	
+					//check if id is inside readyID list
+					var ready = false;
+					for(var j=0;j<currentSession.abstractReadyArray.length && ready==false;j++){
+						if(currentSession.abstractReadyArray[j]==currentSession.abstractPlayersArray[i].playerID){
+							ready=true;
+						}
+					}
+					
+					var html="";
+					html+='<li>';
+					if(ready==true){
+						html+='<a class="success button disabled grid" href="#">';
+						}else{
+						html+='<a class="alert button disabled grid">';
+					}
+					html+='<h2>'+currentSession.abstractPlayersArray[i].playerName+'</h2>';
+					if(ready==true){
+						html+='<h3>Ready</h3>';
+						}else{
+						html+='<h3>Not Ready</h3>';
+					}
+					html+='</a>';
+					html+='</li>';
+					
+					$('#playerDisplay').append(html);
+				}
+				}else{
+				alert("oh no, current session ID is null!");
 			}
 		}
 	}
@@ -212,55 +266,31 @@ function Client(){
 				initLobby();
 			});
 			
-			//TODO start functions
+			$('#btn_start').button().click( function(event){
+				var currentSession = getSessionWithID(currentSessionID);
+				if(currentSession!=null){
+					$('#btn_start').tooltip('close');
+					if(currentSession.abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS){
+						$('#btn_start').prop('title', 'Require 4 players to start the game');
+						$('#btn_start').tooltip('open');
+					}else if(currentSession.abstractPlayersArray.length != currentSession.abstractReadyArray.length){
+						$('#btn_start').prop('title', 'Not All Players Are Ready Yet');
+						$('#btn_start').tooltip('open');
+					}else{
+						sendStartGame();
+					}
+					
+				}
+			});
+			
+			$('#btn_start').tooltip();
+			
 			$('#btn_ready').button().click( function(event){
 				toggleReady();
 			});
-			
+
 			refreshSessionPlayersDisplay();
 		});
-	}
-	
-	//This refreshes the room display of players
-	var refreshSessionPlayersDisplay = function(){
-		if($('#playerDisplay').length>0){
-			$('#playerDisplay').empty();
-			console.log("refreshSessionPlayersDisplay");
-			
-			var currentSession = getSessionWithID(currentSessionID);
-			if(currentSessionID!=null){
-				//this session is the abstractGameSession
-				for(var i=0;i<currentSession.abstractPlayersArray.length;i++){	
-					//check if id is inside readyID list
-					var ready = false;
-					for(var j=0;j<currentSession.abstractReadyArray.length && ready==false;j++){
-						if(currentSession.abstractReadyArray[j]==currentSession.abstractPlayersArray[i].playerID){
-							ready=true;
-						}
-					}
-				
-					var html="";
-					html+='<li>';
-					if(ready==true){
-						html+='<a class="success button disabled grid" href="#">';
-					}else{
-						html+='<a class="alert button disabled grid">';
-					}
-					html+='<h2>'+currentSession.abstractPlayersArray[i].playerName+'</h2>';
-					if(ready==true){
-						html+='<h3>Ready</h3>';
-					}else{
-						html+='<h3>Not Ready</h3>';
-					}
-					html+='</a>';
-					html+='</li>';
-					
-					$('#playerDisplay').append(html);
-				}
-			}else{
-				alert("oh no, current session ID is null!");
-			}
-		}
 	}
 	
 	var initChatBox = function(){
@@ -288,7 +318,7 @@ function Client(){
 		});
 	}
 	
-	var initLobby = function() {
+	var initLobby = function(){
 		$('#contentHTML').empty();
 		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/lobby.html',function(responseData){
 			//This part of code will run after content has loaded
@@ -320,7 +350,55 @@ function Client(){
 		});
 	}
 	
-	var initNetwork = function() {
+	var initGame = function(){
+		$('#contentHTML').empty();		
+		document.title='KnockOut | Game';
+		
+		$(document).unbind();
+		//TODO start binding onto gaming keys
+		
+		//window.innerWidth / window.innerHeight
+
+		//TODO rendering init
+		camera = new THREE.PerspectiveCamera( 60, GameConstants.WINDOW_WIDTH/GameConstants.WINDOW_HEIGHT ,0.1, 1000 );
+		camera.position.z = 40;
+		scene = new THREE.Scene();
+		
+		var geometry = new THREE.SphereGeometry(1,10,10);
+		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+		var material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+		var material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+		var player1 = new THREE.Mesh( geometry, material );
+		scene.add( player1 );
+		var player2 = new THREE.Mesh ( geometry, material1 );
+		scene.add( player2 );
+		var playField = new THREE.Mesh (new THREE.PlaneGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT ), material2);
+		scene.add( playField );
+		player1.position.z = 0.5;
+		player2.position.z = 0.5;	
+		
+		renderer = new THREE.CanvasRenderer();
+		renderer.setSize( GameConstants.WINDOW_WIDTH, GameConstants.WINDOW_HEIGHT );
+		$('#contentHTML').append(renderer.domElement);
+		
+		animateGame();
+	}
+	
+	var animateGame = function(){
+		requestAnimationFrame( animateGame );
+		
+		//TODO all the reaction to keys and logic
+		
+		renderer.render( scene, camera );
+	}
+	
+	var unloadGame = function(){
+		camera = null;
+		scene = null;
+		renderer = null;
+	}
+	
+	var initNetwork = function(){
         // Attempts to connect to game server
         try {
             socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
@@ -341,6 +419,7 @@ function Client(){
 					//User has input invalid playerName that someone else was already using
 					hideProcessing();
 					showLoginHTML();
+					$('#username').tooltip('close');
 					$('#username').prop('title', 'Username already taken, please try another Username');
 					$('#username').tooltip('open');
 					playerName="";
@@ -419,6 +498,7 @@ function Client(){
 							}
 						}
 						newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
+						newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
 						abstractSessionArray.push(newAbstractGameSession);
 					}
 					refreshSessionDisplay();
@@ -445,12 +525,22 @@ function Client(){
 						tempGameSession.name = message.content.name;
 						tempGameSession.abstractPlayersArray = playerList;
 						tempGameSession.abstractReadyArray = message.content.readyIDs;
+						tempGameSession.bol_isPlaying = message.content.isPlaying;
 						console.log("edit game session");
+						
+						if(currentSessionID!=null && message.content.id == currentSessionID){
+							if($('#btn_start').length>0){
+								//refresh tooltip if current game session has updates
+								$('#btn_start').tooltip('close');
+								$('#btn_start').prop('title','');
+							}
+						}
 					}else{
 						//create new session
 						var newAbstractGameSession = new AbstractGameSession(message.content.name,message.content.id);
 						newAbstractGameSession.abstractPlayersArray = playerList;
 						newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
+						newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
 						abstractSessionArray.push(newAbstractGameSession);
 						console.log("create new game session");
 					}
@@ -480,7 +570,17 @@ function Client(){
 					//failed to join a game session
 					hideProcessing();
 					alert('Failed to join room, sorry :(');
-				break;				
+				break;	
+
+				case "startGame":
+					appendToChat('[Game is Starting in 5]');
+					setTimeout(function() {appendToChat('[Game is Starting in 4]');}, 1000);
+					setTimeout(function() {appendToChat('[Game is Starting in 3]');}, 2000);
+					setTimeout(function() {appendToChat('[Game is Starting in 2]');}, 3000);
+					setTimeout(function() {appendToChat('[Game is Starting in 1]');}, 4000);
+					setTimeout(function() {initGame();}, 5000);
+				break;
+				
                 case "updateGame":
 					//update the game values
 					//TODO
@@ -497,6 +597,7 @@ function Client(){
         }
     }
 	
+	//Below are functions that send JSON to server
 	var updatePlayerName = function(playerName){
 		sendToServer({type:"updatePlayerName",name:playerName});
 	}
@@ -511,6 +612,10 @@ function Client(){
 	
 	var toggleReady = function(){
 		sendToServer({type:"toggleReady"});
+	}
+	
+	var sendStartGame = function(){
+		sendToServer({type:"startGame"});
 	}
 	
 	var joinGameSession = function(id){
@@ -544,19 +649,15 @@ function Client(){
 		return null;
 	}
 	
-	this.start = function() {
+	this.start = function(){
 		initNetwork();
-		
-
-        // Start drawing 
-        //setInterval(function() {render();}, 1000/Pong.FRAME_RATE);
 	}
 }
 
 // Run Client. Give leeway of 0.5 second for libraries to load
 var gameClient = new Client();
-$( document ).ready(function() {
-gameClient.start();
+$( document ).ready(function(){
+	gameClient.start();
 });
 
 

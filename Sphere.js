@@ -60,6 +60,15 @@ function Sphere(){
 		that.y += vy;
 		that.z += vz;
 	}
+	
+	this.isOutOfBound = function(){
+		if((that.x < -GameConstants.PLATFORM_WIDTH/2 || that.x > GameConstants.PLATFORM_WIDTH/2) ||
+		(that.y < -GameConstants.PLATFORM_HEIGHT/2 || that.y > GameConstants.PLATFORM_HEIGHT/2)){
+			return true;
+			}else{
+			return false;
+		}
+	}
 }
 
 

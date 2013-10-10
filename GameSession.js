@@ -2,6 +2,7 @@
 "use strict"; 
 var LIB_PATH = "./";
 require(LIB_PATH + "Player.js");
+require(LIB_PATH + "GameConstants.js");
 
 function GameSession(id) {
 	//Private variables
@@ -26,6 +27,11 @@ function GameSession(id) {
     }
 	
 	this.addPlayer = function(player){
+		//Restrict number of players
+		if(playersArray.length>=GameConstants.NUM_OF_PLAYERS || this.bol_isPlaying==true){
+			return false;
+		}
+		
 		//Check if name already exist, return false if exist, else return true
 		for (var i=0; i<playersArray.length; i++){
 			if(playersArray[i].playerID==player.playerID){
@@ -62,6 +68,10 @@ function GameSession(id) {
 		}
 	}
 	
+	this.canStartGame = function(){
+		return (playersArray.length==GameConstants.NUM_OF_PLAYERS && playersArray.length==readyArray.length);
+	}
+	
 	this.hasNoPlayers = function(){
 		return (playersArray.length==0);
 	}
@@ -72,7 +82,7 @@ function GameSession(id) {
 		for (var i=0; i<playersArray.length; i++){
 			playerIDs.push(playersArray[i].playerID);
 		}
-		return {id: this.sessionID , name: this.sessionName, 'playerIDs': playerIDs, 'readyIDs':readyArray};
+		return {id: this.sessionID , name:this.sessionName, 'playerIDs':playerIDs, 'readyIDs':readyArray, 'isPlaying':this.bol_isPlaying};
 	}
 }
 

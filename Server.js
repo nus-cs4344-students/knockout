@@ -5,8 +5,6 @@ var LIB_PATH = "./";
 require(LIB_PATH + "Lobby.js");
 require(LIB_PATH + "Player.js");
 require(LIB_PATH + "GameConstants.js");
-//require(LIB_PATH + "AbstractPlayer.js");
-//require(LIB_PATH + "AbstractGameSession.js");
 
 function Server(){
 	//Private variables
@@ -127,9 +125,19 @@ function Server(){
 						 
 						 case "toggleReady":
 							var currentGameSession = currentPlayer.currentGameSession;
-							if(currentGameSession!=null){
+							if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
 								currentGameSession.togglePlayerReady(currentPlayer);
 								currentGameSession.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+							}
+						 break;
+						 
+						 case "startGame":
+							//Has to make all of them start at the same time
+							var currentGameSession = currentPlayer.currentGameSession;
+							if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
+								currentGameSession.bol_isPlaying = true;
+								currentGameSession.broadcast({type:"startGame"});
+								gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
 							}
 						 break;
 						 
