@@ -7,6 +7,7 @@ var GameConstants = {
 	SERVER_NAME : "localhost",	// server name of game
 	PLATFORM_HEIGHT: 350,
 	PLATFORM_WIDTH : 350,
+	PLATFORM_DEPTH : 50,
 	WINDOW_HEIGHT: 500,
 	WINDOW_WIDTH: 500,
 	NUM_OF_PLAYERS : 4

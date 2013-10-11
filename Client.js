@@ -343,7 +343,8 @@ function Client(){
 			$('#btn_quick_join').button().click( function(event){
 				event.preventDefault();
 				//TODO
-				alert('quick join');
+				alert('suppose to be quick join but using it to quick test game');
+				initGame();
 			});
 			
 			refreshSessionDisplay();
@@ -360,26 +361,52 @@ function Client(){
 		//window.innerWidth / window.innerHeight
 
 		//TODO rendering init
-		camera = new THREE.PerspectiveCamera( 60, GameConstants.WINDOW_WIDTH/GameConstants.WINDOW_HEIGHT ,0.1, 1000 );
-		camera.position.z = 40;
+		if (window.WebGLRenderingContext){
+			renderer = new THREE.WebGLRenderer(); 
+		}else{
+			renderer = new THREE.CanvasRenderer();
+		}
+		renderer.setSize( $(window).width(), $(window).height());
+		//Enable shadows on renderer
+		renderer.shadowMapEnabled = true;
+		$('#contentHTML').append(renderer.domElement);
+		
 		scene = new THREE.Scene();
 		
-		var geometry = new THREE.SphereGeometry(1,10,10);
+		//PerspectiveCamera( angle, aspect ratio, near, far )
+		camera = new THREE.PerspectiveCamera( 20,  $(window).width()/$(window).height() , 0.1 , 10000 );
+		camera.position.y = -GameConstants.PLATFORM_WIDTH-GameConstants.PLATFORM_HEIGHT-100; //tilt camera downwards
+		camera.position.x = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
+		camera.position.z = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
+		camera.lookAt( scene.position ); // the origin
+		camera.rotation.z = -camera.rotation.z; //set back to horizontal plane view
+		
+		scene.add(camera);
+
+		//Create lighting on top
+		var light = new THREE.SpotLight();
+		light.position.set(0,0,200);
+		light.castShadow = true;
+		scene.add(light);
+		
+		//SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
+		var geometry = new THREE.SphereGeometry(20,20,20);
 		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
 		var material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 		var material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
 		var player1 = new THREE.Mesh( geometry, material );
+		player1.castShadow = true;
+		player1.receiveShadow = true;
 		scene.add( player1 );
 		var player2 = new THREE.Mesh ( geometry, material1 );
+		player2.castShadow = true;
+		player2.receiveShadow = true;
 		scene.add( player2 );
-		var playField = new THREE.Mesh (new THREE.PlaneGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT ), material2);
+		//CubeGeometry(width, height, depth, widthSegments, heightSegments, depthSegments)
+		var playField = new THREE.Mesh (new THREE.CubeGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT, -GameConstants.PLATFORM_DEPTH ), material2);
+		playField.receiveShadow = true;
 		scene.add( playField );
-		player1.position.z = 0.5;
-		player2.position.z = 0.5;	
-		
-		renderer = new THREE.CanvasRenderer();
-		renderer.setSize( GameConstants.WINDOW_WIDTH, GameConstants.WINDOW_HEIGHT );
-		$('#contentHTML').append(renderer.domElement);
+		player1.position.x = 40;
 		
 		animateGame();
 	}
@@ -388,7 +415,6 @@ function Client(){
 		requestAnimationFrame( animateGame );
 		
 		//TODO all the reaction to keys and logic
-		
 		renderer.render( scene, camera );
 	}
 	
