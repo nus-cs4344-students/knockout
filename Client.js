@@ -1,6 +1,7 @@
 // enforce strict/clean programming
 "use strict"; 
-
+Physijs.scripts.worker = '../physijs_worker.js';
+Physijs.scripts.ammo = '../ammo.js';
 //Client will require the html to have jQuery installed
 
 function Client(){
@@ -343,7 +344,7 @@ function Client(){
 			$('#btn_quick_join').button().click( function(event){
 				event.preventDefault();
 				//TODO
-				alert('suppose to be quick join but using it to quick test game');
+				//alert('suppose to be quick join but using it to quick test game');
 				initGame();
 			});
 			
@@ -363,59 +364,123 @@ function Client(){
 		//TODO rendering init
 		if (window.WebGLRenderingContext){
 			renderer = new THREE.WebGLRenderer(); 
+			console.log("webgl");
 		}else{
 			renderer = new THREE.CanvasRenderer();
+			console.log("canvas renderer");
 		}
 		renderer.setSize( $(window).width(), $(window).height());
 		//Enable shadows on renderer
 		renderer.shadowMapEnabled = true;
+		renderer.shadowMapSoft = true;
 		$('#contentHTML').append(renderer.domElement);
 		
-		scene = new THREE.Scene();
-		
+		//scene = new THREE.Scene();
+		scene = new Physijs.Scene;
+		scene.setGravity(new THREE.Vector3( 0, -50, 0 ));
+
+		scene.addEventListener(
+			'update',
+			function() {
+				scene.simulate( undefined, 1 );
+			}
+		);
+		console.log("created scene & set gravity");
 		//PerspectiveCamera( angle, aspect ratio, near, far )
 		camera = new THREE.PerspectiveCamera( 20,  $(window).width()/$(window).height() , 0.1 , 10000 );
-		camera.position.y = -GameConstants.PLATFORM_WIDTH-GameConstants.PLATFORM_HEIGHT-100; //tilt camera downwards
+		/*camera.position.y = -GameConstants.PLATFORM_WIDTH-GameConstants.PLATFORM_HEIGHT-100; //tilt camera downwards
 		camera.position.x = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
-		camera.position.z = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
+		camera.position.z = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;*/
+		camera.position.set(0, 200, 300);
 		camera.lookAt( scene.position ); // the origin
-		camera.rotation.z = -camera.rotation.z; //set back to horizontal plane view
+		//camera.rotation.z = -camera.rotation.z; //set back to horizontal plane view
 		
 		scene.add(camera);
-
+		console.log("added camera");
 		//Create lighting on top
-		var light = new THREE.SpotLight();
-		light.position.set(0,0,200);
+		var light = new THREE.DirectionalLight(0xFFFFFF);
+		light.position.set(0,200,200);
 		light.castShadow = true;
 		scene.add(light);
 		
-		//SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
-		var geometry = new THREE.SphereGeometry(20,20,20);
-		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		var material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-		var material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-		var player1 = new THREE.Mesh( geometry, material );
-		player1.castShadow = true;
-		player1.receiveShadow = true;
-		scene.add( player1 );
-		var player2 = new THREE.Mesh ( geometry, material1 );
-		player2.castShadow = true;
-		player2.receiveShadow = true;
-		scene.add( player2 );
-		//CubeGeometry(width, height, depth, widthSegments, heightSegments, depthSegments)
-		var playField = new THREE.Mesh (new THREE.CubeGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT, -GameConstants.PLATFORM_DEPTH ), material2);
-		playField.receiveShadow = true;
-		scene.add( playField );
-		player1.position.x = 40;
+		var sphere, sphere2, material;
+		var sphere_geometry = new THREE.SphereGeometry( 5, 15, 15 );
+		material = Physijs.createMaterial(
+			new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture( 'images/plywood.jpg' ) }),
+			.6, // medium friction
+			.3 // low restitution
+			
+		);
+		material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+		material.map.repeat.set( .5, .5 );
 		
+		sphere = new Physijs.SphereMesh(
+			sphere_geometry,
+			material
+		);
+				
+		sphere.position.set(
+			Math.random() * 15 - 7.5,
+			50,
+			Math.random() * 15 - 7.5
+		);
+		
+		sphere.castShadow = true;
+		sphere.receiveShadow = true;
+		scene.add( sphere );
+
+		sphere2 = new Physijs.SphereMesh(
+			sphere_geometry,
+			material
+		);
+				
+		sphere2.position.set(
+			0,
+			10,
+			0
+		);		
+
+		
+		sphere2.castShadow = true;
+		sphere2.receiveShadow = true;
+		scene.add( sphere2 );
+
+		//CubeGeometry(width, height, depth, widthSegments, heightSegments, depthSegments)
+
+		// Ground
+		var ground_material = Physijs.createMaterial(
+			new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture( 'images/rocks.jpg' ) }),
+			.8, // high friction
+			.3 // low restitution
+		);
+		ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
+		ground_material.map.repeat.set( 3, 3 );
+		
+		var ground = new Physijs.BoxMesh(
+			new THREE.CubeGeometry(100, 1, 100),
+			ground_material,
+			0 // mass
+		);
+		ground.receiveShadow = true;
+
+		scene.add( ground );
+		console.log("created ground");
+
+		
+/*		var playField = new THREE.Mesh (new THREE.CubeGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT, -GameConstants.PLATFORM_DEPTH ), material2);
+		playField.receiveShadow = true;
+		scene.add( playField );*/
+		scene.simulate();
 		animateGame();
+		
 	}
 	
 	var animateGame = function(){
 		requestAnimationFrame( animateGame );
-		
+		scene.simulate();
 		//TODO all the reaction to keys and logic
 		renderer.render( scene, camera );
+		console.log("render");
 	}
 	
 	var unloadGame = function(){
