@@ -10,11 +10,6 @@ function Client(){
 	var playerName="";
 	var currentSessionID=null;
 	
-	//Game Stuffs
-	var camera = null;
-	var scene = null;
-	var renderer = null;
-	
 	var sendToServer = function(msg){
         socket.send(JSON.stringify(msg));
     }
@@ -347,78 +342,13 @@ function Client(){
 	
 	var initGame = function(){
 		$('#contentHTML').empty();		
-		document.title='KnockOut | Game';
-		
 		$(document).unbind();
-		//TODO start binding onto gaming keys
-		
-		//window.innerWidth / window.innerHeight
+		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/game.html',function(responseData){
+			document.title='KnockOut | Game';
+			runDemo();
+		});
+	}
 
-		//TODO rendering init
-		renderer = new THREE.CanvasRenderer();
-		/*if (window.WebGLRenderingContext){
-			renderer = new THREE.WebGLRenderer(); 
-		}else{
-			renderer = new THREE.CanvasRenderer();
-		}*/
-		renderer.setSize( $(window).width(), $(window).height());
-		//Enable shadows on renderer
-		renderer.shadowMapEnabled = true;
-		$('#contentHTML').append(renderer.domElement);
-		
-		scene = new THREE.Scene();
-		
-		//PerspectiveCamera( angle, aspect ratio, near, far )
-		camera = new THREE.PerspectiveCamera( 20,  $(window).width()/$(window).height() , 0.1 , 10000 );
-		camera.position.y = -GameConstants.PLATFORM_WIDTH-GameConstants.PLATFORM_HEIGHT-100; //tilt camera downwards
-		camera.position.x = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
-		camera.position.z = GameConstants.PLATFORM_WIDTH+GameConstants.PLATFORM_HEIGHT;
-		camera.lookAt( scene.position ); // the origin
-		camera.rotation.z = -camera.rotation.z; //set back to horizontal plane view
-		
-		scene.add(camera);
-
-		//Create lighting on top
-		var light = new THREE.SpotLight();
-		light.position.set(0,0,200);
-		light.castShadow = true;
-		scene.add(light);
-		
-		//SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)
-		var geometry = new THREE.SphereGeometry(20,20,20);
-		var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-		var material1 = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-		var material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-		var player1 = new THREE.Mesh( geometry, material );
-		player1.castShadow = true;
-		player1.receiveShadow = true;
-		scene.add( player1 );
-		var player2 = new THREE.Mesh ( geometry, material1 );
-		player2.castShadow = true;
-		player2.receiveShadow = true;
-		scene.add( player2 );
-		//CubeGeometry(width, height, depth, widthSegments, heightSegments, depthSegments)
-		var playField = new THREE.Mesh (new THREE.CubeGeometry ( GameConstants.PLATFORM_WIDTH, GameConstants.PLATFORM_HEIGHT, -GameConstants.PLATFORM_DEPTH ), material2);
-		playField.receiveShadow = true;
-		scene.add( playField );
-		player1.position.x = 40;
-		
-		animateGame();
-	}
-	
-	var animateGame = function(){
-		requestAnimationFrame( animateGame );
-		
-		//TODO all the reaction to keys and logic
-		renderer.render( scene, camera );
-	}
-	
-	var unloadGame = function(){
-		camera = null;
-		scene = null;
-		renderer = null;
-	}
-	
 	var initNetwork = function(){
         // Attempts to connect to game server
         try {

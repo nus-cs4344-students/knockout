@@ -27,6 +27,7 @@ function Sphere(){
 	this.setPosition = function(sx,sy){
 		that.x = sx;
 		that.y = sy;
+		that.z = 0;
 	}
 	
 	//priviledged method
@@ -65,7 +66,7 @@ function Sphere(){
 		if((that.x < -GameConstants.PLATFORM_WIDTH/2 || that.x > GameConstants.PLATFORM_WIDTH/2) ||
 		(that.y < -GameConstants.PLATFORM_HEIGHT/2 || that.y > GameConstants.PLATFORM_HEIGHT/2)){
 			return true;
-			}else{
+		}else{
 			return false;
 		}
 	}

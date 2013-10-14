@@ -5,6 +5,9 @@ var GameConstants = {
 	PORT : 8111,				// port of game
 	FRAME_RATE : 30,			// frame rate of game
 	SERVER_NAME : "localhost",	// server name of game
+	FRICTION : 1,
+	VELOCITY : 3,
+	MAX_VELOCITY : 10,
 	PLATFORM_HEIGHT: 350,
 	PLATFORM_WIDTH : 350,
 	PLATFORM_DEPTH : 50,
