@@ -11,6 +11,7 @@ var GameEngine = function() {
 	var run = true;
 	var frameTime60 = 0; 
 	var that = this;
+	var mySphere = null;
        
 	var canvasOffset = {
 		x: 0,
@@ -29,7 +30,7 @@ var GameEngine = function() {
 		canvasOffset.y = canvas.height/2;
 		
 		myDebugDraw = getCanvasDebugDraw();   
-		myDebugDraw.SetFlags(e_shapeBit);
+		myDebugDraw.SetFlags(e_shapeBit|e_jointBit);
 		
 		myQueryCallback = new b2QueryCallback();
 		
@@ -93,7 +94,7 @@ var GameEngine = function() {
 			Box2D.destroy(world);
 		}
         
-		world = new b2World( new b2Vec2(0.0, -10.0) );
+		world = new b2World( new b2Vec2(0.0, 0.0) );
 		world.SetDebugDraw(myDebugDraw);
 		
 		that.setViewCenterWorld( new b2Vec2(0,7.5), true );
@@ -103,36 +104,32 @@ var GameEngine = function() {
         var shape = new b2EdgeShape();
         shape.Set(new b2Vec2(-40.0, 0.0), new b2Vec2(40.0, 0.0));
         ground.CreateFixture(shape, 0.0);
+		shape.Set(new b2Vec2(-40.0, 14.0), new b2Vec2(40.0, 14.0));
+		ground.CreateFixture(shape, 0.0);
+		shape.Set(new b2Vec2(-8.0, 40.0), new b2Vec2(-8.0, -40.0));
+		ground.CreateFixture(shape, 0.0);
+		shape.Set(new b2Vec2(8.0, 40.0), new b2Vec2(8.0, -40.0));
+		ground.CreateFixture(shape, 0.0);
 		
 		var a = 0.5;
-        var shape = new b2PolygonShape();
-        shape.SetAsBox(a, a);
-		
-        var x = new b2Vec2(-7.5, 0.75);
-        var y = new b2Vec2();
-        var deltaX = new b2Vec2(0.5625, 1.25);
-        var deltaY = new b2Vec2(1.125, 0.0);
+		var shape = new b2CircleShape();
+		shape.set_m_radius(a);
 		
         var bd = new b2BodyDef();
         bd.set_type( b2_dynamicBody );
 		
-        for (var i = 0; i < 15; ++i) {
-            y = copyVec2(x);
-			
-            for (var j = i; j < 15; ++j)
-            {
-                bd.set_position(y);                        
-                world.CreateBody(bd).CreateFixture(shape, 5.0);
-                y.op_add(deltaY);
-            }
-			
-            x.op_add(deltaX);
-        }
+		bd.set_position(new b2Vec2(0,3));
+		mySphere =  world.CreateBody(bd);
+		mySphere.CreateFixture(shape, 5.0);
+		world.CreateBody(bd).CreateFixture(shape, 5.0);
+		world.CreateBody(bd).CreateFixture(shape, 5.0);
+		world.CreateBody(bd).CreateFixture(shape, 5.0);
 	}
 	
 	var step = function() {		
 		var current = Date.now();
 		world.Step(1/60, 3, 2);
+		checkKeys();
 		
 		//This is for stats
 		var frametime = (Date.now() - current);
@@ -165,6 +162,36 @@ var GameEngine = function() {
 			requestAnimFrame( that.animate );
 		}
 		step();
+	}
+	
+	var checkKeys = function(){
+		if(mySphere==null){
+			return;
+		}
+		
+		var xPush=0;
+		var yPush=0;
+		
+		if(Key.isDown(Key.LEFT)){
+			xPush -= 15;
+		}
+		
+		if(Key.isDown(Key.RIGHT)){
+			xPush += 15;
+		}
+		
+		if(Key.isDown(Key.UP)){
+			yPush += 15;
+		}
+		
+		if(Key.isDown(Key.DOWN)){
+			yPush -= 15;
+		}
+		
+		if(xPush!=0 || yPush!=0 ){
+			console.log("should move: "+xPush+" "+yPush);
+			mySphere.ApplyForceToCenter(new b2Vec2(xPush,yPush));
+		}
 	}
 }
 
