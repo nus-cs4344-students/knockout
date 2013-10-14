@@ -9,6 +9,7 @@ function Client(){
 	var socket;
 	var playerName="";
 	var currentSessionID=null;
+	var engine = null;
 	
 	var sendToServer = function(msg){
         socket.send(JSON.stringify(msg));
@@ -345,7 +346,11 @@ function Client(){
 		$(document).unbind();
 		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/game.html',function(responseData){
 			document.title='KnockOut | Game';
-			runDemo();
+			//https://github.com/kripken/box2d.js/
+			engine = new GameEngine();
+			engine.init();
+			engine.resetScene();
+			engine.animate();
 		});
 	}
 
