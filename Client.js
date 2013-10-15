@@ -1,32 +1,34 @@
-// enforce strict/clean programming
-"use strict"; 
-Physijs.scripts.worker = '../physijs_worker.js';
-Physijs.scripts.ammo = '../ammo.js';
-//Client will require the html to have jQuery installed
+	// enforce strict/clean programming
+	"use strict"; 
+	Physijs.scripts.worker = '../physijs_worker.js';
+	Physijs.scripts.ammo = '../ammo.js';
+	//Client will require the html to have jQuery installed
 
-function Client(){
+	function Client(){
 	var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (does not include this client)
 	var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
 	var socket;
 	var playerName="";
 	var currentSessionID=null;
-	
+
 	//Game Stuffs
 	var camera = null;
 	var scene = null;
 	var renderer = null;
+
 	
+
 	var sendToServer = function(msg){
-        socket.send(JSON.stringify(msg));
-    }
-	
+	    socket.send(JSON.stringify(msg));
+	}
+
 	var appendToChat = function(msg){
 		//check if chatbox exist
 		if($('#chatbox').length>0){
 			$('#chatbox').append('<p>'+msg+'</p>');
 		}
 	}
-	
+
 	var showLoginHTML = function(){
 		var html = "";
 		html+='<div id="user-login" title="Login">'+"\n";
@@ -73,7 +75,7 @@ function Client(){
 			}
 		});
 	}
-	
+
 	var showProcessing = function(){
 		if($('#processing').length>0){
 			return;
@@ -95,7 +97,7 @@ function Client(){
 			}
 		});
 	}
-	
+
 	var hideProcessing = function(){
 		//check if the id exist
 		if($('#processing').length>0){
@@ -103,7 +105,7 @@ function Client(){
 			$('#processing').remove();
 		}
 	}
-	
+
 	var promptSessionName = function(){
 		var html = "";
 		html+='<div id="prompt-sessionname" title="Create New Room">'+"\n";
@@ -166,7 +168,7 @@ function Client(){
 			}
 		});
 	}
-	
+
 	//This refreshes the lobby display of rooms
 	var refreshSessionDisplay = function(){
 		console.log("refreshSessionDisplay");
@@ -247,7 +249,7 @@ function Client(){
 			}
 		}
 	}
-	
+
 	var initSession = function(){
 		$('#contentHTML').empty();
 		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/room.html',function(responseData){
@@ -293,7 +295,7 @@ function Client(){
 			refreshSessionPlayersDisplay();
 		});
 	}
-	
+
 	var initChatBox = function(){
 		//initialize chat box function
 		$('#btn_sendChat').button().click( function(event){
@@ -318,7 +320,7 @@ function Client(){
 			}
 		});
 	}
-	
+
 	var initLobby = function(){
 		$('#contentHTML').empty();
 		$('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/lobby.html',function(responseData){
@@ -351,7 +353,7 @@ function Client(){
 			refreshSessionDisplay();
 		});
 	}
-	
+
 	var initGame = function(){
 		$('#contentHTML').empty();		
 		document.title='KnockOut | Game';
@@ -364,190 +366,155 @@ function Client(){
 		//TODO rendering init
 		function init() {
 			console.log("entered init");
-         var   b2Vec2 = Box2D.Common.Math.b2Vec2
-            ,  b2AABB = Box2D.Collision.b2AABB
-         	,	b2BodyDef = Box2D.Dynamics.b2BodyDef
-         	,	b2Body = Box2D.Dynamics.b2Body
-         	,	b2FixtureDef = Box2D.Dynamics.b2FixtureDef
-         	,	b2Fixture = Box2D.Dynamics.b2Fixture
-         	,	b2World = Box2D.Dynamics.b2World
-         	,	b2MassData = Box2D.Collision.Shapes.b2MassData
-         	,	b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
-         	,	b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
-         	,	b2DebugDraw = Box2D.Dynamics.b2DebugDraw
-            ,  b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
-            ;
-         
-         var world = new b2World(
-               new b2Vec2(0, 0)    //gravity is zero since top-down
-            ,  true                 //allow sleep
-         );
-         
-         var fixDef = new b2FixtureDef;
-         fixDef.density = 1.0;
-         fixDef.friction = 0.5;
-         fixDef.restitution = 0.2;
-         
-         var bodyDef = new b2BodyDef;
-         
-         //create ground
-         bodyDef.type = b2Body.b2_staticBody;
-         fixDef.shape = new b2PolygonShape;
-         fixDef.shape.SetAsBox(20, 2);
-         bodyDef.position.Set(10, 400 / 30 + 1.8);
-         world.CreateBody(bodyDef).CreateFixture(fixDef);
-         bodyDef.position.Set(10, -1.8);
-         world.CreateBody(bodyDef).CreateFixture(fixDef);
-         fixDef.shape.SetAsBox(2, 14);
-         bodyDef.position.Set(-1.8, 13);
-         world.CreateBody(bodyDef).CreateFixture(fixDef);
-         bodyDef.position.Set(21.8, 13);
-         world.CreateBody(bodyDef).CreateFixture(fixDef);
-         
-         
-         //create some objects
-         bodyDef.type = b2Body.b2_dynamicBody;
-         for(var i = 0; i < 10; ++i) {
-            if(Math.random() > 0.5) {
-               fixDef.shape = new b2PolygonShape;
-               fixDef.shape.SetAsBox(
-                     Math.random() + 0.1 //half width
-                  ,  Math.random() + 0.1 //half height
-               );
-            } else {
-               fixDef.shape = new b2CircleShape(
-                  Math.random() + 0.1 //radius
-               );
-            }
-            bodyDef.position.x = Math.random() * 10;
-            bodyDef.position.y = Math.random() * 10;
-            world.CreateBody(bodyDef).CreateFixture(fixDef);
-         }
-         
-         //setup debug draw
-         var debugDraw = new b2DebugDraw();
+	     var    b2Vec2 = Box2D.Common.Math.b2Vec2,
+	         	b2AABB = Box2D.Collision.b2AABB,
+	     		b2BodyDef = Box2D.Dynamics.b2BodyDef,
+	     		b2Body = Box2D.Dynamics.b2Body,
+	     		b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+	     		b2Fixture = Box2D.Dynamics.b2Fixture,
+	     		b2World = Box2D.Dynamics.b2World,
+	     		b2MassData = Box2D.Collision.Shapes.b2MassData,
+	     		b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+	     		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
+	     		b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
+	         	b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+	        ;
+	     
+	     var world = new b2World(
+	           new b2Vec2(0, 0)    //gravity is zero since top-down
+	        ,  true                 //allow sleep
+	     );
+	     
+	     var fixDef = new b2FixtureDef;
+	     fixDef.density = 1.0;
+	     fixDef.friction = 0.5;
+	     fixDef.restitution = 0.2;
+	     
+	     var bodyDef = new b2BodyDef;
+	     var myDisk = null;
+	     //create ground
+	     bodyDef.type = b2Body.b2_staticBody;
+	     fixDef.shape = new b2PolygonShape;
+	     fixDef.shape.SetAsBox(20, 2);
+	     bodyDef.position.Set(10, 400 / 30 + 1.8);
+	     world.CreateBody(bodyDef).CreateFixture(fixDef);
+	     bodyDef.position.Set(10, -1.8);
+	     world.CreateBody(bodyDef).CreateFixture(fixDef);
+	     fixDef.shape.SetAsBox(2, 14);
+	     bodyDef.position.Set(-1.8, 13);
+	     world.CreateBody(bodyDef).CreateFixture(fixDef);
+	     bodyDef.position.Set(21.8, 13);
+	     world.CreateBody(bodyDef).CreateFixture(fixDef);
+	     
+	     
+	     //create some objects
+	     bodyDef.type = b2Body.b2_dynamicBody;
+	     // for(var i = 0; i < 10; ++i) {
+	     //    if(Math.random() > 0.5) {
+	     //       fixDef.shape = new b2PolygonShape;
+	     //       fixDef.shape.SetAsBox(
+	     //             Math.random() + 0.1 //half width
+	     //          ,  Math.random() + 0.1 //half height
+	     //       );
+	     //    } else {
+	     //       fixDef.shape = new b2CircleShape(
+	     //          Math.random() + 0.1 //radius
+	     //       );
+	     //    }
+	     //    bodyDef.position.x = Math.random() * 10;
+	     //    bodyDef.position.y = Math.random() * 10;
+	     //    world.CreateBody(bodyDef).CreateFixture(fixDef);
+	     // }
+	     //my disk
+	     fixDef.shape = new b2CircleShape(
+	              1 //radius
+	           );
+	     bodyDef.position.x = Math.random() * 10;
+	     bodyDef.position.y = Math.random() * 10;
+
+	     myDisk = world.CreateBody(bodyDef);
+	     myDisk.CreateFixture(fixDef);
+
+	     //setup debug draw
+	     var debugDraw = new b2DebugDraw();
 			debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
 			debugDraw.SetDrawScale(30.0);
 			debugDraw.SetFillAlpha(0.5);
 			debugDraw.SetLineThickness(1.0);
 			debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
 			world.SetDebugDraw(debugDraw);
-         
-         window.setInterval(update, 1000 / 60);
-         
-         //mouse
-         
-         var mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint;
-         var canvasPosition = getElementPosition(document.getElementById("canvas"));
-         
-         document.addEventListener("mousedown", function(e) {
-            isMouseDown = true;
-            handleMouseMove(e);
-            document.addEventListener("mousemove", handleMouseMove, true);
-         }, true);
-         
-         document.addEventListener("mouseup", function() {
-            document.removeEventListener("mousemove", handleMouseMove, true);
-            isMouseDown = false;
-            mouseX = undefined;
-            mouseY = undefined;
-         }, true);
-         
-         function handleMouseMove(e) {
-            mouseX = (e.clientX - canvasPosition.x) / 30;
-            mouseY = (e.clientY - canvasPosition.y) / 30;
-         };
-         
-         function getBodyAtMouse() {
-            mousePVec = new b2Vec2(mouseX, mouseY);
-            var aabb = new b2AABB();
-            aabb.lowerBound.Set(mouseX - 0.001, mouseY - 0.001);
-            aabb.upperBound.Set(mouseX + 0.001, mouseY + 0.001);
-            
-            // Query the world for overlapping shapes.
+	     
+	     window.setInterval(update, 1000 / 60);
+			
+	     document.addEventListener("keypress", function(e) {
+	     	console.log("detect keypress");
+	        var xMove=0;
+			var yMove=0;
+			if(e.keyCode == 97){//a
+				xMove -= 30;				
+			}
 
-            selectedBody = null;
-            world.QueryAABB(getBodyCB, aabb);
-            return selectedBody;
-         }
+			if(e.keyCode == 100){//d
+				xMove += 30;
+			}
 
-         function getBodyCB(fixture) {
-            if(fixture.GetBody().GetType() != b2Body.b2_staticBody) {
-               if(fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), mousePVec)) {
-                  selectedBody = fixture.GetBody();
-                  return false;
-               }
-            }
-            return true;
-         }
-         
-         //update
-         
-         function update() {
-         
-            if(isMouseDown && (!mouseJoint)) {
-               var body = getBodyAtMouse();
-               if(body) {
-                  var md = new b2MouseJointDef();
-                  md.bodyA = world.GetGroundBody();
-                  md.bodyB = body;
-                  md.target.Set(mouseX, mouseY);
-                  md.collideConnected = true;
-                  md.maxForce = 300.0 * body.GetMass();
-                  mouseJoint = world.CreateJoint(md);
-                  body.SetAwake(true);
-               }
-            }
-            
-            if(mouseJoint) {
-               if(isMouseDown) {
-                  mouseJoint.SetTarget(new b2Vec2(mouseX, mouseY));
-               } else {
-                  world.DestroyJoint(mouseJoint);
-                  mouseJoint = null;
-               }
-            }
-         
-            world.Step(1 / 60, 10, 10);
-            world.DrawDebugData();
-            world.ClearForces();
-         };
-         //http://js-tut.aardon.de/js-tut/tutorial/position.html
-         function getElementPosition(element) {
-            var elem=element, tagname="", x=0, y=0;
-           
-            while((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
-               y += elem.offsetTop;
-               x += elem.offsetLeft;
-               tagname = elem.tagName.toUpperCase();
+			if(e.keyCode == 115){//w
+				yMove += 30;
+			}
 
-               if(tagname == "BODY")
-                  elem=0;
+			if(e.keyCode == 119){//s
+				yMove -= 30;
+			}
 
-               if(typeof(elem) == "object") {
-                  if(typeof(elem.offsetParent) == "object")
-                     elem = elem.offsetParent;
-               }
-            }
 
-            return {x: x, y: y};
-         }
-     	}
+			console.log("move: "+xMove+" "+yMove);
+			myDisk.ApplyForce(new b2Vec2(xMove,yMove),myDisk.GetWorldCenter());
+			
+	     }, true);
+	     
+	     //update
+	     
+	     function update() {     
+	        world.Step(1 / 60, 10, 10);
+	        world.DrawDebugData();
+	        world.ClearForces();
+	     };
+	     //http://js-tut.aardon.de/js-tut/tutorial/position.html
+	     function getElementPosition(element) {
+	        var elem=element, tagname="", x=0, y=0;
+	       
+	        while((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
+	           y += elem.offsetTop;
+	           x += elem.offsetLeft;
+	           tagname = elem.tagName.toUpperCase();
+
+	           if(tagname == "BODY")
+	              elem=0;
+
+	           if(typeof(elem) == "object") {
+	              if(typeof(elem.offsetParent) == "object")
+	                 elem = elem.offsetParent;
+	           }
+	        }
+
+	        return {x: x, y: y};
+	     }
+	 	}
 	}
-	
+
 	var unloadGame = function(){
 		camera = null;
 		scene = null;
 		renderer = null;
 	}
-	
+
 	var initNetwork = function(){
-        // Attempts to connect to game server
-        try {
-            socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
-            socket.onmessage = function (e) {
-                var message = JSON.parse(e.data);
-                switch (message.type) {
+	    // Attempts to connect to game server
+	    try {
+	        socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
+	        socket.onmessage = function (e) {
+	            var message = JSON.parse(e.data);
+	            switch (message.type) {
 				case "successConnection":
 					console.log("successfully connected to server");
 					//Has successfully connected to server
@@ -724,52 +691,52 @@ function Client(){
 					setTimeout(function() {initGame();}, 5000);
 				break;
 				
-                case "updateGame":
+	            case "updateGame":
 					//update the game values
 					//TODO
-                break;
+	            break;
 				
-                default: 
+	            default: 
 					//TODO un-handled message type, show error
 				break;
-                }
-            }
-        } catch (e) {
-            console.log("Failed to connect to " + "http://" + GameConstants.SERVER_NAME + ":" + GameConstants.PORT);
+	            }
+	        }
+	    } catch (e) {
+	        console.log("Failed to connect to " + "http://" + GameConstants.SERVER_NAME + ":" + GameConstants.PORT);
 			console.log("Error: "+e);
-        }
-    }
-	
+	    }
+	}
+
 	//Below are functions that send JSON to server
 	var updatePlayerName = function(playerName){
 		sendToServer({type:"updatePlayerName",name:playerName});
 	}
-	
+
 	var sendMessage = function(msg){
 		sendToServer({type:"sendMessage",message:msg});
 	}
-	
+
 	var createGameSession = function(sessionName){
 		sendToServer({type:"createGameSession", name:sessionName});
 	}
-	
+
 	var toggleReady = function(){
 		sendToServer({type:"toggleReady"});
 	}
-	
+
 	var sendStartGame = function(){
 		sendToServer({type:"startGame"});
 	}
-	
+
 	var joinGameSession = function(id){
 		sendToServer({type:"joinGameSession", sessionID:id});
 	}
-	
+
 	var leaveGameSession = function(){
 		sendToServer({type:"leaveGameSession"});
 		currentSessionID=null;
 	}
-	
+
 	var getPlayerWithID = function(id){
 		//TODO use better algo
 		for(var i=0; i<abstractPlayersArray.length; i++)
@@ -780,7 +747,7 @@ function Client(){
 		}
 		return null;
 	}
-	
+
 	var getSessionWithID = function(id){
 		//TODO use better algo
 		for(var i=0; i<abstractSessionArray.length; i++)
@@ -791,16 +758,16 @@ function Client(){
 		}
 		return null;
 	}
-	
+
 	this.start = function(){
 		initNetwork();
 	}
-}
+	}
 
-// Run Client. Give leeway of 0.5 second for libraries to load
-var gameClient = new Client();
-$( document ).ready(function(){
+	// Run Client. Give leeway of 0.5 second for libraries to load
+	var gameClient = new Client();
+	$( document ).ready(function(){
 	gameClient.start();
-});
+	});
 
 
