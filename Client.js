@@ -1,7 +1,6 @@
 	// enforce strict/clean programming
 	"use strict"; 
-	Physijs.scripts.worker = '../physijs_worker.js';
-	Physijs.scripts.ammo = '../ammo.js';
+
 	//Client will require the html to have jQuery installed
 
 	function Client(){
@@ -10,13 +9,6 @@
 	var socket;
 	var playerName="";
 	var currentSessionID=null;
-
-	//Game Stuffs
-	var camera = null;
-	var scene = null;
-	var renderer = null;
-
-	
 
 	var sendToServer = function(msg){
 	    socket.send(JSON.stringify(msg));
@@ -361,151 +353,11 @@
 		$(document).unbind();
 		//TODO start binding onto gaming keys
 		$('#contentHTML').append('<canvas id="canvas" width="600" height="400" style="background-color:#333333;" ></canvas>');
-		init();
-		//window.innerWidth / window.innerHeight
-		//TODO rendering init
-		function init() {
-			console.log("entered init");
-	     var    b2Vec2 = Box2D.Common.Math.b2Vec2,
-	         	b2AABB = Box2D.Collision.b2AABB,
-	     		b2BodyDef = Box2D.Dynamics.b2BodyDef,
-	     		b2Body = Box2D.Dynamics.b2Body,
-	     		b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
-	     		b2Fixture = Box2D.Dynamics.b2Fixture,
-	     		b2World = Box2D.Dynamics.b2World,
-	     		b2MassData = Box2D.Collision.Shapes.b2MassData,
-	     		b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
-	     		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
-	     		b2DebugDraw = Box2D.Dynamics.b2DebugDraw,
-	         	b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
-	        ;
-	     
-	     var world = new b2World(
-	           new b2Vec2(0, 0)    //gravity is zero since top-down
-	        ,  true                 //allow sleep
-	     );
-	     
-	     var fixDef = new b2FixtureDef;
-	     fixDef.density = 1.0;
-	     fixDef.friction = 0.5;
-	     fixDef.restitution = 0.2;
-	     
-	     var bodyDef = new b2BodyDef;
-	     var myDisk = null;
-	     //create ground
-	     bodyDef.type = b2Body.b2_staticBody;
-	     fixDef.shape = new b2PolygonShape;
-	     fixDef.shape.SetAsBox(20, 2);
-	     bodyDef.position.Set(10, 400 / 30 + 1.8);
-	     world.CreateBody(bodyDef).CreateFixture(fixDef);
-	     bodyDef.position.Set(10, -1.8);
-	     world.CreateBody(bodyDef).CreateFixture(fixDef);
-	     fixDef.shape.SetAsBox(2, 14);
-	     bodyDef.position.Set(-1.8, 13);
-	     world.CreateBody(bodyDef).CreateFixture(fixDef);
-	     bodyDef.position.Set(21.8, 13);
-	     world.CreateBody(bodyDef).CreateFixture(fixDef);
-	     
-	     
-	     //create some objects
-	     bodyDef.type = b2Body.b2_dynamicBody;
-	     // for(var i = 0; i < 10; ++i) {
-	     //    if(Math.random() > 0.5) {
-	     //       fixDef.shape = new b2PolygonShape;
-	     //       fixDef.shape.SetAsBox(
-	     //             Math.random() + 0.1 //half width
-	     //          ,  Math.random() + 0.1 //half height
-	     //       );
-	     //    } else {
-	     //       fixDef.shape = new b2CircleShape(
-	     //          Math.random() + 0.1 //radius
-	     //       );
-	     //    }
-	     //    bodyDef.position.x = Math.random() * 10;
-	     //    bodyDef.position.y = Math.random() * 10;
-	     //    world.CreateBody(bodyDef).CreateFixture(fixDef);
-	     // }
-	     //my disk
-	     fixDef.shape = new b2CircleShape(
-	              1 //radius
-	           );
-	     bodyDef.position.x = Math.random() * 10;
-	     bodyDef.position.y = Math.random() * 10;
-
-	     myDisk = world.CreateBody(bodyDef);
-	     myDisk.CreateFixture(fixDef);
-
-	     //setup debug draw
-	     var debugDraw = new b2DebugDraw();
-			debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
-			debugDraw.SetDrawScale(30.0);
-			debugDraw.SetFillAlpha(0.5);
-			debugDraw.SetLineThickness(1.0);
-			debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
-			world.SetDebugDraw(debugDraw);
-	     
-	     window.setInterval(update, 1000 / 60);
-			
-	     document.addEventListener("keypress", function(e) {
-	     	console.log("detect keypress");
-	        var xMove=0;
-			var yMove=0;
-			if(e.keyCode == 97){//a
-				xMove -= 30;				
-			}
-
-			if(e.keyCode == 100){//d
-				xMove += 30;
-			}
-
-			if(e.keyCode == 115){//w
-				yMove += 30;
-			}
-
-			if(e.keyCode == 119){//s
-				yMove -= 30;
-			}
-
-
-			console.log("move: "+xMove+" "+yMove);
-			myDisk.ApplyForce(new b2Vec2(xMove,yMove),myDisk.GetWorldCenter());
-			
-	     }, true);
-	     
-	     //update
-	     
-	     function update() {     
-	        world.Step(1 / 60, 10, 10);
-	        world.DrawDebugData();
-	        world.ClearForces();
-	     };
-	     //http://js-tut.aardon.de/js-tut/tutorial/position.html
-	     function getElementPosition(element) {
-	        var elem=element, tagname="", x=0, y=0;
-	       
-	        while((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
-	           y += elem.offsetTop;
-	           x += elem.offsetLeft;
-	           tagname = elem.tagName.toUpperCase();
-
-	           if(tagname == "BODY")
-	              elem=0;
-
-	           if(typeof(elem) == "object") {
-	              if(typeof(elem.offsetParent) == "object")
-	                 elem = elem.offsetParent;
-	           }
-	        }
-
-	        return {x: x, y: y};
-	     }
-	 	}
-	}
-
-	var unloadGame = function(){
-		camera = null;
-		scene = null;
-		renderer = null;
+		
+		//Engine.js is included in index.html
+		var gameEngine = new Engine();
+		gameEngine.init();
+		gameEngine.startEngine();
 	}
 
 	var initNetwork = function(){
@@ -762,12 +614,14 @@
 	this.start = function(){
 		initNetwork();
 	}
+	
+	
 	}
 
 	// Run Client. Give leeway of 0.5 second for libraries to load
 	var gameClient = new Client();
 	$( document ).ready(function(){
-	gameClient.start();
+		gameClient.start();
 	});
 
 
