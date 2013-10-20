@@ -351,7 +351,6 @@
 		document.title='KnockOut | Game';
 		
 		$(document).unbind();
-		//TODO start binding onto gaming keys
 		$('#contentHTML').append('<canvas id="canvas" width="600" height="400" style="background-color:#333333;" ></canvas>');
 		
 		//Engine.js is included in index.html

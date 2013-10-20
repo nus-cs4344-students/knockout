@@ -5,11 +5,8 @@ var GameConstants = {
 	PORT : 8111,				// port of game
 	FRAME_RATE : 30,			// frame rate of game
 	SERVER_NAME : "localhost",	// server name of game
-	PLATFORM_HEIGHT: 350,
-	PLATFORM_WIDTH : 350,
-	PLATFORM_DEPTH : 50,
-	WINDOW_HEIGHT: 500,
-	WINDOW_WIDTH: 500,
+	CANVAS_HEIGHT: 400,
+	CANVAS_WIDTH: 600,
 	NUM_OF_PLAYERS : 2
 }
 

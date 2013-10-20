@@ -14,8 +14,13 @@ var Engine = function() {
 	var world;
 	
 	var that = this;
-	
 	var myDisk = null;
+	var myDiskUI = null;
+	
+	//Rendering Pixi.js parts
+	var renderer;
+	var stage;
+	var texturePlayer;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -30,6 +35,11 @@ var Engine = function() {
 		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 		b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 		b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
+		renderer = new PIXI.CanvasRenderer(GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT); 
+		renderer.view.id = 'PixiCanvas';
+		stage = new PIXI.Stage;
+		$('#contentHTML').append(renderer.view);
+		texturePlayer = PIXI.Texture.fromImage("images/lambo_the_brocolli_monster.png");
 	}
 	
 	this.startEngine = function(){
@@ -40,17 +50,17 @@ var Engine = function() {
 	
 	this.animate = function(){
 		requestAnimFrame( that.animate );
-		that.update();
+		update();
 	}
 	
-	var createWorld = function(){
+	var createWorld = function(){		
 		world = new b2World(
 			new b2Vec2(0, 0)    //gravity is zero since top-down
 			,  true                 //allow sleep
 		);
 		
 		var fixDef = new b2FixtureDef;
-		fixDef.density = 1.0;
+		fixDef.density = 0.1;
 		fixDef.friction = 0.0;
 		fixDef.restitution = 0.6;
 		
@@ -58,46 +68,59 @@ var Engine = function() {
 		//create ground
 		bodyDef.type = b2Body.b2_staticBody;
 		fixDef.shape = new b2PolygonShape;
-		fixDef.shape.SetAsBox(20, 2);
-		bodyDef.position.Set(10, 400 / 30 + 1.8);
+		//Origin is at middle
+		fixDef.shape.SetAsBox(GameConstants.CANVAS_WIDTH/2, 10);
+		bodyDef.position.Set(GameConstants.CANVAS_WIDTH/2, 10);
 		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		bodyDef.position.Set(10, -1.8);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		fixDef.shape.SetAsBox(2, 14);
-		bodyDef.position.Set(-1.8, 13);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		bodyDef.position.Set(21.8, 13);
+		bodyDef.position.Set(GameConstants.CANVAS_WIDTH/2, GameConstants.CANVAS_HEIGHT-10);
 		world.CreateBody(bodyDef).CreateFixture(fixDef);
 		
+		fixDef.shape.SetAsBox(10, GameConstants.CANVAS_HEIGHT/2);
+		bodyDef.position.Set(10, GameConstants.CANVAS_HEIGHT/2);
+		world.CreateBody(bodyDef).CreateFixture(fixDef);
+		bodyDef.position.Set(GameConstants.CANVAS_WIDTH-10, GameConstants.CANVAS_HEIGHT/2);
+		world.CreateBody(bodyDef).CreateFixture(fixDef);
 		
 		//create some objects
 		bodyDef.type = b2Body.b2_dynamicBody;
-		// for(var i = 0; i < 10; ++i) {
-		//    if(Math.random() > 0.5) {
-		//       fixDef.shape = new b2PolygonShape;
-		//       fixDef.shape.SetAsBox(
-		//             Math.random() + 0.1 //half width
-		//          ,  Math.random() + 0.1 //half height
-		//       );
-		//    } else {
-		//       fixDef.shape = new b2CircleShape(
-		//          Math.random() + 0.1 //radius
-		//       );
-		//    }
-		//    bodyDef.position.x = Math.random() * 10;
-		//    bodyDef.position.y = Math.random() * 10;
-		//    world.CreateBody(bodyDef).CreateFixture(fixDef);
-		// }
-		//my disk
-		fixDef.shape = new b2CircleShape(
-		1 //radius
-		);
-		bodyDef.position.x = Math.random() * 10;
-		bodyDef.position.y = Math.random() * 10;
+		bodyDef.fixedRotation = true;
+		
+		//vertices indicate a eclipsal shape
+		var vertices = new Array();
+		var size = 30;
+		//left most vertex
+		vertices.push(new b2Vec2(1.0*size,0.0*size));
+		vertices.push(new b2Vec2(0.9*size,0.2*size));
+		vertices.push(new b2Vec2(0.6*size,0.4*size));
+		//down most vertex
+		vertices.push(new b2Vec2(0.0*size,0.5*size));
+		vertices.push(new b2Vec2(-0.6*size,0.4*size));
+		vertices.push(new b2Vec2(-0.9*size,0.2*size));
+		//right most vertex
+		vertices.push(new b2Vec2(-1.0*size,0.0*size));
+		vertices.push(new b2Vec2(-0.9*size,-0.2*size));
+		vertices.push(new b2Vec2(-0.6*size,-0.4*size));
+		//up most vertex
+		vertices.push(new b2Vec2(0.0*size,-0.5*size));
+		vertices.push(new b2Vec2(0.6*size,-0.4*size));
+		vertices.push(new b2Vec2(0.9*size,-0.2*size));
+		
+		
+		fixDef.shape = new b2PolygonShape();
+		fixDef.shape.SetAsArray(vertices,12);
+		
+		bodyDef.position.x = GameConstants.CANVAS_WIDTH/2;
+		bodyDef.position.y = GameConstants.CANVAS_HEIGHT/2;
 		
 		myDisk = world.CreateBody(bodyDef);
 		myDisk.CreateFixture(fixDef);
+		myDiskUI = new PIXI.Sprite(texturePlayer);
+		myDiskUI.scale.x = 0.5;
+		myDiskUI.scale.y = 0.5;
+		stage.addChild(myDiskUI);
 		
+		bodyDef.position.x = GameConstants.CANVAS_WIDTH/2-100;
+		bodyDef.position.y = GameConstants.CANVAS_HEIGHT/2-100;
 		var oppo1 = world.CreateBody(bodyDef).CreateFixture(fixDef);
 		var oppo2 = world.CreateBody(bodyDef).CreateFixture(fixDef);
 		var oppo3 = world.CreateBody(bodyDef).CreateFixture(fixDef);
@@ -107,15 +130,22 @@ var Engine = function() {
 		//setup debug draw
 		var debugDraw = new b2DebugDraw();
 		debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
-		debugDraw.SetDrawScale(30.0);
+		debugDraw.SetDrawScale(1);
 		debugDraw.SetFillAlpha(0.5);
 		debugDraw.SetLineThickness(1.0);
-		debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+		debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit | b2DebugDraw.e_centerOfMassBit);
 		world.SetDebugDraw(debugDraw);
 	}
 	
-	this.update = function(){
+	var draw = function(){
+		renderer.render(stage);
+	}
+	
+	var update = function(){
 		world.Step(1 / 60, 10, 10);
+		myDiskUI.position.x = myDisk.GetPosition().x;
+		myDiskUI.position.y = myDisk.GetPosition().y;
+		draw();
 		world.DrawDebugData();
 		world.ClearForces();
 		checkKeys();
@@ -128,25 +158,26 @@ var Engine = function() {
 		
 		var xPush=0;
 		var yPush=0;
+		var force = 50000;
 		
 		if(Key.isDown(Key.LEFT)){
-			xPush -= 15;
+			xPush -= force;
 		}
 		
 		if(Key.isDown(Key.RIGHT)){
-			xPush += 15;
+			xPush += force;
 		}
 		
 		if(Key.isDown(Key.UP)){
-			yPush -= 15;
+			yPush -= force;
 		}
 		
 		if(Key.isDown(Key.DOWN)){
-			yPush += 15;
+			yPush += force;
 		}
 		
 		if(xPush!=0 || yPush!=0 ){
-			console.log("should move: "+xPush+" "+yPush);
+			//console.log("should move: "+xPush+" "+yPush);
 			myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
 		}
 	}
