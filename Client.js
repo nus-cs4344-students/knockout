@@ -9,11 +9,6 @@ function Client(){
   var playerName="";
   var currentSessionID=null;
 
-  //Game Stuffs
-  var camera = null;
-  var scene = null;
-  var renderer = null;
-
   var sendToServer = function(msg){
     socket.send(JSON.stringify(msg));
   }
@@ -551,7 +546,6 @@ function Client(){
           ctx.translate(400, 100);
           ctx.scale(0.8, 0.48);
           ctx.rotate(45 * Math.PI /180);
-
           if (debug) {
             var debugDraw = new b2DebugDraw();
             debugDraw.SetSprite(ctx);
@@ -598,7 +592,6 @@ function Client(){
         }
       }
     };
-
     var loop = {
       step: function() {
         var stepRate = 1 / 60;
@@ -622,7 +615,6 @@ function Client(){
           // console.log("move: "+xMove+" "+yMove);
           var myDisk = playerShapes["myDisk"];
           myDisk.ApplyForce(new b2Vec2(xMove,yMove),myDisk.GetWorldCenter());
-
         }
       },
       
@@ -983,6 +975,8 @@ function Client(){
   this.start = function(){
     initNetwork();
   }
+	
+	
 }
 
 // Run Client. Give leeway of 0.5 second for libraries to load
