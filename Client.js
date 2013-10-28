@@ -33,8 +33,6 @@ function Client(){
       closeOnEscape: false,
       modal: true,
       draggable: false,
-      height: 300,
-      width: 400,
       open: function() { 
           $('.ui-dialog-titlebar-close').remove(); //remove the close button
       },
@@ -81,8 +79,6 @@ function Client(){
       closeOnEscape: false,
       draggable: false,
       modal: true,
-      height: 200,
-      width: 400,
       open: function() { 
         $('.ui-dialog-titlebar-close').remove(); //remove the close button
       }
@@ -109,8 +105,6 @@ function Client(){
       autoOpen: true,
       modal: true,
       draggable: false,
-      height: 300,
-      width: 400,
       buttons:{
         "Create": function(){
           if($('#sessionname').val().trim().length==0){
