@@ -9,6 +9,11 @@ function Client(){
   var playerName="";
   var currentSessionID=null;
 
+  //Game Stuffs
+  var camera = null;
+  var scene = null;
+  var renderer = null;
+
   var sendToServer = function(msg){
     socket.send(JSON.stringify(msg));
   }
@@ -349,7 +354,7 @@ function Client(){
     
     $(document).unbind();
     //TODO start binding onto gaming keys
-    $('#contentHTML').append('<canvas id="canvas" width="800" height="800" style="border: 1px solid black"></canvas>');
+    $('#contentHTML').append('<canvas id="canvas" width="800" height="800" style="background: #F1F1F1;"></canvas>');
 
     var SCALE = 30,
         destroy_list = [],
@@ -361,7 +366,8 @@ function Client(){
         xMoveD,
         yMoveD,
         shapes = {},
-        playerShapes = {};
+        playerShapes = {},
+        score = {p1:10, p2:10, p3:10};
 
 
     var b2Vec2 = Box2D.Common.Math.b2Vec2,
@@ -388,21 +394,27 @@ function Client(){
         box2d.create.world();
         box2d.create.defaultFixture();
 
-        this.gameobjects.ground();
+        this.gameobjects.ground(10);
         this.gameobjects.player1();
+        this.gameobjects.player2();
+        this.gameobjects.player3();
 
         this.callbacks();
 
         function mainloop() {
             loop.step();
             loop.update();
+            
             if (debug) {
                 world.DrawDebugData();
             }
             loop.draw();
             
         };
-        window.setInterval(mainloop, 1000 / 60);
+
+        loop.update_ground();
+        window.setInterval(loop.update_ground, 3000);
+        window.setInterval(mainloop, 1000 / 30);
       },
   
       canvas: function(id) {
@@ -411,12 +423,13 @@ function Client(){
       },
             
       gameobjects: {
-        ground: function() {
-          add.box({
+        ground: function(radius) {
+          add.circle({
+            radius: radius,
             x: canvas.width / SCALE / 2,
             y: canvas.width / SCALE / 2,
-            height: canvas.width / SCALE - 7,
-            width: canvas.width / SCALE - 7,
+            // height: canvas.width / SCALE - 7,
+            // width: canvas.width / SCALE - 7,
             id: 1,
             isStatic: true,
             isSensor: true
@@ -424,9 +437,26 @@ function Client(){
         },
         player1: function() {
           add.circle({
-            x:10,
-            y:10,
+            color: "#e00707",
+            x:9,
+            y:9,
             id: "myDisk",
+          });
+        },
+        player2: function() {
+          add.circle({
+            color: "#fdb813",
+            x:18,
+            y:9,
+            id: "p2Disk",
+          });
+        },
+        player3: function() {
+          add.circle({
+            color: "#69ab35",
+            x:9,
+            y:18,
+            id: "p3Disk",
           });
         }
       },
@@ -441,19 +471,13 @@ function Client(){
         }, false);
 
         var listener = new b2Listener;
-        listener.PostSolve = function(contact, impulse) {
-          // console.log(impulse);
-        }
-
         listener.EndContact = function(contact) {
           if (contact.GetFixtureA().GetBody().GetUserData() == 1) {
-            // console.log(contact.GetFixtureB().GetBody());
-            // console.log(world);
             destroy_list.push(contact.GetFixtureB().GetBody());
-            // world.DestroyBody(contact.GetFixtureB().GetBody());
-            // console.log(world);
-            // console.log(shapes[contact.GetFixtureB().GetBody().GetUserData()]);
-          };  
+          }
+          else if (contact.GetFixtureB().GetBody().GetUserData() == 1) {
+            destroy_list.push(contact.GetFixtureA().GetBody());
+          };
         }
         world.SetContactListener(listener);
 
@@ -487,6 +511,10 @@ function Client(){
       K: 75,
       L: 76,
       SPACE: 32,
+      UP: 38,
+      DOWN: 40,
+      LEFT: 37,
+      RIGHT: 39,
       
       isDown: function(keyCode) {
         return this._pressed[keyCode];
@@ -501,7 +529,7 @@ function Client(){
          
     var add = {
       circle: function(options) {
-        options.radius = 1.5;
+        options.radius = options.radius || 1.5;
         var shape = new Circle(options);
         shapes[shape.id] = shape;
         box2d.addToWorld(shape);
@@ -542,10 +570,11 @@ function Client(){
           );
           
           // change to isometric view          
-          ctx.save();
-          ctx.translate(400, 100);
-          ctx.scale(0.8, 0.48);
-          ctx.rotate(45 * Math.PI /180);
+          // ctx.save();
+          // ctx.translate(400, 100);
+          // ctx.scale(0.8, 0.48);
+          // ctx.rotate(45 * Math.PI /180);
+
           if (debug) {
             var debugDraw = new b2DebugDraw();
             debugDraw.SetSprite(ctx);
@@ -558,9 +587,9 @@ function Client(){
         },
         defaultFixture: function() {
           fixDef = new b2FixtureDef;
-          fixDef.density = 0.8;
+          fixDef.density = 0.6; //0.3
           // fixDef.friction = 0.5;
-          fixDef.restitution = 0.8;
+          fixDef.restitution = 0.3; //1.5
         },
         bodyDef: function(shape) {
           var bodyDef = new b2BodyDef;
@@ -592,6 +621,7 @@ function Client(){
         }
       }
     };
+
     var loop = {
       step: function() {
         var stepRate = 1 / 60;
@@ -600,12 +630,29 @@ function Client(){
         
 
         var xMove=0, yMove=0;
-        if (Key.isDown(Key.S) || Key.isDown(Key.D) || Key.isDown(Key.W) || Key.isDown(Key.A) || 
-          orientation.tiltFB != null || orientation.tiltLR != null || orientation.dir !=null) {
-          if (Key.isDown(Key.S)) {xMove += 30; yMove += 30;} //s
-          if (Key.isDown(Key.D)) {xMove += 30; yMove -= 30;} //d
-          if (Key.isDown(Key.W)) {xMove -= 30; yMove -= 30;} //w
-          if (Key.isDown(Key.A)) {xMove -= 30; yMove += 30;} //a
+        var x2Move=0, y2Move=0;
+        var x3Move=0, y3Move=0;
+        // if (Key.isDown(Key.S) || Key.isDown(Key.D) || Key.isDown(Key.W) || Key.isDown(Key.A) || 
+          // orientation.tiltFB != null || orientation.tiltLR != null || orientation.dir !=null) {
+          // if (Key.isDown(Key.S)) {xMove += 30; yMove += 30;} //s
+          // if (Key.isDown(Key.D)) {xMove += 30; yMove -= 30;} //d
+          // if (Key.isDown(Key.W)) {xMove -= 30; yMove -= 30;} //w
+          // if (Key.isDown(Key.A)) {xMove -= 30; yMove += 30;} //a
+
+          if (Key.isDown(Key.S)) {yMove += 30;} //s
+          if (Key.isDown(Key.D)) {xMove += 30;} //d
+          if (Key.isDown(Key.W)) {yMove -= 30;} //w
+          if (Key.isDown(Key.A)) {xMove -= 30;} //a
+
+          if (Key.isDown(Key.K)) {y2Move += 30;} //s
+          if (Key.isDown(Key.L)) {x2Move += 30;} //d
+          if (Key.isDown(Key.I)) {y2Move -= 30;} //w
+          if (Key.isDown(Key.J)) {x2Move -= 30;} //a
+
+          if (Key.isDown(Key.DOWN)) {y3Move += 30;} //s
+          if (Key.isDown(Key.RIGHT)) {x3Move += 30;} //d
+          if (Key.isDown(Key.UP)) {y3Move -= 30;} //w
+          if (Key.isDown(Key.LEFT)) {x3Move -= 30;} //a
 
           xMove += orientation.tiltFB * 1.5; yMove += orientation.tiltFB * 1.5;
           xMove += orientation.tiltLR * 1.5; yMove -= orientation.tiltLR * 1.5;
@@ -613,16 +660,45 @@ function Client(){
           xMoveD = xMove;
           yMoveD = yMove;
           // console.log("move: "+xMove+" "+yMove);
+
           var myDisk = playerShapes["myDisk"];
-          myDisk.ApplyForce(new b2Vec2(xMove,yMove),myDisk.GetWorldCenter());
-        }
+          var p2Disk = playerShapes["p2Disk"];
+          var p3Disk = playerShapes["p3Disk"];
+
+          if (myDisk) {myDisk.ApplyForce(new b2Vec2(xMove,yMove),myDisk.GetWorldCenter());}
+          if (p2Disk) {p2Disk.ApplyForce(new b2Vec2(x2Move,y2Move),p2Disk.GetWorldCenter());}
+          if (p3Disk) {p3Disk.ApplyForce(new b2Vec2(x3Move,y3Move),p3Disk.GetWorldCenter());}
+
+        // }
       },
       
+      update_ground: function () {
+        // console.log(shapes);
+        if (shapes["1"].radius > 1.5) {
+          var r = shapes["1"].radius;
+          world.DestroyBody("1");
+          delete shapes["1"];
+          delete playerShapes["1"];
+          init.gameobjects.ground(r - 2.2);
+          shapes["1"].radius = r - 0.5;
+          playerShapes["1"].radius = r - 0.5;
+        }
+        // console.log(shapes["1"]);
+
+      },
+
       update: function () {
         for (var i in destroy_list) {
           world.DestroyBody(destroy_list[i]);
           delete shapes[destroy_list[i].GetUserData()];
+          delete playerShapes[destroy_list[i].GetUserData()];
+          // var id = destroy_list[i].GetUserData();
+          // if (id == "myDisk"){init.gameobjects.player1(); score.p1--;}
+          // else if (id == "p2Disk"){init.gameobjects.player2(); score.p2--;}
+          // else if (id == "p3Disk"){init.gameobjects.player3(); score.p3--;}
+
         }
+
         // Reset the array
         destroy_list.length = 0;
         for (var b = world.GetBodyList(); b; b = b.m_next) {
@@ -632,16 +708,23 @@ function Client(){
         }
       },
       
-      draw: function() {            
+      draw: function() {           
         if (!debug) ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (var i in shapes) {
           shapes[i].draw();
         }
+
         //debug xMove & yMove
-        ctx.font="60px Segoe UI";
-        ctx.fillStyle = "#555555";
-        ctx.fillText("x: " + xMoveD,120,600);
-        ctx.fillText("y: " + yMoveD,120,670);
+        // ctx.font="60px Segoe UI";
+        // ctx.fillStyle = "#555555";
+        // ctx.fillText("x: " + xMoveD,120,600);
+        // ctx.fillText("y: " + yMoveD,120,670);
+
+        // ctx.font="40px Segoe UI";
+        // ctx.fillStyle = "#FFFFFF";
+        // ctx.fillText("p1: " + score.p1,100,750);
+        // ctx.fillText("p2: " + score.p2,300,750);
+        // ctx.fillText("p3: " + score.p3,500,750);
       }
     };    
         
@@ -653,6 +736,24 @@ function Client(){
           color += letters[Math.round(Math.random() * 15)];
         }
         return color;
+      },
+      darkerShade: function(hex, lum) {
+        // validate hex string
+        hex = String(hex).replace(/[^0-9a-f]/gi, '');
+        if (hex.length < 6) {
+          hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        }
+        lum = lum || 0;
+
+        // convert to decimal and change luminosity
+        var rgb = "#", c, i;
+        for (i = 0; i < 3; i++) {
+          c = parseInt(hex.substr(i*2,2), 16);
+          c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+          rgb += ("00"+c).substr(c.length);
+        }
+
+        return rgb;
       }
     };
         
@@ -663,7 +764,7 @@ function Client(){
       this.x = v.x || Math.random()*23 + 1;
       this.y = v.y || 0;
       this.angle = 0;
-      this.color = helpers.randomColor();
+      this.color = v.color || helpers.randomColor();
       this.center = { x: null, y: null };
       this.isStatic = v.isStatic || false;
       // this.categoryBits = v.categoryBits || null;
@@ -688,7 +789,11 @@ function Client(){
         ctx.rotate(this.angle);
         ctx.translate(-(this.x) * SCALE, -(this.y) * SCALE);
 
-        ctx.fillStyle = this.color;
+        // ctx.fillStyle = this.color;
+        var grd=ctx.createRadialGradient(this.x * SCALE*0.9,this.y * SCALE*0.9,this.radius*SCALE*0.1,this.x * SCALE,this.y * SCALE,this.radius*SCALE);
+        grd.addColorStop(0,this.color);
+        grd.addColorStop(1,helpers.darkerShade(this.color, 0.1));
+        ctx.fillStyle=grd;
         ctx.beginPath();
         ctx.arc(this.x * SCALE, this.y * SCALE, this.radius * SCALE, 0, Math.PI * 2, true);
         ctx.closePath();
@@ -975,8 +1080,6 @@ function Client(){
   this.start = function(){
     initNetwork();
   }
-	
-	
 }
 
 // Run Client. Give leeway of 0.5 second for libraries to load
