@@ -210,6 +210,15 @@ var Engine = function() {
 			world.DrawDebugData();
 		}
 		
+		checkToDestroy();
+		updateShapeUIFromBox2D();
+		updateCustomGravity();
+		checkKeysAndOrientation();
+		resetPositionAfterFall();
+	}
+	
+	//Checks to see which object is in destroy_list and must be removed from game
+	var checkToDestroy = function(){
 		for (var i in destroy_list) {
 			world.DestroyBody(destroy_list[i]);
 			delete shapes[destroy_list[i].GetUserData()];
@@ -221,14 +230,6 @@ var Engine = function() {
 		}
         // Reset the array
         destroy_list.length = 0;
-        for (var b = world.GetBodyList(); b; b = b.m_next) {
-          if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
-            shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
-          }
-        }
-		updateCustomGravity();
-		checkKeysAndOrientation();
-		resetPositionAfterFall();
 	}
 	
 	//Make objects fall if isFalling is true
@@ -240,6 +241,15 @@ var Engine = function() {
             if(shapes[b.GetUserData()].isFalling==true){
 				b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
 			}
+          }
+        }
+	}
+	
+	//Update UI according to models set by box2d
+	var updateShapeUIFromBox2D = function(){
+		for (var b = world.GetBodyList(); b; b = b.m_next) {
+          if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
+            shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
           }
         }
 	}
@@ -320,7 +330,7 @@ var Engine = function() {
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
 			//if it is out of screen for a long time
-			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (GameConstants.CANVAS_HEIGHT + 50)/SCALE){
+			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (GameConstants.CANVAS_HEIGHT*2)/SCALE){
 				shapes[b.GetUserData()].isFalling = false;
 				//Stop movements
 				b.SetAngularVelocity(0);
@@ -365,6 +375,7 @@ var Engine = function() {
         return rgb;
 	}
 	
+	//Conversion helper of shape to box2d elements
 	var box2d = {
       addToWorld: function(shape) {
         var bodyDef = this.create.bodyDef(shape);
