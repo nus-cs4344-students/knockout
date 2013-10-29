@@ -231,6 +231,7 @@ var Engine = function() {
 		resetPositionAfterFall();
 	}
 	
+	//Make objects fall if isFalling is true
 	var updateCustomGravity = function(){
 		var customGravityForce = 150;
 	
@@ -243,6 +244,7 @@ var Engine = function() {
         }
 	}
 	
+	//Checks for key press and do actions based on key press
 	var checkKeysAndOrientation = function(){
 		var xPush=0;
 		var yPush=0;
@@ -286,6 +288,7 @@ var Engine = function() {
 		}
 	}
 	
+	//Create platform
 	var createGround = function(r){
 		addCircle({
 			radius: r,
@@ -297,6 +300,7 @@ var Engine = function() {
         });
 	}
 	
+	//Shrink platform
 	var updateGround = function(){
 		//This reduces the platform radius
         if (shapes["1"].radius > 1.5) {
@@ -311,6 +315,7 @@ var Engine = function() {
         }
 	}
 	
+	//When sphere drops out of map, reset position to middle
 	var resetPositionAfterFall = function(){
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
@@ -330,7 +335,8 @@ var Engine = function() {
         }
 	
 	}
-	
+		
+	//Get random color (used for platform)
 	var getRandomColor = function(){
         var letters = '0123456789ABCDEF'.split('');
         color = '#';
@@ -339,7 +345,6 @@ var Engine = function() {
         }
         return color;
 	}
-	
 	
 	var darkerShade = function(hex, lum) {
        // validate hex string
@@ -518,6 +523,7 @@ var Engine = function() {
 	}
 	//End of Shape creation------------------------------------------------------------------
 
+	//Draw bitmap following a body
 	var drawSpriteOnBody = function(body){
 		var img = new Image();
 		img.src = '/images/lambo_the_brocolli_monster.png';
