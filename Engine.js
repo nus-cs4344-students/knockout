@@ -59,13 +59,13 @@ var Engine = function() {
 
         var listener = new b2Listener;
 
-		//listener waits for contact between ground ("1") and object to end
+		//listener waits for contact between ground ("id_Ground") and object to end
         listener.EndContact = function(contact) {
 			var tempBody;
-			if (contact.GetFixtureA().GetBody().GetUserData() == 1) {
+			if (contact.GetFixtureA().GetBody().GetUserData() == 'id_Ground') {
 				tempBody = contact.GetFixtureB().GetBody();
 			}
-			else if (contact.GetFixtureB().GetBody().GetUserData() == 1) {
+			else if (contact.GetFixtureB().GetBody().GetUserData() == 'id_Ground') {
 				tempBody = contact.GetFixtureA().GetBody();
 			}
 			
@@ -104,9 +104,6 @@ var Engine = function() {
         box2d.create.world();
         box2d.create.defaultFixture();
 
-		//Create Ground
-		createGround(PLATFORM_RADIUS);
-		
 		//Create Player
 		addCircle({
 			color: "#e00707",
@@ -129,11 +126,14 @@ var Engine = function() {
             id: "p3Disk",
 		});
 		
+		//Create Ground
+		createGround(PLATFORM_RADIUS);
+		
 
         setupCallbacks();
 		
 		that.animate();
-		window.setInterval(updateGround, 3000);
+		window.setInterval(shrinkGround, 5000);
 	}
 	
 	var setCanvas = function(id){
@@ -158,13 +158,20 @@ var Engine = function() {
 			ctx.clearRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
 		}
 		
-		/*var drawOrder = [];
+		//Set the drawOrder
+		var drawOrder = [shapes["id_Ground"]];
         for (var i in shapes) {
-			if(drawOrder.length==0){
-				drawOrder.push(shapes[i]);
-			}else{
-				var bol_added = false;
-				for(var k in drawOrder){
+			if(shapes[i]==shapes["id_Ground"]){
+				continue;
+			}
+			
+			var bol_added = false;
+			for(var k in drawOrder){
+				if(drawOrder[k]==shapes["id_Ground"] && shapes[i].isFalling==false){
+					drawOrder.splice(k+1,0,shapes[i]);
+					bol_added = true;
+					break;
+				}else{
 					var kZ = drawOrder[k].x+drawOrder[k].y;
 					var iZ = shapes[i].x+shapes[i].y;
 					if(iZ<kZ){
@@ -173,18 +180,15 @@ var Engine = function() {
 						break;
 					}
 				}
-				if(bol_added == false){
-					drawOrder.push(shapes[i]);
-				}
+			}
+			if(bol_added == false){
+				drawOrder.push(shapes[i]);
 			}
         }
 		
+		//Draw the drawOrder
 		for (var i in drawOrder){
 			drawOrder[i].draw();
-		}*/
-		
-		for(var i in shapes){
-			shapes[i].draw();
 		}
 		
 		// ctx.font="40px Segoe UI";
@@ -304,24 +308,26 @@ var Engine = function() {
 			radius: r,
             x: GameConstants.CANVAS_WIDTH / SCALE / 2,
             y: GameConstants.CANVAS_HEIGHT / SCALE / 2,
-            id: 1,
+            id: "id_Ground",
             isStatic: true,
             isSensor: true
         });
 	}
 	
 	//Shrink platform
-	var updateGround = function(){
+	var shrinkGround = function(){
 		//This reduces the platform radius
-        if (shapes["1"].radius > 1.5) {
-          var r = shapes["1"].radius;
-          world.DestroyBody("1");
-          delete shapes["1"];
-          delete playerShapes["1"];
+        if (shapes["id_Ground"].radius > 1.5) {
+          var r = shapes["id_Ground"].radius;
+          world.DestroyBody("id_Ground");
+          delete shapes["id_Ground"];
+          delete playerShapes["id_Ground"];
 		  
-          createGround(r - 2.2);
-          shapes["1"].radius = r - 0.5;
-          playerShapes["1"].radius = r - 0.5;
+		  //reduce the radius everytime
+		  r = r-1.0;
+          createGround(r);
+          //shapes["id_Ground"].radius = r;
+          //playerShapes["id_Ground"].radius = r;
         }
 	}
 	
@@ -459,6 +465,7 @@ var Engine = function() {
       //this.maskBits = v.maskBits || null;
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
+	  this.fallDirection = null;
 	  
 	  //function to update coordinates from box2d bodies
       this.update = function(options) {
