@@ -343,7 +343,7 @@ function Client(){
     
     $(document).unbind();
     //TODO start binding onto gaming keys
-    $('#contentHTML').append('<canvas id="canvas" width="800" height="800" style="background: #F1F1F1;"></canvas>');
+    $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
 
 	var gameEngine = new Engine();
 	gameEngine.init();

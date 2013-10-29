@@ -12,23 +12,23 @@ var Engine = function() {
 	var b2DebugDraw;
 	var b2MouseJointDef;
 	var b2Listener;
+	var b2FilterData;
 	var world;
 	
 	var SCALE = 30,
         destroy_list = [],
         canvas,
-        ctx,
-        world,
+        ctx, //context of canvas
+        world, //game world of box2d
         fixDef,
-        orientation,
-        shapes = {},
-        playerShapes = {},
-		score = {p1:10, p2:10, p3:10};
+        orientation, //used for mobile devices
+        shapes = {}, //used for UI
+        playerShapes = {}, //body of box2d
+		score = {p1:10, p2:10, p3:10, p4:10};
 	
 	var debug = false;
-	
 	var that = this;
-
+	var PLATFORM_RADIUS = 10;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -44,29 +44,46 @@ var Engine = function() {
 		b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 		b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 		b2Listener = Box2D.Dynamics.b2ContactListener;
+		b2FilterData = Box2D.Dynamics.b2FilterData;
 	}
 	
 	var setupCallbacks = function(){
-		canvas.addEventListener('click', function(e) {
+		//Add circles for testing
+		/*canvas.addEventListener('click', function(e) {
           var shapeOptions = {
             x: Math.random() * 10 + 10,
             y: Math.random() * 10 + 10,
           };
           addCircle(shapeOptions);
-        }, false);
+        }, false);*/
 
         var listener = new b2Listener;
 
+		//listener waits for contact between ground ("1") and object to end
         listener.EndContact = function(contact) {
+			var tempBody;
 			if (contact.GetFixtureA().GetBody().GetUserData() == 1) {
-				destroy_list.push(contact.GetFixtureB().GetBody());
+				tempBody = contact.GetFixtureB().GetBody();
 			}
 			else if (contact.GetFixtureB().GetBody().GetUserData() == 1) {
-				destroy_list.push(contact.GetFixtureA().GetBody());
-			};
+				tempBody = contact.GetFixtureA().GetBody();
+			}
+			
+			//destroy_list.push(tempBody);
+			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
+				shapes[tempBody.GetUserData()].isFalling = true;
+
+				//Set groupIndex to -1 so that it will not hit anyone when falling
+				var filter = new b2FilterData;
+				filter.groupIndex = -1;
+				filter.categoryBits = 0x0002;
+				filter.maskBits = 0x0000
+				tempBody.GetFixtureList().SetFilterData(filter);
+			}
         }
         world.SetContactListener(listener);
 
+		
         if (window.DeviceOrientationEvent) {
           window.addEventListener('deviceorientation', function(eventData) {
             orientation = {
@@ -88,7 +105,7 @@ var Engine = function() {
         box2d.create.defaultFixture();
 
 		//Create Ground
-		createGround(10);
+		createGround(PLATFORM_RADIUS);
 		
 		//Create Player
 		addCircle({
@@ -111,6 +128,7 @@ var Engine = function() {
             y:18,
             id: "p3Disk",
 		});
+		
 
         setupCallbacks();
 		
@@ -128,92 +146,59 @@ var Engine = function() {
 		update();
 	}
 	
-	var createWorld = function(){		
-		world = new b2World(
-			new b2Vec2(0, 0)    //gravity is zero since top-down
-			,  true                 //allow sleep
-		);
-		
-		var fixDef = new b2FixtureDef;
-		fixDef.density = 0.1;
-		fixDef.friction = 0.0;
-		fixDef.restitution = 0.6;
-		
-		var bodyDef = new b2BodyDef;
-		//create ground
-		bodyDef.type = b2Body.b2_staticBody;
-		fixDef.shape = new b2PolygonShape;
-		//Origin is at middle
-		fixDef.shape.SetAsBox(GameConstants.CANVAS_WIDTH/2, 10);
-		bodyDef.position.Set(GameConstants.CANVAS_WIDTH/2, 10);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		bodyDef.position.Set(GameConstants.CANVAS_WIDTH/2, GameConstants.CANVAS_HEIGHT-10);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		
-		fixDef.shape.SetAsBox(10, GameConstants.CANVAS_HEIGHT/2);
-		bodyDef.position.Set(10, GameConstants.CANVAS_HEIGHT/2);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		bodyDef.position.Set(GameConstants.CANVAS_WIDTH-10, GameConstants.CANVAS_HEIGHT/2);
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-		
-		//create some objects
-		bodyDef.type = b2Body.b2_dynamicBody;
-		bodyDef.fixedRotation = true;
-		
-		//vertices indicate a eclipsal shape
-		var vertices = new Array();
-		var size = 30;
-		//left most vertex
-		vertices.push(new b2Vec2(1.0*size,0.0*size));
-		vertices.push(new b2Vec2(0.9*size,0.2*size));
-		vertices.push(new b2Vec2(0.6*size,0.4*size));
-		//down most vertex
-		vertices.push(new b2Vec2(0.0*size,0.5*size));
-		vertices.push(new b2Vec2(-0.6*size,0.4*size));
-		vertices.push(new b2Vec2(-0.9*size,0.2*size));
-		//right most vertex
-		vertices.push(new b2Vec2(-1.0*size,0.0*size));
-		vertices.push(new b2Vec2(-0.9*size,-0.2*size));
-		vertices.push(new b2Vec2(-0.6*size,-0.4*size));
-		//up most vertex
-		vertices.push(new b2Vec2(0.0*size,-0.5*size));
-		vertices.push(new b2Vec2(0.6*size,-0.4*size));
-		vertices.push(new b2Vec2(0.9*size,-0.2*size));
-		
-		
-		fixDef.shape = new b2PolygonShape();
-		fixDef.shape.SetAsArray(vertices,12);
-		
-		bodyDef.position.x = GameConstants.CANVAS_WIDTH/2;
-		bodyDef.position.y = GameConstants.CANVAS_HEIGHT/2;
-		
-		myDisk = world.CreateBody(bodyDef);
-		myDisk.CreateFixture(fixDef);
-		myDiskUI = new PIXI.Sprite(texturePlayer);
-		myDiskUI.scale.x = 0.5;
-		myDiskUI.scale.y = 0.5;
-		stage.addChild(myDiskUI);
-		
-		bodyDef.position.x = GameConstants.CANVAS_WIDTH/2-100;
-		bodyDef.position.y = GameConstants.CANVAS_HEIGHT/2-100;
-		var oppo1 = world.CreateBody(bodyDef).CreateFixture(fixDef);
-		var oppo2 = world.CreateBody(bodyDef).CreateFixture(fixDef);
-		var oppo3 = world.CreateBody(bodyDef).CreateFixture(fixDef);
-	}
 	
 	var draw = function(){
+		// change to isometric view          
+		ctx.save();
+		//ctx.rotate(45 * Math.PI /180);
+		ctx.scale(1, 0.5);
+		ctx.translate(0, GameConstants.CANVAS_HEIGHT/2);
+		
 		if (!debug){
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.clearRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
 		}
+		
+		/*var drawOrder = [];
         for (var i in shapes) {
-			shapes[i].draw();
+			if(drawOrder.length==0){
+				drawOrder.push(shapes[i]);
+			}else{
+				var bol_added = false;
+				for(var k in drawOrder){
+					var kZ = drawOrder[k].x+drawOrder[k].y;
+					var iZ = shapes[i].x+shapes[i].y;
+					if(iZ<kZ){
+						drawOrder.splice(k,0,shapes[i]);
+						bol_added = true;
+						break;
+					}
+				}
+				if(bol_added == false){
+					drawOrder.push(shapes[i]);
+				}
+			}
         }
+		
+		for (var i in drawOrder){
+			drawOrder[i].draw();
+		}*/
+		
+		for(var i in shapes){
+			shapes[i].draw();
+		}
 		
 		// ctx.font="40px Segoe UI";
         // ctx.fillStyle = "#FFFFFF";
         // ctx.fillText("p1: " + score.p1,100,750);
         // ctx.fillText("p2: " + score.p2,300,750);
         // ctx.fillText("p3: " + score.p3,500,750);
+		ctx.restore();
+		
+		//
+		var myDisk = playerShapes["myDisk"];
+		if(myDisk!= null){
+			drawSpriteOnBody(myDisk);
+		}
 	}
 	
 	var update = function(){
@@ -241,8 +226,21 @@ var Engine = function() {
             shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
           }
         }
-		
+		updateCustomGravity();
 		checkKeysAndOrientation();
+		resetPositionAfterFall();
+	}
+	
+	var updateCustomGravity = function(){
+		var customGravityForce = 150;
+	
+		for (var b = world.GetBodyList(); b; b = b.m_next) {
+          if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
+            if(shapes[b.GetUserData()].isFalling==true){
+				b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
+			}
+          }
+        }
 	}
 	
 	var checkKeysAndOrientation = function(){
@@ -252,21 +250,17 @@ var Engine = function() {
 		
 		if(Key.isDown(Key.LEFT)){
 			xPush -= force;
-			yPush += force;
 		}
 		
 		if(Key.isDown(Key.RIGHT)){
 			xPush += force;
-			yPush -= force;
 		}
 		
 		if(Key.isDown(Key.UP)){
-			xPush -= force;
 			yPush -= force;
 		}
 		
 		if(Key.isDown(Key.DOWN)){
-			xPush += force;
 			yPush += force;
 		}
 		
@@ -286,7 +280,7 @@ var Engine = function() {
 		if(xPush!=0 || yPush!=0 ){
 			//console.log("should move: "+xPush+" "+yPush);
 			var myDisk = playerShapes["myDisk"];
-			if(myDisk!= null){
+			if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
 				myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
 			}
 		}
@@ -295,8 +289,8 @@ var Engine = function() {
 	var createGround = function(r){
 		addCircle({
 			radius: r,
-            x: canvas.width / SCALE / 2,
-            y: canvas.width / SCALE / 2,
+            x: GameConstants.CANVAS_WIDTH / SCALE / 2,
+            y: GameConstants.CANVAS_HEIGHT / SCALE / 2,
             id: 1,
             isStatic: true,
             isSensor: true
@@ -304,7 +298,7 @@ var Engine = function() {
 	}
 	
 	var updateGround = function(){
-		// console.log(shapes);
+		//This reduces the platform radius
         if (shapes["1"].radius > 1.5) {
           var r = shapes["1"].radius;
           world.DestroyBody("1");
@@ -315,10 +309,27 @@ var Engine = function() {
           shapes["1"].radius = r - 0.5;
           playerShapes["1"].radius = r - 0.5;
         }
-        // console.log(shapes["1"]);
 	}
 	
+	var resetPositionAfterFall = function(){
+		for (var b = world.GetBodyList(); b; b = b.m_next) {
+          if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
+			//if it is out of screen for a long time
+			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (GameConstants.CANVAS_HEIGHT + 50)/SCALE){
+				shapes[b.GetUserData()].isFalling = false;
+				//Stop movements
+				b.SetAngularVelocity(0);
+				b.SetLinearVelocity(new b2Vec2(0,0));
+				b.SetPosition(new b2Vec2(canvas.width / SCALE / 2,canvas.height / SCALE / 2));
+				//Set back groupIndex to default 0 so that they will hit each other
+				b.GetFixtureList().SetFilterData(new b2FilterData);
+				//Update UI
+				shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
+			}
+          }
+        }
 	
+	}
 	
 	var getRandomColor = function(){
         var letters = '0123456789ABCDEF'.split('');
@@ -372,11 +383,6 @@ var Engine = function() {
             , false                 //allow sleep
           );
           
-          // change to isometric view          
-          //ctx.save();
-          //ctx.translate(400, 100);
-          //ctx.scale(0.8, 0.48);
-          //ctx.rotate(45 * Math.PI /180);
           if (debug) {
             var debugDraw = new b2DebugDraw();
             debugDraw.SetSprite(ctx);
@@ -433,10 +439,12 @@ var Engine = function() {
 	  this.color = v.color || getRandomColor();
       this.center = { x: null, y: null };
       this.isStatic = v.isStatic || false;
-      // this.categoryBits = v.categoryBits || null;
-      // this.maskBits = v.maskBits || null;
+      //this.categoryBits = v.categoryBits || null;
+      //this.maskBits = v.maskBits || null;
       this.isSensor = v.isSensor || false;
-      
+	  this.isFalling = false;
+	  
+	  //function to update coordinates from box2d bodies
       this.update = function(options) {
         this.angle = options.angle;
         this.center = options.center;
@@ -509,6 +517,37 @@ var Engine = function() {
         box2d.addToWorld(shape);
 	}
 	//End of Shape creation------------------------------------------------------------------
+
+	var drawSpriteOnBody = function(body){
+		var img = new Image();
+		img.src = '/images/lambo_the_brocolli_monster.png';
+		var spriteWidth  = 245,
+			spriteHeight = 361,
+			pixelsLeft   = 0,
+			pixelsTop    = 0,
+
+			canvasPosX   = (body.GetPosition().x*SCALE-spriteWidth/2);
+			canvasPosY   = (body.GetPosition().y*SCALE-spriteHeight)*0.5;
+		
+		//For more complex sprite
+		/*ctx.drawImage(img,
+			pixelsLeft,
+			pixelsTop,
+			spriteWidth,
+			spriteHeight,
+			canvasPosX,
+			canvasPosY,
+			spriteWidth,
+			spriteHeight
+		);*/
+		
+		ctx.drawImage(img,
+			canvasPosX,
+			canvasPosY
+		);
+		
+
+	}
 }
 
 
