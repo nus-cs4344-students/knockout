@@ -72,7 +72,13 @@ var Engine = function() {
 			//destroy_list.push(tempBody);
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
-
+				
+				//Set fallDirection for drawing properly behind or infront the ground
+				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
+					shapes[tempBody.GetUserData()].fallDirection = 1;
+				}else{
+					shapes[tempBody.GetUserData()].fallDirection = -1;
+				}
 				//Set groupIndex to -1 so that it will not hit anyone when falling
 				var filter = new b2FilterData;
 				filter.groupIndex = -1;
@@ -148,61 +154,92 @@ var Engine = function() {
 	
 	
 	var draw = function(){
-		// change to isometric view          
-		ctx.save();
-		//ctx.rotate(45 * Math.PI /180);
-		ctx.scale(1, 0.5);
-		ctx.translate(0, GameConstants.CANVAS_HEIGHT/2);
-		
 		if (!debug){
 			ctx.clearRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
 		}
 		
-		//Set the drawOrder
-		var drawOrder = [shapes["id_Ground"]];
-        for (var i in shapes) {
-			if(shapes[i]==shapes["id_Ground"]){
-				continue;
-			}
-			
-			var bol_added = false;
-			for(var k in drawOrder){
-				if(drawOrder[k]==shapes["id_Ground"] && shapes[i].isFalling==false){
-					drawOrder.splice(k+1,0,shapes[i]);
-					bol_added = true;
-					break;
-				}else{
-					var kZ = drawOrder[k].x+drawOrder[k].y;
-					var iZ = shapes[i].x+shapes[i].y;
-					if(iZ<kZ){
-						drawOrder.splice(k,0,shapes[i]);
-						bol_added = true;
-						break;
-					}
-				}
-			}
-			if(bol_added == false){
-				drawOrder.push(shapes[i]);
-			}
-        }
+		var drawOrder = getDrawOrder();
 		
 		//Draw the drawOrder
-		for (var i in drawOrder){
+		for(var i in drawOrder){
+			// change to side view          
+			ctx.save();
+			//ctx.rotate(45 * Math.PI /180);
+			ctx.scale(1, 0.5);
+			ctx.translate(0, GameConstants.CANVAS_HEIGHT/2);
 			drawOrder[i].draw();
+			ctx.restore();
+			//testing
+			if(drawOrder[i] == shapes["myDisk"]){
+				drawSpriteOnShape(drawOrder[i]);
+			}
 		}
 		
+		
+		//draw score
 		// ctx.font="40px Segoe UI";
         // ctx.fillStyle = "#FFFFFF";
         // ctx.fillText("p1: " + score.p1,100,750);
         // ctx.fillText("p2: " + score.p2,300,750);
         // ctx.fillText("p3: " + score.p3,500,750);
-		ctx.restore();
-		
-		//
-		var myDisk = playerShapes["myDisk"];
-		if(myDisk!= null){
-			drawSpriteOnBody(myDisk);
+	}
+	
+	var getDrawOrder = function(){
+		var behindGround = [];
+		var infrontGround = [];
+	
+        for (var i in shapes) {
+			if(shapes[i]==shapes["id_Ground"]){
+				continue;
+			}
+			if(shapes[i].isFalling==false || shapes[i].fallDirection==1){
+				infrontGround.push(shapes[i]);
+			}else if(shapes[i].fallDirection==-1){
+				behindGround.push(shapes[i]);
+			}
 		}
+		
+		var tempinfrontGround = infrontGround.slice(0); //clone using slice
+		for(var i in tempinfrontGround){
+			//tempinfrontGround is not used in this loop, only used to make sure that the order doesn't change when running this algo
+			for(var j in infrontGround){
+				if(infrontGround[i]==infrontGround[j]){
+					continue;
+				}
+				var jZ = infrontGround[j].y;
+				var iZ = infrontGround[i].y;
+				if(iZ<jZ){
+					var tempShape = infrontGround[i];
+					//remove i from it's original place
+					infrontGround.splice(i,1);
+					//insert shapes[i] at j
+					infrontGround.splice(j,0,tempShape);
+					break;
+				}
+			}
+		}
+		
+		var tempbehindGround = behindGround.slice(0); //clone using slice
+		for(var i in tempbehindGround){
+			//tempinfrontGround is not used in this loop, only used to make sure that the order doesn't change when running this algo
+			for(var j in behindGround){
+				if(behindGround[i]==behindGround[j]){
+					continue;
+				}
+				var jZ = behindGround[j].y;
+				var iZ = behindGround[i].y;
+				if(iZ<jZ){
+					var tempShape = behindGround[i];
+					//remove i from it's original place
+					behindGround.splice(i,1);
+					//insert shapes[i] at j
+					behindGround.splice(j,0,tempShape);
+					break;
+				}
+			}
+		}
+		
+		return behindGround.concat([shapes["id_Ground"]],infrontGround);
 	}
 	
 	var update = function(){
@@ -338,6 +375,7 @@ var Engine = function() {
 			//if it is out of screen for a long time
 			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (GameConstants.CANVAS_HEIGHT*2)/SCALE){
 				shapes[b.GetUserData()].isFalling = false;
+				shapes[b.GetUserData()].fallDirection = 0;
 				//Stop movements
 				b.SetAngularVelocity(0);
 				b.SetLinearVelocity(new b2Vec2(0,0));
@@ -465,7 +503,7 @@ var Engine = function() {
       //this.maskBits = v.maskBits || null;
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
-	  this.fallDirection = null;
+	  this.fallDirection = 0;
 	  
 	  //function to update coordinates from box2d bodies
       this.update = function(options) {
@@ -541,8 +579,8 @@ var Engine = function() {
 	}
 	//End of Shape creation------------------------------------------------------------------
 
-	//Draw bitmap following a body
-	var drawSpriteOnBody = function(body){
+	//Draw bitmap following a shape
+	var drawSpriteOnShape = function(shape){
 		var img = new Image();
 		img.src = '/images/lambo_the_brocolli_monster.png';
 		var spriteWidth  = 245,
@@ -550,8 +588,8 @@ var Engine = function() {
 			pixelsLeft   = 0,
 			pixelsTop    = 0,
 
-			canvasPosX   = (body.GetPosition().x*SCALE-spriteWidth/2);
-			canvasPosY   = (body.GetPosition().y*SCALE-spriteHeight)*0.5;
+			canvasPosX   = (shape.x*SCALE-spriteWidth/2);
+			canvasPosY   = (shape.y*SCALE-spriteHeight)*0.5;
 		
 		//For more complex sprite
 		/*ctx.drawImage(img,
