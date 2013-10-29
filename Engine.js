@@ -139,7 +139,7 @@ var Engine = function() {
         setupCallbacks();
 		
 		that.animate();
-		window.setInterval(shrinkGround, 5000);
+		window.setInterval(shrinkGround, 2000);
 	}
 	
 	var setCanvas = function(id){
@@ -170,7 +170,7 @@ var Engine = function() {
 			drawOrder[i].draw();
 			ctx.restore();
 			//testing
-			if(drawOrder[i] == shapes["myDisk"]){
+			if(drawOrder[i] != shapes["id_Ground"]){
 				drawSpriteOnShape(drawOrder[i]);
 			}
 		}
@@ -361,7 +361,7 @@ var Engine = function() {
           delete playerShapes["id_Ground"];
 		  
 		  //reduce the radius everytime
-		  r = r-1.0;
+		  r = r-0.1;
           createGround(r);
           //shapes["id_Ground"].radius = r;
           //playerShapes["id_Ground"].radius = r;
@@ -582,14 +582,25 @@ var Engine = function() {
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
 		var img = new Image();
-		img.src = '/images/lambo_the_brocolli_monster.png';
-		var spriteWidth  = 245,
-			spriteHeight = 361,
+		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
+		//Change image according to direction it is moving
+		if(playerShapes[shape.id].GetLinearVelocity().x>0){
+			img.src = '/images/Seal-R.png';
+		}else{
+			img.src = '/images/Seal-L.png';
+		}
+		
+		
+		
+		var spriteWidth  = 100,
+			spriteHeight = 100,
 			pixelsLeft   = 0,
 			pixelsTop    = 0,
 
 			canvasPosX   = (shape.x*SCALE-spriteWidth/2);
-			canvasPosY   = (shape.y*SCALE-spriteHeight)*0.5;
+			canvasPosY   = (shape.y*SCALE+spriteHeight)*0.5;
+			
+		
 		
 		//For more complex sprite
 		/*ctx.drawImage(img,
@@ -607,8 +618,6 @@ var Engine = function() {
 			canvasPosX,
 			canvasPosY
 		);
-		
-
 	}
 }
 
