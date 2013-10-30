@@ -29,6 +29,8 @@ var Engine = function() {
 	var debug = false;
 	var that = this;
 	var PLATFORM_RADIUS = 10;
+	var img_Seal_L;
+	var img_Seal_R;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -105,6 +107,7 @@ var Engine = function() {
 	}
 	
 	this.start = function(id){
+		preloadImages();
 		setCanvas(id);
 
         box2d.create.world();
@@ -152,6 +155,13 @@ var Engine = function() {
 		update();
 	}
 	
+	var preloadImages = function(){
+		img_Seal_L = new Image();
+		img_Seal_R = new Image();
+		//preload images for chrome
+		img_Seal_L.src = '/images/Seal-L.png';
+		img_Seal_R.src = '/images/Seal-R.png';
+	}
 	
 	var draw = function(){
 		if (!debug){
@@ -581,13 +591,13 @@ var Engine = function() {
 
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
-		var img = new Image();
+		var img;
 		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
 		//Change image according to direction it is moving
 		if(playerShapes[shape.id].GetLinearVelocity().x>0){
-			img.src = '/images/Seal-R.png';
+			img = img_Seal_R;
 		}else{
-			img.src = '/images/Seal-L.png';
+			img = img_Seal_L;
 		}
 		
 		
@@ -613,7 +623,7 @@ var Engine = function() {
 			spriteWidth,
 			spriteHeight
 		);*/
-		
+
 		ctx.drawImage(img,
 			canvasPosX,
 			canvasPosY
