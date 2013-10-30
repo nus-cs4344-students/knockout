@@ -370,17 +370,14 @@ var Engine = function() {
 	//Shrink platform
 	var shrinkGround = function(){
 		//This reduces the platform radius
-        if (shapes["id_Ground"].radius > 1.5) {
-          var r = shapes["id_Ground"].radius;
-          world.DestroyBody("id_Ground");
-          delete shapes["id_Ground"];
-          delete playerShapes["id_Ground"];
-		  
-		  //reduce the radius everytime
+		var r = shapes["id_Ground"].radius;
+        if (r > 1.5) {
 		  r = r-0.1;
-          createGround(r);
-          //shapes["id_Ground"].radius = r;
-          //playerShapes["id_Ground"].radius = r;
+		  shapes["id_Ground"].radius = r;
+		  playerShapes["id_Ground"].radius = r;
+		  playerShapes["id_Ground"].GetFixtureList().GetShape().SetRadius(r);
+		  //Change color of ground everytime it shrinks
+		  shapes["id_Ground"].color = getRandomColor();
         }
 	}
 	
