@@ -3,13 +3,10 @@ var Engine = function() {
 	var b2BodyDef;
 	var b2Body;
 	var b2FixtureDef;
-	var b2Fixture;
 	var b2World;
-	var b2MassData;
 	var b2PolygonShape;
 	var b2CircleShape;
 	var b2DebugDraw;
-	var b2MouseJointDef;
 	var b2Listener;
 	var b2FilterData;
 	var world;
@@ -30,19 +27,20 @@ var Engine = function() {
 	var PLATFORM_RADIUS = 10;
 	var img_Seal_L;
 	var img_Seal_R;
+	var img_Penguin_L;
+	var img_Penguin_R;
+	var img_Bear_L;
+	var img_Bear_R;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
 		b2BodyDef = Box2D.Dynamics.b2BodyDef;
 		b2Body = Box2D.Dynamics.b2Body;
 		b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
-		b2Fixture = Box2D.Dynamics.b2Fixture;
 		b2World = Box2D.Dynamics.b2World;
-		b2MassData = Box2D.Collision.Shapes.b2MassData;
 		b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
 		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 		b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
-		b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 		b2Listener = Box2D.Dynamics.b2ContactListener;
 		b2FilterData = Box2D.Dynamics.b2FilterData;
 	}
@@ -164,9 +162,17 @@ var Engine = function() {
 	var preloadImages = function(){
 		img_Seal_L = new Image();
 		img_Seal_R = new Image();
+		img_Penguin_L = new Image();
+		img_Penguin_R = new Image();
+		img_Bear_L = new Image();
+		img_Bear_R = new Image();
 		//preload images for chrome
 		img_Seal_L.src = '/images/Seal-L.png';
 		img_Seal_R.src = '/images/Seal-R.png';
+		img_Penguin_L.src = '/images/Penguin-L.png';
+		img_Penguin_R.src = '/images/Penguin-R.png';
+		img_Bear_L.src = '/images/Bear-L.png';
+		img_Bear_R.src = '/images/Bear-R.png';
 	}
 	
 	var draw = function(){
@@ -375,6 +381,7 @@ var Engine = function() {
 		  r = r-0.1;
 		  shapes["id_Ground"].radius = r;
 		  playerShapes["id_Ground"].radius = r;
+		  //Fixture will determine where the player will drop
 		  playerShapes["id_Ground"].GetFixtureList().GetShape().SetRadius(r);
 		  //Change color of ground everytime it shrinks
 		  shapes["id_Ground"].color = getRandomColor();
@@ -517,6 +524,7 @@ var Engine = function() {
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
 	  this.fallDirection = 0;
+	  this.sprite = Math.floor((Math.random()*3)+1); //return random number between 1 and 3
 	  
 	  //function to update coordinates from box2d bodies
       this.update = function(options) {
@@ -598,9 +606,31 @@ var Engine = function() {
 		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
 		//Change image according to direction it is moving
 		if(playerShapes[shape.id].GetLinearVelocity().x>0){
-			img = img_Seal_R;
+			switch(shape.sprite){
+				case 3:
+					img = img_Bear_R;
+					break;
+				case 2:
+					img = img_Penguin_R;
+					break;
+				case 1:
+				default:
+					img = img_Seal_R;
+					break;
+			}
 		}else{
-			img = img_Seal_L;
+			switch(shape.sprite){
+				case 3:
+					img = img_Bear_L;
+					break;
+				case 2:
+					img = img_Penguin_L;
+					break;
+				case 1:
+				default:
+					img = img_Seal_L;
+					break;
+			}
 		}
 		
 		
