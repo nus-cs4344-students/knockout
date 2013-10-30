@@ -1,6 +1,5 @@
 var Engine = function() {
 	var b2Vec2;
-	var b2AABB;
 	var b2BodyDef;
 	var b2Body;
 	var b2FixtureDef;
@@ -34,7 +33,6 @@ var Engine = function() {
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
-		b2AABB = Box2D.Collision.b2AABB;
 		b2BodyDef = Box2D.Dynamics.b2BodyDef;
 		b2Body = Box2D.Dynamics.b2Body;
 		b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
@@ -86,6 +84,14 @@ var Engine = function() {
 				filter.groupIndex = -1;
 				filter.categoryBits = 0x0002;
 				filter.maskBits = 0x0000
+
+				//flag all current contacts for filtering again since we changed the filter
+				var contactList = tempBody.GetContactList();
+				for(var ce = contactList; ce; ce = ce.next){
+					var contact = ce.contact;
+					contact.FlagForFiltering();
+				}
+				
 				tempBody.GetFixtureList().SetFilterData(filter);
 			}
         }
