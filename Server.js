@@ -59,7 +59,7 @@ function Server(){
               }else{
                 //inform success
                 console.log("accept playerName:"+message.name);
-                unicast(conn, {type:"successPlayerName"});
+                unicast(conn, {type:"successPlayerName", playerID: currentPlayer.playerID});
                 //update lobby players of the new player
                 //When adding new player, do not need to send isPlaying because he is definately not playing yet
                 gameLobby.broadcastExcept({type:"addLobbyPlayer", name:currentPlayer.playerName, id:currentPlayer.playerID},currentPlayer);

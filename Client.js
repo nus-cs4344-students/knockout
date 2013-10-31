@@ -7,6 +7,7 @@ function Client(){
   var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
   var socket;
   var playerName="";
+  var playerID;
   var currentSessionID=null;
 
   var sendToServer = function(msg){
@@ -345,9 +346,25 @@ function Client(){
     //TODO start binding onto gaming keys
     $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
 
+	var currentSession = getSessionWithID(currentSessionID);
+	var playerShapeID = null;
+	if(currentSession!=null){
+		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
+			if(currentSession.abstractPlayersArray[i].playerID == playerID){
+				playerShapeID = GameConstants.SHAPE_NAME+(i+1);
+			}
+		}
+	}
+	
+	
 	var gameEngine = new Engine();
 	gameEngine.init();
-	gameEngine.start('canvas');  
+	gameEngine.start('canvas');
+	if(playerShapeID!=null){
+		gameEngine.setPlayerShapeID(playerShapeID);
+	}else{
+		console.log("initGame: playerShapeID is null");
+	}
   }
 
   var initNetwork = function(){
@@ -364,6 +381,8 @@ function Client(){
             break;
           case "successPlayerName":
             //User has input valid playerName that no one else is using
+			playerID = message.playerID;
+			console.log("playerID is: "+playerID);
             hideProcessing();
             initLobby();
             break;
@@ -601,9 +620,7 @@ function Client(){
 
   this.start = function(){
     initNetwork();
-  }
-	
-	
+  }	
 }
 
 // Run Client. Give leeway of 0.5 second for libraries to load

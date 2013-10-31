@@ -33,6 +33,7 @@ var Engine = function() {
 	var img_Bear_L;
 	var img_Bear_R;
 	var currentPlayerShapeID;
+	var bol_Stop;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -103,12 +104,12 @@ var Engine = function() {
 	}
 	
 	this.start = function(id){
+		bol_Stop = false;
 		preloadImages();
 		setCanvas(id);
 
         box2d.create.world();
         box2d.create.defaultFixture();
-
 		
 		//Create Ground
 		createGround(PLATFORM_RADIUS);
@@ -125,7 +126,7 @@ var Engine = function() {
 				color: getRandomColor(),
 				x:shapes["id_Ground"].x + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
 				y:shapes["id_Ground"].y + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
-				id: 'playerDisk'+i,
+				id: GameConstants.SHAPE_NAME+i,
 			});
 		}		
 
@@ -141,8 +142,11 @@ var Engine = function() {
 	}
 	
 	this.animate = function(){
-		requestAnimFrame( that.animate );
-		update();
+		if(bol_Stop==false){
+			//only perform when rendering frame from browser is available
+			requestAnimFrame( that.animate );
+			update();
+		}
 	}
 	
 	var preloadImages = function(){
@@ -582,6 +586,28 @@ var Engine = function() {
 	}
 	//End of Shape creation------------------------------------------------------------------
 
+	this.stopAndDestroyWorld = function(){
+		if(world.IsLocked()){
+			bol_Stop = true;
+			window.setTimeout(stopAndDestroyWorld, 1000 / 60);
+		}else{
+			world.ClearForces();
+			var bodies = world.GetBodyList();
+			for(var i in bodies){
+				destroy_list.push(i);
+			}
+			checkToDestroy();
+		}
+	}
+	
+	this.setPlayerShapeID = function(id){
+		if(id!=null){
+			currentPlayerShapeID = id;
+		}else{
+			console.log("setPlayerShapeID: id was null");
+		}
+	}
+	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
 		var img;
