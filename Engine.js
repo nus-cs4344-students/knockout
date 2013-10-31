@@ -25,12 +25,14 @@ var Engine = function() {
 	var debug = false;
 	var that = this;
 	var PLATFORM_RADIUS = 10;
+	var PLAYER_RADIUS = 1.4;
 	var img_Seal_L;
 	var img_Seal_R;
 	var img_Penguin_L;
 	var img_Penguin_R;
 	var img_Bear_L;
 	var img_Bear_R;
+	var currentPlayerShapeID;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -46,15 +48,6 @@ var Engine = function() {
 	}
 	
 	var setupCallbacks = function(){
-		//Add circles for testing
-		/*canvas.addEventListener('click', function(e) {
-          var shapeOptions = {
-            x: Math.random() * 10 + 10,
-            y: Math.random() * 10 + 10,
-          };
-          addCircle(shapeOptions);
-        }, false);*/
-
         var listener = new b2Listener;
 
 		//listener waits for contact between ground ("id_Ground") and object to end
@@ -67,7 +60,6 @@ var Engine = function() {
 				tempBody = contact.GetFixtureA().GetBody();
 			}
 			
-			//destroy_list.push(tempBody);
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
 				
@@ -117,31 +109,25 @@ var Engine = function() {
         box2d.create.world();
         box2d.create.defaultFixture();
 
-		//Create Player
-		addCircle({
-			color: "#e00707",
-            x:9,
-            y:9,
-            id: "myDisk",
-        });
-		
-		//Create other Players
-		addCircle({
-           color: "#fdb813",
-            x:18,
-            y:9,
-            id: "p2Disk",
-        });
-		addCircle({
-           color: "#69ab35",
-            x:9,
-            y:18,
-            id: "p3Disk",
-		});
 		
 		//Create Ground
 		createGround(PLATFORM_RADIUS);
 		
+		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
+		currentPlayerShapeID = 'playerDisk1';
+		
+		//Must evenly space out players
+		var angle = 360/GameConstants.NUM_OF_PLAYERS;
+		//Create circles according to number of player
+		for(var i=1;i<=GameConstants.NUM_OF_PLAYERS;i++){
+			addCircle({
+				radius: PLAYER_RADIUS,
+				color: getRandomColor(),
+				x:shapes["id_Ground"].x + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
+				y:shapes["id_Ground"].y + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
+				id: 'playerDisk'+i,
+			});
+		}		
 
         setupCallbacks();
 		
@@ -286,10 +272,6 @@ var Engine = function() {
 			world.DestroyBody(destroy_list[i]);
 			delete shapes[destroy_list[i].GetUserData()];
 			delete playerShapes[destroy_list[i].GetUserData()];
-			// var id = destroy_list[i].GetUserData();
-			// if (id == "myDisk"){init.gameobjects.player1(); score.p1--;}
-			// else if (id == "p2Disk"){init.gameobjects.player2(); score.p2--;}
-			// else if (id == "p3Disk"){init.gameobjects.player3(); score.p3--;}
 		}
         // Reset the array
         destroy_list.length = 0;
@@ -340,21 +322,21 @@ var Engine = function() {
 		}
 		
 		if(window.DeviceOrientationEvent && orientation != undefined){
+			//Front Back tilt (front is positive)
 			if(orientation.tiltFB != null){
-				xPush += orientation.tiltFB * 1.5; 
-				yPush += orientation.tiltFB * 1.5;
+				yPush -= orientation.tiltFB * 1.5;
 			}
 			
+			//Left Right tilt (right is positive)
 			if(orientation.tiltLR != null){
 				xPush += orientation.tiltLR * 1.5; 
-				yPush -= orientation.tiltLR * 1.5;
 			}
 		}
       
 		
 		if(xPush!=0 || yPush!=0 ){
 			//console.log("should move: "+xPush+" "+yPush);
-			var myDisk = playerShapes["myDisk"];
+			var myDisk = playerShapes[currentPlayerShapeID];
 			if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
 				myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
 			}
