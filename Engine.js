@@ -19,7 +19,7 @@ var Engine = function() {
         fixDef,
         orientation, //used for mobile devices
         shapes = {}, //used for UI
-        playerShapes = {}, //body of box2d
+        bodies = {}, //body of box2d
 		score = {p1:10, p2:10, p3:10, p4:10};
 	
 	var debug = false;
@@ -114,9 +114,6 @@ var Engine = function() {
 		//Create Ground
 		createGround(PLATFORM_RADIUS);
 		
-		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
-		currentPlayerShapeID = 'playerDisk1';
-		
 		//Must evenly space out players
 		var angle = 360/GameConstants.NUM_OF_PLAYERS;
 		//Create circles according to number of player
@@ -129,6 +126,10 @@ var Engine = function() {
 				id: GameConstants.SHAPE_NAME+i,
 			});
 		}		
+		
+		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
+		currentPlayerShapeID = 'playerDisk1';
+		that.setShapeName(currentPlayerShapeID,"omgbbqthisismadness");
 
         setupCallbacks();
 		
@@ -275,7 +276,7 @@ var Engine = function() {
 		for (var i in destroy_list) {
 			world.DestroyBody(destroy_list[i]);
 			delete shapes[destroy_list[i].GetUserData()];
-			delete playerShapes[destroy_list[i].GetUserData()];
+			delete bodies[destroy_list[i].GetUserData()];
 		}
         // Reset the array
         destroy_list.length = 0;
@@ -340,7 +341,7 @@ var Engine = function() {
 		
 		if(xPush!=0 || yPush!=0 ){
 			//console.log("should move: "+xPush+" "+yPush);
-			var myDisk = playerShapes[currentPlayerShapeID];
+			var myDisk = bodies[currentPlayerShapeID];
 			if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
 				myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
 			}
@@ -366,9 +367,9 @@ var Engine = function() {
         if (r > 1.5) {
 		  r = r-0.1;
 		  shapes["id_Ground"].radius = r;
-		  playerShapes["id_Ground"].radius = r;
+		  bodies["id_Ground"].radius = r;
 		  //Fixture will determine where the player will drop
-		  playerShapes["id_Ground"].GetFixtureList().GetShape().SetRadius(r);
+		  bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(r);
 		  //Change color of ground everytime it shrinks
 		  shapes["id_Ground"].color = getRandomColor();
         }
@@ -440,7 +441,7 @@ var Engine = function() {
         
         fixDef.isSensor = shape.isSensor;
         body.CreateFixture(fixDef);
-        playerShapes[shape.id] = body;
+        bodies[shape.id] = body;
       },
       create: {
         world: function() {
@@ -511,6 +512,7 @@ var Engine = function() {
 	  this.isFalling = false;
 	  this.fallDirection = 0;
 	  this.sprite = Math.floor((Math.random()*3)+1); //return random number between 1 and 3
+	  this.displayName = "";
 	  
 	  //function to update coordinates from box2d bodies
       this.update = function(options) {
@@ -541,7 +543,17 @@ var Engine = function() {
         ctx.arc(this.x * SCALE, this.y * SCALE, this.radius * SCALE, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.fill();
-        ctx.restore();
+		ctx.restore();
+		
+		if(this.displayName.length>0){
+			ctx.save();
+			ctx.font="30px Comic Sans MS";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillText(this.displayName,(this.x-this.displayName.length/4)*SCALE,(this.y+this.radius*1.5)*SCALE);
+			ctx.restore();
+		}
+		
+        
       };
     }
     Circle.prototype = Shape;
@@ -599,7 +611,7 @@ var Engine = function() {
 			checkToDestroy();
 		}
 	}
-	
+		
 	this.setPlayerShapeID = function(id){
 		if(id!=null){
 			currentPlayerShapeID = id;
@@ -608,12 +620,16 @@ var Engine = function() {
 		}
 	}
 	
+	this.setShapeName = function(shapeID, name){
+		shapes[shapeID].displayName = name;
+	}
+	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
 		var img;
 		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
 		//Change image according to direction it is moving
-		if(playerShapes[shape.id].GetLinearVelocity().x>0){
+		if(bodies[shape.id].GetLinearVelocity().x>0){
 			switch(shape.sprite){
 				case 3:
 					img = img_Bear_R;

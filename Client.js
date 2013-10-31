@@ -346,24 +346,18 @@ function Client(){
     //TODO start binding onto gaming keys
     $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
 
-	var currentSession = getSessionWithID(currentSessionID);
-	var playerShapeID = null;
-	if(currentSession!=null){
-		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
-			if(currentSession.abstractPlayersArray[i].playerID == playerID){
-				playerShapeID = GameConstants.SHAPE_NAME+(i+1);
-			}
-		}
-	}
-	
-	
 	var gameEngine = new Engine();
 	gameEngine.init();
 	gameEngine.start('canvas');
-	if(playerShapeID!=null){
-		gameEngine.setPlayerShapeID(playerShapeID);
-	}else{
-		console.log("initGame: playerShapeID is null");
+	
+	var currentSession = getSessionWithID(currentSessionID);
+	if(currentSession!=null){
+		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
+			if(currentSession.abstractPlayersArray[i].playerID == playerID){
+				gameEngine.setPlayerShapeID(GameConstants.SHAPE_NAME+(i+1));
+			}
+			gameEngine.setShapeName(GameConstants.SHAPE_NAME+(i+1),currentSession.abstractPlayersArray[i].playerName);
+		}
 	}
   }
 
