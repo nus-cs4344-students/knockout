@@ -348,6 +348,7 @@ function Client(){
     $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
 
 	gameEngine = new Engine();
+	global.engineSocket = socket;
 	gameEngine.init();
 	gameEngine.start('canvas');
 	
@@ -547,20 +548,26 @@ function Client(){
                 setTimeout(function() {initGame();}, 5000);
             break;
             
-            case "updateGame":
+            case "updateGameStates":
 				if(gameEngine==null || gameEngine == 'undefined'){
-					console.log("updateGame but gameEngine does not exist");
+					console.log("updateGameStates but gameEngine does not exist");
 					break;
 				}
-				
                 //update the game values
 				if(message.groundRadius){
 					gameEngine.shrinkGroundToRadius(message.groundRadius);
 				}
-
-                //TODO
             break;
-            
+			
+			case "updatePlayerStates":
+				if(gameEngine==null || gameEngine == 'undefined'){
+					console.log("updatePlayerStates but gameEngine does not exist");
+					break;
+				}
+				if(message.playerStates){
+					gameEngine.updatePlayerStates(message.playerStates);
+				}
+            break;
             default: 
 				//un-handled message type, show error
 				console.log("Unknown message type");

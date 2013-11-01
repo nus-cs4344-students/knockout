@@ -130,7 +130,7 @@ var Engine = function() {
 		
 		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
 		currentPlayerShapeID = 'playerDisk1';
-		that.setShapeName(currentPlayerShapeID,"omgbbqthisismadness");
+		that.setShapeName(currentPlayerShapeID,"omg test bbq");
 
         setupCallbacks();
 		
@@ -304,46 +304,57 @@ var Engine = function() {
 	var checkKeysAndOrientation = function(){
 		var xPush=0;
 		var yPush=0;
-		var force=30;
 		
+		//The numbers here do not determine the force
 		if(Key.isDown(Key.LEFT)){
-			xPush -= force;
-		}
-		
-		if(Key.isDown(Key.RIGHT)){
-			xPush += force;
+			xPush = -1;
+		}else if(Key.isDown(Key.RIGHT)){
+			xPush = 1;
 		}
 		
 		if(Key.isDown(Key.UP)){
-			yPush -= force;
+			yPush = -1;
+		}else if(Key.isDown(Key.DOWN)){
+			yPush = +1;
 		}
 		
-		if(Key.isDown(Key.DOWN)){
-			yPush += force;
-		}
-		
-		//TODO properly test on device
 		if(window.DeviceOrientationEvent && orientation != undefined){
+			//Tweak sensitivity here
+			var sensitivity = 10;
+			
 			//Front Back tilt (front is positive)
-			if(orientation.tiltFB != null){
-				yPush -= orientation.tiltFB * 1.5;
+			if(orientation.tiltFB != null && Math.abs(orientation.tiltFB)>sensitivity){
+				yPush -= orientation.tiltFB;
 			}
 			
 			//Left Right tilt (right is positive)
-			if(orientation.tiltLR != null){
-				xPush += orientation.tiltLR * 1.5; 
+			if(orientation.tiltLR != null && Math.abs(orientation.tiltLR)>sensitivity){
+				xPush += orientation.tiltLR; 
 			}
 		}
       
-		
 		if(xPush!=0 || yPush!=0 ){
-			//console.log("should move: "+xPush+" "+yPush);
 			that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
+			sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
 		}
 	}
 	
 	//Move player around
 	this.pushPlayerShape = function(shapeID,xPush,yPush){
+		var force=30;
+		//Anti cheat on server side
+		if(xPush<0){
+			xPush=-force;
+		}else if(xPush>0){
+			xPush=force;
+		}
+		
+		if(yPush<0){
+			yPush=-force;
+		}else if(yPush>0){
+			yPush=force;
+		}
+		
 		var myDisk = bodies[shapeID];
 		if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
 			myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
@@ -351,7 +362,8 @@ var Engine = function() {
 	}
 	
 	//Set x and y position of player
-	this.setPlayerShapePosition = function(shapeID,x,y){
+	//TODO remove if not used
+	var setPlayerShapePosition = function(shapeID,x,y){
 		var myDisk = bodies[shapeID];
 		if(myDisk!= null){
 			myDisk.SetPosition(new b2Vec2(x,y));
@@ -359,7 +371,8 @@ var Engine = function() {
 	}
 	
 	//Set velocity of player
-	this.setPlayerShapeVelocity = function(shapeID,vx,vy){
+	//TODO remove if not used
+	var setPlayerShapeVelocity = function(shapeID,vx,vy){
 		var myDisk = bodies[shapeID];
 		if(myDisk!= null){
 			myDisk.SetLinearVelocity(new b2Vec2(x,y));
@@ -367,11 +380,19 @@ var Engine = function() {
 	}
 	
 	//Set position and velocity of player
-	this.setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
-		var myDisk = bodies[shapeID];
-		if(myDisk!= null){
-			myDisk.SetPosition(new b2Vec2(x,y));
-			myDisk.SetLinearVelocity(new b2Vec2(x,y));
+	var setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
+		var targetPlayerShape = bodies[shapeID];
+		if(targetPlayerShape!= null){
+			//Convergence
+			if(getDistance(x,y,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
+				targetPlayerShape.SetPosition(new b2Vec2(x,y));
+			}
+			
+			if(vx==0 && vy==0){
+				shapes[shapeID].isFalling=false;
+			}
+			
+			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
 		}
 	}
 	
@@ -385,6 +406,7 @@ var Engine = function() {
             isStatic: true,
             isSensor: true
         });
+		that.shrinkGroundToRadius(r);
 	}
 	
 	//Shrink platform
@@ -397,11 +419,12 @@ var Engine = function() {
         }
 	}
 	
+	//Shrinks platform to a target radius
 	this.shrinkGroundToRadius = function(radius){
 		shapes["id_Ground"].radius = radius;
 		bodies["id_Ground"].radius = radius;
-		//Fixture will determine where the player will drop
-		bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius);
+		//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
+		bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius-GameConstants.PLAYER_RADIUS);
 		//Change color of ground everytime it shrinks
 		shapes["id_Ground"].color = getRandomColor();
 	}
@@ -629,6 +652,7 @@ var Engine = function() {
 	}
 	//End of Shape creation------------------------------------------------------------------
 
+	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
 		if(world.IsLocked()){
 			bol_Stop = true;
@@ -642,7 +666,8 @@ var Engine = function() {
 			checkToDestroy();
 		}
 	}
-		
+	
+	//Set the current player's shapeID
 	this.setPlayerShapeID = function(id){
 		if(id!=null){
 			currentPlayerShapeID = id;
@@ -651,9 +676,55 @@ var Engine = function() {
 		}
 	}
 	
+	//Set the displayName of a shape with shapeID
 	this.setShapeName = function(shapeID, name){
 		shapes[shapeID].displayName = name;
 	}
+	
+	//Used for server to generate states (x,y,vx,vy) to send to players
+	this.getPlayerStates = function(){
+		var playerStatesArray = [];
+		for(var i in bodies){
+			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
+				playerStatesArray.push({shapeID: bodies[i].GetUserData(), x: bodies[i].GetPosition().x, y: bodies[i].GetPosition().y, vx: bodies[i].GetLinearVelocity().x, vy: bodies[i].GetLinearVelocity().y, isFalling: shapes[i].isFalling});
+			}
+		}
+		return playerStatesArray;
+	}
+	
+	this.updatePlayerStates = function(playerStates){
+		//Update for client side only
+		if(that.bol_Server){
+			return;
+		}
+		for(var i=0; i<playerStates.length; i++){
+			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
+			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling && playerStates[i].isFalling==true){
+				//Set fallDirection for drawing properly behind or infront the ground
+				if(shapes[playerStates[i].shapeID].y>shapes["id_Ground"].y){
+					shapes[playerStates[i].shapeID].fallDirection = 1;
+				}else{
+					shapes[playerStates[i].shapeID].fallDirection = -1;
+				}
+				
+				shapes[playerStates[i].shapeID].isFalling = true;
+			
+			}
+		}
+	}
+	
+	var getDistance = function(x1,y1,x2,y2){
+		var dx = x1-x2;
+		var dy = y1-y2;
+		return Math.sqrt(dx*dx + dy*dy);
+	}
+	
+	//For Client only
+	var sendToServer = function(msg){
+		if(!that.bol_Server && global.engineSocket!=null){
+			global.engineSocket.send(JSON.stringify(msg));
+		}
+	}	
 	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){

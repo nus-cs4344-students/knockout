@@ -102,22 +102,32 @@ function GameSession(id) {
 	gameEngine.start();
 	game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
 	if(game_Mode==0){
-			//Classic Ground Shrink Mode
-			setInterval(function() {
+		//Classic Ground Shrink Mode
+		setInterval(function() {
 			game_Platform_Radius-=0.1;
 			gameEngine.shrinkGroundToRadius(game_Platform_Radius);
-			that.broadcast({type:"updateGame", groundRadius: game_Platform_Radius});
-			}, 2000);
+			that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});
+		}, 2000);
 	}else{
 		//Points Mode
 	}
+	updateServerStates();
   }
   
-  var updatePlayerGameStates = function(){
-	//TODO
+  var updateServerStates = function(){
 	if(bol_gameHasEnded==false){
-		setTimeout(updatePlayerGameStates, GameConstants.FRAME_RATE);
-	
+		//Every frame update player position
+		setTimeout(updateServerStates, GameConstants.FRAME_RATE);
+		that.broadcast({type:"updatePlayerStates", playerStates: gameEngine.getPlayerStates()});
+	}
+  }
+  
+  this.updatePlayerState = function(playerID, playerState){
+	for(var i=0;i<playersArray.length;i++){
+		if(playersArray[i].playerID == playerID){
+			gameEngine.pushPlayerShape(GameConstants.SHAPE_NAME+(i+1),playerState.moveX,playerState.moveY);
+			break;
+		}
 	}
   }
   

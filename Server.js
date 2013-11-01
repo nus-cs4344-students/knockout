@@ -133,14 +133,21 @@ function Server(){
               break;
                          
             case "startGame":
-              //Has to make all of them start at the same time
-              var currentGameSession = currentPlayer.currentGameSession;
-              if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
+				//Has to make all of them start at the same time
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
 				//Game updates all handled by GameSession
-                currentGameSession.startGame();
-                gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
-              }
-              break;
+				currentGameSession.startGame();
+				gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+				}
+			break;
+			  
+			case "updatePlayerState":
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
+					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
+				}
+			break;
                          
             default:
               //Report unknown message type
