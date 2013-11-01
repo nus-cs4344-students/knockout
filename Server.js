@@ -136,8 +136,8 @@ function Server(){
               //Has to make all of them start at the same time
               var currentGameSession = currentPlayer.currentGameSession;
               if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
-                currentGameSession.bol_isPlaying = true;
-                currentGameSession.broadcast({type:"startGame"});
+				//Game updates all handled by GameSession
+                currentGameSession.startGame();
                 gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
               }
               break;

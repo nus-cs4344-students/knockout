@@ -9,6 +9,7 @@ function Client(){
   var playerName="";
   var playerID;
   var currentSessionID=null;
+  var gameEngine=null;
 
   var sendToServer = function(msg){
     socket.send(JSON.stringify(msg));
@@ -260,7 +261,7 @@ function Client(){
         if(currentSession!=null){
           $('#btn_start').tooltip('close');
           if(currentSession.abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS){
-            $('#btn_start').prop('title', 'Require 4 players to start the game');
+            $('#btn_start').prop('title', 'Require '+GameConstants.NUM_OF_PLAYERS+' players to start the game');
             $('#btn_start').tooltip('open');
           }else if(currentSession.abstractPlayersArray.length != currentSession.abstractReadyArray.length){
             $('#btn_start').prop('title', 'Not All Players Are Ready Yet');
@@ -346,7 +347,7 @@ function Client(){
     //TODO start binding onto gaming keys
     $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
 
-	var gameEngine = new Engine();
+	gameEngine = new Engine();
 	gameEngine.init();
 	gameEngine.start('canvas');
 	
@@ -547,12 +548,23 @@ function Client(){
             break;
             
             case "updateGame":
+				if(gameEngine==null || gameEngine == 'undefined'){
+					console.log("updateGame but gameEngine does not exist");
+					break;
+				}
+				
                 //update the game values
+				if(message.groundRadius){
+					gameEngine.shrinkGroundToRadius(message.groundRadius);
+				}
+
                 //TODO
             break;
             
             default: 
-                //TODO un-handled message type, show error
+				//un-handled message type, show error
+				console.log("Unknown message type");
+				console.log(message);
             break;
             }
         }
@@ -580,6 +592,7 @@ function Client(){
   }
 
   var sendStartGame = function(){
+	console.log("sendToServer: startGame");
     sendToServer({type:"startGame"});
   }
 
