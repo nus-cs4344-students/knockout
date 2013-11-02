@@ -125,12 +125,20 @@ function Server(){
               break;
             
             case "toggleReady":
-              var currentGameSession = currentPlayer.currentGameSession;
-              if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
-                currentGameSession.togglePlayerReady(currentPlayer);
-                currentGameSession.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
-              }
-              break;
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
+					currentGameSession.togglePlayerReady(currentPlayer);
+					currentGameSession.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+				}
+            break;
+			  
+			case "toggleGameMode":
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
+					currentGameSession.toggleGameMode();
+					currentGameSession.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+				}
+			break;
                          
             case "startGame":
 				//Has to make all of them start at the same time

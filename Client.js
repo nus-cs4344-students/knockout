@@ -277,6 +277,10 @@ function Client(){
       $('#btn_ready').button().click( function(event){
         toggleReady();
       });
+	  
+	  $('#btn_mode').button().click( function(event){
+        toggleGameMode();
+      });
 
       refreshSessionPlayersDisplay();
     });
@@ -466,6 +470,7 @@ function Client(){
                     }
                     newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
+					newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                 }
                 refreshSessionDisplay();
@@ -493,14 +498,26 @@ function Client(){
                     tempGameSession.abstractPlayersArray = playerList;
                     tempGameSession.abstractReadyArray = message.content.readyIDs;
                     tempGameSession.bol_isPlaying = message.content.isPlaying;
+					tempGameSession.game_Mode = message.content.gameMode;
                     console.log("edit game session");
                     
+					//if in current session, change button contents
                     if(currentSessionID!=null && message.content.id == currentSessionID){
                         if($('#btn_start').length>0){
                             //refresh tooltip if current game session has updates
                             $('#btn_start').tooltip('close');
                             $('#btn_start').prop('title','');
                         }
+						if('#btn_mode'.length>0){
+							//need include span otherwise the UI will mess up
+							if(message.content.gameMode==0){
+								$('#btn_mode span').text('Classic');
+							}else if(message.content.gameMode==1){
+								$('#btn_mode span').text('Points');
+							}else{
+								$('#btn_mode span').text('Unknown');
+							}
+						}
                     }
                 }else{
                     //create new session
@@ -508,6 +525,7 @@ function Client(){
                     newAbstractGameSession.abstractPlayersArray = playerList;
                     newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
+					newAbstractGameSession.game_Mode = message.content.gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                     console.log("create new game session");
                 }
@@ -599,6 +617,10 @@ function Client(){
     sendToServer({type:"toggleReady"});
   }
 
+  var toggleGameMode = function(){
+	sendToServer({type:"toggleGameMode"});
+  }
+  
   var sendStartGame = function(){
 	console.log("sendToServer: startGame");
     sendToServer({type:"startGame"});

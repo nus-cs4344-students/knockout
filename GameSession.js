@@ -70,6 +70,14 @@ function GameSession(id) {
     }
   }
   
+  this.toggleGameMode = function(){
+	if(game_Mode==0){
+		game_Mode=1;
+	}else{
+		game_Mode=0;
+	}
+  }
+  
   this.removePlayer = function(player){
     for (var i=0; i<playersArray.length; i++){
       if(playersArray[i].playerID==player.playerID){
@@ -148,7 +156,7 @@ function GameSession(id) {
     for (var i=0; i<playersArray.length; i++){
       playerIDs.push(playersArray[i].playerID);
     }
-    return {id: this.sessionID , name:this.sessionName, 'playerIDs':playerIDs, 'readyIDs':readyArray, 'isPlaying':this.bol_isPlaying};
+    return {id: this.sessionID , name:this.sessionName, 'playerIDs':playerIDs, 'readyIDs':readyArray, 'isPlaying':this.bol_isPlaying, 'gameMode':game_Mode};
   }
 }
 
