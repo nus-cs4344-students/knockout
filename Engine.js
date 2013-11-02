@@ -33,6 +33,7 @@ var Engine = function() {
 	var img_Penguin_R;
 	var img_Bear_L;
 	var img_Bear_R;
+	var pattern_Platform;
 	var currentPlayerShapeID;
 	var bol_Stop;
 	this.bol_Server = false;
@@ -162,10 +163,6 @@ var Engine = function() {
 		ctx.canvas.height = window.innerHeight-scrollbarSizeFix;
 		WORLD_WIDTH = window.innerWidth-scrollbarSizeFix;
 		WORLD_HEIGHT = window.innerHeight-scrollbarSizeFix;
-		
-		//Do not modify GameConstants, it should remain constant
-		//GameConstants.CANVAS_WIDTH = window.innerWidth;
-		//GameConstants.CANVAS_HEIGHT = window.innerHeight;
 	}
 	
 	var preloadImages = function(){
@@ -175,6 +172,7 @@ var Engine = function() {
 		img_Penguin_R = new Image();
 		img_Bear_L = new Image();
 		img_Bear_R = new Image();
+		pattern_Platform = new Image();
 		//preload images for chrome
 		img_Seal_L.src = '/images/Seal-L.png';
 		img_Seal_R.src = '/images/Seal-R.png';
@@ -182,17 +180,19 @@ var Engine = function() {
 		img_Penguin_R.src = '/images/Penguin-R.png';
 		img_Bear_L.src = '/images/Bear-L.png';
 		img_Bear_R.src = '/images/Bear-R.png';
+		pattern_Platform.src = '/images/snowGround.png';
 	}
 	
 	var draw = function(){	
 		if (!debug){
-			ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+			//Paint background over
+			ctx.fillStyle='#81BDF9';
+			ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 		}else{
 			world.DrawDebugData();
 		}
 		
 		var drawOrder = getDrawOrder();
-		
 		//Draw the drawOrder
 		for(var i in drawOrder){
 			//Change to side view          
@@ -202,6 +202,8 @@ var Engine = function() {
 			drawOrder[i].draw();
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawDisplayNameOnShape(drawOrder[i]);
+			}else{
+				drawGround();
 			}
 			ctx.restore();
 			//Draw sprites on circles
@@ -782,23 +784,10 @@ var Engine = function() {
 		
 		var spriteWidth  = 100,
 			spriteHeight = 100,
-			pixelsLeft   = 0,
-			pixelsTop    = 0,
-
+			//multiply by default scale so that afterwards the scaling will convert it back to normal values
 			canvasPosX   = (shape.x*DEFAULT_SCALE-(spriteWidth/2));
 			canvasPosY   = (shape.y*DEFAULT_SCALE+spriteHeight)*0.5;
 			
-		//For more complex sprite
-		/*ctx.drawImage(img,
-			pixelsLeft,
-			pixelsTop,
-			spriteWidth,
-			spriteHeight,
-			canvasPosX,
-			canvasPosY,
-			spriteWidth,
-			spriteHeight
-		);*/
 		ctx.save();
 		//Scale the image according to UI Scaling
 		ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
@@ -814,10 +803,21 @@ var Engine = function() {
 		if(shape.displayName.length>0){
 			ctx.save();
 			ctx.font= SCALE+"px Segoe UI";
-			ctx.fillStyle = "#FFFFFF";
+			ctx.fillStyle = "#808080";
 			ctx.fillText(shape.displayName,(shape.x-shape.displayName.length/4)*SCALE,(shape.y+shape.radius*1.5)*SCALE);
 			ctx.restore();
 		}
+	}
+
+	var drawGround = function(){
+		
+		ctx.save();
+		ctx.fillStyle=ctx.createPattern(pattern_Platform,"repeat");
+        ctx.beginPath();
+        ctx.arc(shapes['id_Ground'].x * SCALE, shapes['id_Ground'].y * SCALE, shapes['id_Ground'].radius * SCALE, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.fill();
+		ctx.restore();
 	}
 }
 

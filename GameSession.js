@@ -104,10 +104,13 @@ function GameSession(id) {
 	if(game_Mode==0){
 		//Classic Ground Shrink Mode
 		setInterval(function() {
-			game_Platform_Radius-=0.1;
-			gameEngine.shrinkGroundToRadius(game_Platform_Radius);
-			that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});
+			if(game_Platform_Radius>1.5){
+				game_Platform_Radius-=0.1;
+				gameEngine.shrinkGroundToRadius(game_Platform_Radius);
+				that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});
+			}
 		}, 2000);
+		
 	}else{
 		//Points Mode
 	}
