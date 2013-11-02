@@ -548,6 +548,7 @@ function Client(){
                 setTimeout(function() {initGame();}, 5000);
             break;
             
+			//Update from server of game variables such as points, platform radius etc
             case "updateGameStates":
 				if(gameEngine==null || gameEngine == 'undefined'){
 					console.log("updateGameStates but gameEngine does not exist");
@@ -558,21 +559,7 @@ function Client(){
 					gameEngine.shrinkGroundToRadius(message.groundRadius);
 				}
 
-            //client receives an update of position of other players from server 
-            case "updatePosition":
-                var player = message.player;
-
-                var currentSession = getSessionWithID(currentSessionID);
-                if(currentSession!=null){
-                  for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
-                    if(currentSession.abstractPlayersArray[i].playerID == player){
-                      currentSession.abstractPlayersArray[i].posX = message.px;
-                      currentSession.abstractPlayersArray[i].posY = message.px;
-                    }                    
-                  }
-                }
-            break;
-			
+            //Update from server of player positions and speed
 			case "updatePlayerStates":
 				if(gameEngine==null || gameEngine == 'undefined'){
 					console.log("updatePlayerStates but gameEngine does not exist");
@@ -624,10 +611,6 @@ function Client(){
   var leaveGameSession = function(){
     sendToServer({type:"leaveGameSession"});
     currentSessionID=null;
-  }
-
-  var updateMyPosition = function(playerID, playerx, playery){
-    sendToServer({type: "updateMyPosition", player: playerID, px: playerx, py: playery});
   }
 
   var getPlayerWithID = function(id){

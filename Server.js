@@ -133,29 +133,22 @@ function Server(){
               break;
                          
             case "startGame":
-      				//Has to make all of them start at the same time
-      				var currentGameSession = currentPlayer.currentGameSession;
-      				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
-      				//Game updates all handled by GameSession
-      				currentGameSession.startGame();
-      				gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
-      				}
-			       break;
-			  
-        			case "updatePlayerState":
-        				var currentGameSession = currentPlayer.currentGameSession;
-        				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
-        					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
-        				}
-        			break;
+				//Has to make all of them start at the same time
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
+				//Game updates all handled by GameSession
+				currentGameSession.startGame();
+				gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+				}
+			break;
+
+			case "updatePlayerState":
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
+					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
+				}
+			break;
             
-            //client sends server update in its position
-            case "updateMyPosition":
-              var currentGameSession = currentPlayer.currentGameSession;
-              //server broadcasts to all players in that game session the new position of the player
-              currentGameSession.broadcast({type:"updatePosition", player: message.player, px: message.playerx, py: message.playery});
-            break;
-                         
             default:
               //Report unknown message type
               console.log("unknown message type");
