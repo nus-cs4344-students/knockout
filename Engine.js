@@ -24,8 +24,6 @@ var Engine = function() {
 	
 	var debug = false;
 	var that = this;
-	var PLATFORM_RADIUS = 10;
-	var PLAYER_RADIUS = 1.4;
 	var img_Seal_L;
 	var img_Seal_R;
 	var img_Penguin_L;
@@ -34,6 +32,7 @@ var Engine = function() {
 	var img_Bear_R;
 	var currentPlayerShapeID;
 	var bol_Stop;
+	this.bol_Server = false;
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -89,7 +88,7 @@ var Engine = function() {
         world.SetContactListener(listener);
 
 		
-        if (window.DeviceOrientationEvent) {
+        if (!that.bol_Server && window.DeviceOrientationEvent) {
           window.addEventListener('deviceorientation', function(eventData) {
             orientation = {
               // gamma is the left-to-right tilt in degrees, where right is positive
@@ -105,36 +104,38 @@ var Engine = function() {
 	
 	this.start = function(id){
 		bol_Stop = false;
-		preloadImages();
-		setCanvas(id);
+		if(!that.bol_Server){
+			preloadImages();
+			setCanvas(id);
+		}
 
         box2d.create.world();
         box2d.create.defaultFixture();
 		
 		//Create Ground
-		createGround(PLATFORM_RADIUS);
+		createGround(GameConstants.PLATFORM_RADIUS);
 		
 		//Must evenly space out players
 		var angle = 360/GameConstants.NUM_OF_PLAYERS;
 		//Create circles according to number of player
 		for(var i=1;i<=GameConstants.NUM_OF_PLAYERS;i++){
 			addCircle({
-				radius: PLAYER_RADIUS,
+				radius: GameConstants.PLAYER_RADIUS,
 				color: getRandomColor(),
-				x:shapes["id_Ground"].x + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
-				y:shapes["id_Ground"].y + (PLATFORM_RADIUS-PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
+				x:shapes["id_Ground"].x + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
+				y:shapes["id_Ground"].y + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
 				id: GameConstants.SHAPE_NAME+i,
 			});
 		}		
 		
 		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
 		currentPlayerShapeID = 'playerDisk1';
-		that.setShapeName(currentPlayerShapeID,"omgbbqthisismadness");
+		that.setShapeName(currentPlayerShapeID,"omg test bbq");
 
         setupCallbacks();
 		
-		that.animate();
-		window.setInterval(shrinkGround, 2000);
+		//update will auto setTimeout recursively
+		update();
 	}
 	
 	var setCanvas = function(id){
@@ -142,14 +143,6 @@ var Engine = function() {
         ctx = canvas.getContext("2d");
         //ctx.canvas.width = window.innerWidth;
 		//ctx.canvas.height = window.innerHeight;
-	}
-	
-	this.animate = function(){
-		if(bol_Stop==false){
-			//only perform when rendering frame from browser is available
-			requestAnimFrame( that.animate );
-			update();
-		}
 	}
 	
 	var preloadImages = function(){
@@ -168,23 +161,24 @@ var Engine = function() {
 		img_Bear_R.src = '/images/Bear-R.png';
 	}
 	
-	var draw = function(){
+	var draw = function(){	
 		if (!debug){
 			ctx.clearRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+		}else{
+			world.DrawDebugData();
 		}
 		
 		var drawOrder = getDrawOrder();
 		
 		//Draw the drawOrder
 		for(var i in drawOrder){
-			// change to side view          
+			//Change to side view          
 			ctx.save();
-			//ctx.rotate(45 * Math.PI /180);
 			ctx.scale(1, 0.5);
 			ctx.translate(0, GameConstants.CANVAS_HEIGHT/2);
 			drawOrder[i].draw();
 			ctx.restore();
-			//testing
+			//Draw sprites on circles
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawSpriteOnShape(drawOrder[i]);
 			}
@@ -258,19 +252,21 @@ var Engine = function() {
 	}
 	
 	var update = function(){
-		world.Step(1 / 60, 10, 10);
-		world.ClearForces();
-
-		draw();
-		if (debug){
-			world.DrawDebugData();
+		if(bol_Stop==false){
+			//http://stackoverflow.com/questions/729921/settimeout-or-setinterval
+			setTimeout(update,GameConstants.FRAME_RATE);
+			world.Step(1 / 60, 10, 10);
+			world.ClearForces();
+			checkToDestroy();
+			updateShapeUIFromBox2D();
+			updateCustomGravity();
+			resetPositionAfterFall();
+			
+			if(!that.bol_Server){
+				checkKeysAndOrientation();
+				draw();
+			}
 		}
-		
-		checkToDestroy();
-		updateShapeUIFromBox2D();
-		updateCustomGravity();
-		checkKeysAndOrientation();
-		resetPositionAfterFall();
 	}
 	
 	//Checks to see which object is in destroy_list and must be removed from game
@@ -310,43 +306,95 @@ var Engine = function() {
 	var checkKeysAndOrientation = function(){
 		var xPush=0;
 		var yPush=0;
-		var force = 30;
 		
+		//The numbers here do not determine the force
 		if(Key.isDown(Key.LEFT)){
-			xPush -= force;
-		}
-		
-		if(Key.isDown(Key.RIGHT)){
-			xPush += force;
+			xPush = -1;
+		}else if(Key.isDown(Key.RIGHT)){
+			xPush = 1;
 		}
 		
 		if(Key.isDown(Key.UP)){
-			yPush -= force;
-		}
-		
-		if(Key.isDown(Key.DOWN)){
-			yPush += force;
+			yPush = -1;
+		}else if(Key.isDown(Key.DOWN)){
+			yPush = +1;
 		}
 		
 		if(window.DeviceOrientationEvent && orientation != undefined){
+			//Tweak sensitivity here
+			var sensitivity = 10;
+			
 			//Front Back tilt (front is positive)
-			if(orientation.tiltFB != null){
-				yPush -= orientation.tiltFB * 1.5;
+			if(orientation.tiltFB != null && Math.abs(orientation.tiltFB)>sensitivity){
+				yPush -= orientation.tiltFB;
 			}
 			
 			//Left Right tilt (right is positive)
-			if(orientation.tiltLR != null){
-				xPush += orientation.tiltLR * 1.5; 
+			if(orientation.tiltLR != null && Math.abs(orientation.tiltLR)>sensitivity){
+				xPush += orientation.tiltLR; 
 			}
 		}
       
-		
 		if(xPush!=0 || yPush!=0 ){
-			//console.log("should move: "+xPush+" "+yPush);
-			var myDisk = bodies[currentPlayerShapeID];
-			if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
-				myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
+			that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
+			sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
+		}
+	}
+	
+	//Move player around
+	this.pushPlayerShape = function(shapeID,xPush,yPush){
+		var force=30;
+		//Anti cheat on server side
+		if(xPush<0){
+			xPush=-force;
+		}else if(xPush>0){
+			xPush=force;
+		}
+		
+		if(yPush<0){
+			yPush=-force;
+		}else if(yPush>0){
+			yPush=force;
+		}
+		
+		var myDisk = bodies[shapeID];
+		if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
+			myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
+		}
+	}
+	
+	//Set x and y position of player
+	//TODO remove if not used
+	var setPlayerShapePosition = function(shapeID,x,y){
+		var myDisk = bodies[shapeID];
+		if(myDisk!= null){
+			myDisk.SetPosition(new b2Vec2(x,y));
+		}
+	}
+	
+	//Set velocity of player
+	//TODO remove if not used
+	var setPlayerShapeVelocity = function(shapeID,vx,vy){
+		var myDisk = bodies[shapeID];
+		if(myDisk!= null){
+			myDisk.SetLinearVelocity(new b2Vec2(x,y));
+		}
+	}
+	
+	//Set position and velocity of player
+	var setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
+		var targetPlayerShape = bodies[shapeID];
+		if(targetPlayerShape!= null){
+			//Convergence
+			if(getDistance(x,y,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
+				targetPlayerShape.SetPosition(new b2Vec2(x,y));
 			}
+			
+			if(vx==0 && vy==0){
+				shapes[shapeID].isFalling=false;
+			}
+			
+			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
 		}
 	}
 	
@@ -360,6 +408,7 @@ var Engine = function() {
             isStatic: true,
             isSensor: true
         });
+		that.shrinkGroundToRadius(r);
 	}
 	
 	//Shrink platform
@@ -368,13 +417,18 @@ var Engine = function() {
 		var r = shapes["id_Ground"].radius;
         if (r > 1.5) {
 		  r = r-0.1;
-		  shapes["id_Ground"].radius = r;
-		  bodies["id_Ground"].radius = r;
-		  //Fixture will determine where the player will drop
-		  bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(r);
-		  //Change color of ground everytime it shrinks
-		  shapes["id_Ground"].color = getRandomColor();
+		  that.shrinkGroundToRadius(r);
         }
+	}
+	
+	//Shrinks platform to a target radius
+	this.shrinkGroundToRadius = function(radius){
+		shapes["id_Ground"].radius = radius;
+		bodies["id_Ground"].radius = radius;
+		//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
+		bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius-GameConstants.PLAYER_RADIUS);
+		//Change color of ground everytime it shrinks
+		shapes["id_Ground"].color = getRandomColor();
 	}
 	
 	//When sphere drops out of map, reset position to middle
@@ -388,7 +442,7 @@ var Engine = function() {
 				//Stop movements
 				b.SetAngularVelocity(0);
 				b.SetLinearVelocity(new b2Vec2(0,0));
-				b.SetPosition(new b2Vec2(canvas.width / SCALE / 2,canvas.height / SCALE / 2));
+				b.SetPosition(new b2Vec2(GameConstants.CANVAS_WIDTH / SCALE / 2,GameConstants.CANVAS_HEIGHT / SCALE / 2));
 				//Set back groupIndex to default 0 so that they will hit each other
 				b.GetFixtureList().SetFilterData(new b2FilterData);
 				//Update UI
@@ -600,6 +654,7 @@ var Engine = function() {
 	}
 	//End of Shape creation------------------------------------------------------------------
 
+	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
 		if(world.IsLocked()){
 			bol_Stop = true;
@@ -613,7 +668,8 @@ var Engine = function() {
 			checkToDestroy();
 		}
 	}
-		
+	
+	//Set the current player's shapeID
 	this.setPlayerShapeID = function(id){
 		if(id!=null){
 			currentPlayerShapeID = id;
@@ -622,9 +678,55 @@ var Engine = function() {
 		}
 	}
 	
+	//Set the displayName of a shape with shapeID
 	this.setShapeName = function(shapeID, name){
 		shapes[shapeID].displayName = name;
 	}
+	
+	//Used for server to generate states (x,y,vx,vy) to send to players
+	this.getPlayerStates = function(){
+		var playerStatesArray = [];
+		for(var i in bodies){
+			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
+				playerStatesArray.push({shapeID: bodies[i].GetUserData(), x: bodies[i].GetPosition().x, y: bodies[i].GetPosition().y, vx: bodies[i].GetLinearVelocity().x, vy: bodies[i].GetLinearVelocity().y, isFalling: shapes[i].isFalling});
+			}
+		}
+		return playerStatesArray;
+	}
+	
+	this.updatePlayerStates = function(playerStates){
+		//Update for client side only
+		if(that.bol_Server){
+			return;
+		}
+		for(var i=0; i<playerStates.length; i++){
+			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
+			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling && playerStates[i].isFalling==true){
+				//Set fallDirection for drawing properly behind or infront the ground
+				if(shapes[playerStates[i].shapeID].y>shapes["id_Ground"].y){
+					shapes[playerStates[i].shapeID].fallDirection = 1;
+				}else{
+					shapes[playerStates[i].shapeID].fallDirection = -1;
+				}
+				
+				shapes[playerStates[i].shapeID].isFalling = true;
+			
+			}
+		}
+	}
+	
+	var getDistance = function(x1,y1,x2,y2){
+		var dx = x1-x2;
+		var dy = y1-y2;
+		return Math.sqrt(dx*dx + dy*dy);
+	}
+	
+	//For Client only
+	var sendToServer = function(msg){
+		if(!that.bol_Server && global.engineSocket!=null){
+			global.engineSocket.send(JSON.stringify(msg));
+		}
+	}	
 	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
@@ -690,14 +792,5 @@ var Engine = function() {
 	}
 }
 
-
-window.requestAnimFrame = (function(){
-    return  window.requestAnimationFrame       || 
-            window.webkitRequestAnimationFrame || 
-            window.mozRequestAnimationFrame    || 
-            window.oRequestAnimationFrame      || 
-            window.msRequestAnimationFrame     || 
-            function( callback ){
-              window.setTimeout(callback, 1000 / 60);
-            };
-})();
+//For node js
+exports.Engine = Engine;
