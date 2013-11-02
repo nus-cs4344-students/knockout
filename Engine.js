@@ -20,7 +20,7 @@ var Engine = function() {
         orientation, //used for mobile devices
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
-		score = {p1:10, p2:10, p3:10, p4:10};
+		score = {p1:10, p2:10, p3:10, p4:10}; //for points mode
 	
 	var debug = false;
 	var that = this;
@@ -141,8 +141,11 @@ var Engine = function() {
 	var setCanvas = function(id){
 		canvas = document.getElementById(id);
         ctx = canvas.getContext("2d");
-        //ctx.canvas.width = window.innerWidth;
-		//ctx.canvas.height = window.innerHeight;
+
+        ctx.canvas.width = window.innerWidth;
+		ctx.canvas.height = window.innerHeight;
+		GameConstants.CANVAS_WIDTH = window.innerWidth;
+		GameConstants.CANVAS_HEIGHT = window.innerHeight;
 	}
 	
 	var preloadImages = function(){
@@ -326,7 +329,7 @@ var Engine = function() {
 			
 			//Front Back tilt (front is positive)
 			if(orientation.tiltFB != null && Math.abs(orientation.tiltFB)>sensitivity){
-				yPush -= orientation.tiltFB;
+				yPush += orientation.tiltFB;
 			}
 			
 			//Left Right tilt (right is positive)
@@ -430,7 +433,8 @@ var Engine = function() {
 		//Change color of ground everytime it shrinks
 		shapes["id_Ground"].color = getRandomColor();
 	}
-	
+
+	//for points mode
 	//When sphere drops out of map, reset position to middle
 	var resetPositionAfterFall = function(){
 		for (var b = world.GetBodyList(); b; b = b.m_next) {

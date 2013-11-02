@@ -3,7 +3,8 @@
   =====================================================*/
 var GameConstants = {
 	PORT : 8111,				// port of game
-	SERVER_NAME : "localhost",	// server name of game
+	//SERVER_NAME : "localhost",	// server name of game
+	SERVER_NAME : "192.168.2.8",	// server name of game
 	CANVAS_HEIGHT: 500,
 	CANVAS_WIDTH: 600,
 	SHAPE_NAME: 'playerDisk',
