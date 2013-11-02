@@ -185,7 +185,7 @@ var Engine = function() {
 		img_Bear_L.src = '/images/Bear-L.png';
 		img_Bear_R.src = '/images/Bear-R.png';
 		img_Eskimo_L.src = '/images/Eskimo-L.png';
-		img_Eskimo_R.src = '/images/Eskimo-L.png';
+		img_Eskimo_R.src = '/images/Eskimo-R.png';
 		pattern_Platform.src = '/images/snowGround.png';
 	}
 	
