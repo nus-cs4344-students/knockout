@@ -22,6 +22,7 @@ function GameSession(id) {
   var game_Mode = 0;
   var game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
   var bol_gameHasEnded = false;
+  var intervalShrink = null;
   var gameEngine;
   
   
@@ -102,12 +103,19 @@ function GameSession(id) {
 	gameEngine.start();
 	game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
 	if(game_Mode==0){
+		if(intervalShrink!=null){
+			clearInterval(intervalShrink);
+		}
 		//Classic Ground Shrink Mode
-		setInterval(function() {
+		intervalShrink = setInterval(function() {
+			//Shrink until a certain limit
 			if(game_Platform_Radius>1.5){
 				game_Platform_Radius-=0.1;
 				gameEngine.shrinkGroundToRadius(game_Platform_Radius);
 				that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});
+			}else{
+				clearInterval(intervalShrink);
+				intervalShrink = null;
 			}
 		}, 2000);
 		

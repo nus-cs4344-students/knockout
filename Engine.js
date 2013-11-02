@@ -33,6 +33,8 @@ var Engine = function() {
 	var img_Penguin_R;
 	var img_Bear_L;
 	var img_Bear_R;
+	var img_Eskimo_L;
+	var img_Eskimo_R;
 	var pattern_Platform;
 	var currentPlayerShapeID;
 	var bol_Stop;
@@ -172,6 +174,8 @@ var Engine = function() {
 		img_Penguin_R = new Image();
 		img_Bear_L = new Image();
 		img_Bear_R = new Image();
+		img_Eskimo_L = new Image();
+		img_Eskimo_R = new Image();
 		pattern_Platform = new Image();
 		//preload images for chrome
 		img_Seal_L.src = '/images/Seal-L.png';
@@ -180,6 +184,8 @@ var Engine = function() {
 		img_Penguin_R.src = '/images/Penguin-R.png';
 		img_Bear_L.src = '/images/Bear-L.png';
 		img_Bear_R.src = '/images/Bear-R.png';
+		img_Eskimo_L.src = '/images/Eskimo-L.png';
+		img_Eskimo_R.src = '/images/Eskimo-L.png';
 		pattern_Platform.src = '/images/snowGround.png';
 	}
 	
@@ -596,7 +602,7 @@ var Engine = function() {
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
 	  this.fallDirection = 0;
-	  this.sprite = Math.floor((Math.random()*3)+1); //return random number between 1 and 3
+	  this.sprite = Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
 	  
 	  //function to update coordinates from box2d bodies
@@ -754,6 +760,9 @@ var Engine = function() {
 		//Change image according to direction it is moving
 		if(bodies[shape.id].GetLinearVelocity().x>0){
 			switch(shape.sprite){
+				case 4:
+					img = img_Eskimo_R;
+					break;
 				case 3:
 					img = img_Bear_R;
 					break;
@@ -767,6 +776,9 @@ var Engine = function() {
 			}
 		}else{
 			switch(shape.sprite){
+				case 4:
+					img = img_Eskimo_L;
+					break;
 				case 3:
 					img = img_Bear_L;
 					break;
@@ -810,7 +822,6 @@ var Engine = function() {
 	}
 
 	var drawGround = function(){
-		
 		ctx.save();
 		ctx.fillStyle=ctx.createPattern(pattern_Platform,"repeat");
         ctx.beginPath();
