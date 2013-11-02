@@ -11,7 +11,8 @@ var Engine = function() {
 	var b2FilterData;
 	var world;
 	
-	var SCALE = 30,
+	var DEFAULT_SCALE = 30,
+		SCALE = DEFAULT_SCALE,
         destroy_list = [],
         canvas,
         ctx, //context of canvas
@@ -20,7 +21,9 @@ var Engine = function() {
         orientation, //used for mobile devices
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
-		score = {p1:10, p2:10, p3:10, p4:10}; //for points mode
+		score = {p1:10, p2:10, p3:10, p4:10}, //for points mode
+		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
+		WORLD_WIDTH = GameConstants.CANVAS_WIDTH;
 	
 	var debug = false;
 	var that = this;
@@ -142,10 +145,27 @@ var Engine = function() {
 		canvas = document.getElementById(id);
         ctx = canvas.getContext("2d");
 
-        ctx.canvas.width = window.innerWidth;
-		ctx.canvas.height = window.innerHeight;
-		GameConstants.CANVAS_WIDTH = window.innerWidth;
-		GameConstants.CANVAS_HEIGHT = window.innerHeight;
+		//Auto scale UI with window frame
+		var dw = window.innerWidth/ctx.canvas.width;
+		var dh = window.innerHeight/ctx.canvas.height;
+		var smaller;
+		if(dw<dh){
+			smaller = dw;
+		}else{
+			smaller = dh;
+		}
+		
+		//Firefox always render the scrollbar if it is totally full
+		var scrollbarSizeFix = 2;
+		SCALE = SCALE*smaller-scrollbarSizeFix;
+        ctx.canvas.width = window.innerWidth-scrollbarSizeFix;
+		ctx.canvas.height = window.innerHeight-scrollbarSizeFix;
+		WORLD_WIDTH = window.innerWidth-scrollbarSizeFix;
+		WORLD_HEIGHT = window.innerHeight-scrollbarSizeFix;
+		
+		//Do not modify GameConstants, it should remain constant
+		//GameConstants.CANVAS_WIDTH = window.innerWidth;
+		//GameConstants.CANVAS_HEIGHT = window.innerHeight;
 	}
 	
 	var preloadImages = function(){
@@ -166,7 +186,7 @@ var Engine = function() {
 	
 	var draw = function(){	
 		if (!debug){
-			ctx.clearRect(0, 0, GameConstants.CANVAS_WIDTH, GameConstants.CANVAS_HEIGHT);
+			ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 		}else{
 			world.DrawDebugData();
 		}
@@ -178,15 +198,18 @@ var Engine = function() {
 			//Change to side view          
 			ctx.save();
 			ctx.scale(1, 0.5);
-			ctx.translate(0, GameConstants.CANVAS_HEIGHT/2);
+			ctx.translate(0, WORLD_HEIGHT/2);
 			drawOrder[i].draw();
+			if(drawOrder[i] != shapes["id_Ground"]){
+				drawDisplayNameOnShape(drawOrder[i]);
+			}
 			ctx.restore();
 			//Draw sprites on circles
+			//Placed below here because we don't want previous ctx manupilation affect this
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawSpriteOnShape(drawOrder[i]);
 			}
 		}
-		
 		
 		//draw score
 		// ctx.font="40px Segoe UI";
@@ -405,8 +428,8 @@ var Engine = function() {
 	var createGround = function(r){
 		addCircle({
 			radius: r,
-            x: GameConstants.CANVAS_WIDTH / SCALE / 2,
-            y: GameConstants.CANVAS_HEIGHT / SCALE / 2,
+            x: WORLD_WIDTH / SCALE / 2,
+            y: WORLD_HEIGHT / SCALE / 2,
             id: "id_Ground",
             isStatic: true,
             isSensor: true
@@ -440,13 +463,13 @@ var Engine = function() {
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
 			//if it is out of screen for a long time
-			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (GameConstants.CANVAS_HEIGHT*2)/SCALE){
+			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (WORLD_HEIGHT*2)/SCALE){
 				shapes[b.GetUserData()].isFalling = false;
 				shapes[b.GetUserData()].fallDirection = 0;
 				//Stop movements
 				b.SetAngularVelocity(0);
 				b.SetLinearVelocity(new b2Vec2(0,0));
-				b.SetPosition(new b2Vec2(GameConstants.CANVAS_WIDTH / SCALE / 2,GameConstants.CANVAS_HEIGHT / SCALE / 2));
+				b.SetPosition(new b2Vec2(WORLD_WIDTH / SCALE / 2,WORLD_HEIGHT / SCALE / 2));
 				//Set back groupIndex to default 0 so that they will hit each other
 				b.GetFixtureList().SetFilterData(new b2FilterData);
 				//Update UI
@@ -604,16 +627,6 @@ var Engine = function() {
         ctx.closePath();
         ctx.fill();
 		ctx.restore();
-		
-		if(this.displayName.length>0){
-			ctx.save();
-			ctx.font="30px Segoe UI";
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillText(this.displayName,(this.x-this.displayName.length/4)*SCALE,(this.y+this.radius*1.5)*SCALE);
-			ctx.restore();
-		}
-		
-        
       };
     }
     Circle.prototype = Shape;
@@ -772,11 +785,9 @@ var Engine = function() {
 			pixelsLeft   = 0,
 			pixelsTop    = 0,
 
-			canvasPosX   = (shape.x*SCALE-spriteWidth/2);
-			canvasPosY   = (shape.y*SCALE+spriteHeight)*0.5;
+			canvasPosX   = (shape.x*DEFAULT_SCALE-(spriteWidth/2));
+			canvasPosY   = (shape.y*DEFAULT_SCALE+spriteHeight)*0.5;
 			
-		
-		
 		//For more complex sprite
 		/*ctx.drawImage(img,
 			pixelsLeft,
@@ -788,13 +799,27 @@ var Engine = function() {
 			spriteWidth,
 			spriteHeight
 		);*/
-
+		ctx.save();
+		//Scale the image according to UI Scaling
+		ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
 		ctx.drawImage(img,
 			canvasPosX,
 			canvasPosY
 		);
+		ctx.restore();
+	}
+
+	//Draw display name below the shape
+	var drawDisplayNameOnShape = function(shape){
+		if(shape.displayName.length>0){
+			ctx.save();
+			ctx.font= SCALE+"px Segoe UI";
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillText(shape.displayName,(shape.x-shape.displayName.length/4)*SCALE,(shape.y+shape.radius*1.5)*SCALE);
+			ctx.restore();
+		}
 	}
 }
 
-//For node js
+//For node js, not used on client side
 exports.Engine = Engine;

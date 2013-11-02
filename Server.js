@@ -167,8 +167,10 @@ function Server(){
             
       var httpServer = http.createServer(app);
       sock.installHandlers(httpServer, {prefix:'/knockout'});
-            
-      httpServer.listen(GameConstants.PORT, '0.0.0.0'); //TODO consider changing this to GameConstants.ServerName
+      
+	  //Do not change 0.0.0.0 to GameConstants.ServerName, seems to cause problems
+      httpServer.listen(GameConstants.PORT, '0.0.0.0');
+	  
       app.use(express.static(__dirname)); 
     }
     catch (e) {
