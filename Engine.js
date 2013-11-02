@@ -801,12 +801,16 @@ var Engine = function() {
 			canvasPosY   = (shape.y*DEFAULT_SCALE+spriteHeight)*0.5;
 			
 		ctx.save();
-		//Scale the image according to UI Scaling
-		ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
-		ctx.drawImage(img,
-			canvasPosX,
-			canvasPosY
-		);
+		try{
+			//Scale the image according to UI Scaling
+			ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
+			ctx.drawImage(img,
+				canvasPosX,
+				canvasPosY
+			);
+		}catch (e) {
+			console.log("Error in drawSprite: "+e);
+		}
 		ctx.restore();
 	}
 
@@ -823,11 +827,15 @@ var Engine = function() {
 
 	var drawGround = function(){
 		ctx.save();
-		ctx.fillStyle=ctx.createPattern(pattern_Platform,"repeat");
-        ctx.beginPath();
-        ctx.arc(shapes['id_Ground'].x * SCALE, shapes['id_Ground'].y * SCALE, shapes['id_Ground'].radius * SCALE, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.fill();
+		try{
+			ctx.fillStyle=ctx.createPattern(pattern_Platform,"repeat");
+			ctx.beginPath();
+			ctx.arc(shapes['id_Ground'].x * SCALE, shapes['id_Ground'].y * SCALE, shapes['id_Ground'].radius * SCALE, 0, Math.PI * 2, true);
+			ctx.closePath();
+			ctx.fill();
+		}catch (e) {
+			console.log("Error in drawGround: "+e);
+		}
 		ctx.restore();
 	}
 }
