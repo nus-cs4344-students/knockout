@@ -11,6 +11,9 @@ function Player(s, n, id){
 	this.currentGameSession = null;
 	this.playerID;
 	
+	this.posX;
+	this.posY;
+	
 	//constructor
 	this.socket = s;
 	this.playerName = n;

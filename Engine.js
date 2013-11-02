@@ -140,6 +140,8 @@ var Engine = function() {
 	var setCanvas = function(id){
 		canvas = document.getElementById(id);
         ctx = canvas.getContext("2d");
+        //ctx.canvas.width = window.innerWidth;
+		//ctx.canvas.height = window.innerHeight;
 	}
 	
 	this.animate = function(){
@@ -547,7 +549,7 @@ var Engine = function() {
 		
 		if(this.displayName.length>0){
 			ctx.save();
-			ctx.font="30px Comic Sans MS";
+			ctx.font="30px Segoe UI";
 			ctx.fillStyle = "#FFFFFF";
 			ctx.fillText(this.displayName,(this.x-this.displayName.length/4)*SCALE,(this.y+this.radius*1.5)*SCALE);
 			ctx.restore();

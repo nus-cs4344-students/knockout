@@ -549,8 +549,24 @@ function Client(){
             case "updateGame":
                 //update the game values
                 //TODO
+                
             break;
-            
+
+            //client receives an update of position of other players from server 
+            case "updatePosition":
+                var player = message.player;
+
+                var currentSession = getSessionWithID(currentSessionID);
+                if(currentSession!=null){
+                  for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
+                    if(currentSession.abstractPlayersArray[i].playerID == player){
+                      currentSession.abstractPlayersArray[i].posX = message.px;
+                      currentSession.abstractPlayersArray[i].posY = message.px;
+                    }                    
+                  }
+                }
+            break;
+
             default: 
                 //TODO un-handled message type, show error
             break;
@@ -590,6 +606,10 @@ function Client(){
   var leaveGameSession = function(){
     sendToServer({type:"leaveGameSession"});
     currentSessionID=null;
+  }
+
+  var updateMyPosition = function(playerID, playerx, playery){
+    sendToServer({type: "updateMyPosition", player: playerID, px: playerx, py: playery});
   }
 
   var getPlayerWithID = function(id){

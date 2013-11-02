@@ -141,6 +141,13 @@ function Server(){
                 gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
               }
               break;
+            
+            //client sends server update in its position
+            case "updateMyPosition":
+              var currentGameSession = currentPlayer.currentGameSession;
+              //server broadcasts to all players in that game session the new position of the player
+              currentGameSession.broadcast({type:"updatePosition", player: message.player, px: message.playerx, py: message.playery});
+            break;
                          
             default:
               //Report unknown message type
