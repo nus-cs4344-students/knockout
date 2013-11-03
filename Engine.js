@@ -23,7 +23,8 @@ var Engine = function() {
         bodies = {}, //body of box2d
 		score = {p1:10, p2:10, p3:10, p4:10}, //for points mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
-		WORLD_WIDTH = GameConstants.CANVAS_WIDTH;
+		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
+		gameMode;
 	
 	var debug = false;
 	var that = this;
@@ -40,7 +41,7 @@ var Engine = function() {
 	var bol_Stop;
 	this.bol_Server = false;
 	
-	this.init = function(){
+	this.init = function(game_Mode){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
 		b2BodyDef = Box2D.Dynamics.b2BodyDef;
 		b2Body = Box2D.Dynamics.b2Body;
@@ -51,6 +52,7 @@ var Engine = function() {
 		b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 		b2Listener = Box2D.Dynamics.b2ContactListener;
 		b2FilterData = Box2D.Dynamics.b2FilterData;
+		gameMode = game_Mode;//set game mode *******************************************************************************************
 	}
 	
 	var setupCallbacks = function(){
@@ -218,13 +220,17 @@ var Engine = function() {
 				drawSpriteOnShape(drawOrder[i]);
 			}
 		}
-		
-		//draw score
-		// ctx.font="40px Segoe UI";
-        // ctx.fillStyle = "#FFFFFF";
-        // ctx.fillText("p1: " + score.p1,100,750);
-        // ctx.fillText("p2: " + score.p2,300,750);
-        // ctx.fillText("p3: " + score.p3,500,750);
+		if(gameMode == 1)//points mode
+		{
+			//draw score
+			ctx.font="40px Lato";
+	        ctx.fillStyle = "#FFFFFF";
+	        ctx.fillText("p1: " + score.p1,10,50);
+	        ctx.fillText("p2: " + score.p2,10,100);
+	        ctx.fillText("p3: " + score.p3,10,150);
+	        ctx.fillText("p4: " + score.p4,10,200);
+
+    	}
 	}
 	
 	var getDrawOrder = function(){
@@ -294,7 +300,9 @@ var Engine = function() {
 			checkToDestroy();
 			updateShapeUIFromBox2D();
 			updateCustomGravity();
-			resetPositionAfterFall();
+			//for points mode only
+			if(gameMode==1)//***************************************************************************************************************************
+				resetPositionAfterFall();
 			
 			if(!that.bol_Server){
 				checkKeysAndOrientation();

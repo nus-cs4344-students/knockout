@@ -107,7 +107,7 @@ function GameSession(id) {
 	var Engine = require(LIB_PATH + "Engine.js").Engine;
 	gameEngine = new Engine();
 	gameEngine.bol_Server = true;
-	gameEngine.init();
+	gameEngine.init(game_Mode);//add game_Mode to the engine ****************************************************************************************
 	gameEngine.start();
 	game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
 	if(game_Mode==0){

@@ -353,7 +353,8 @@ function Client(){
 
 	gameEngine = new Engine();
 	global.engineSocket = socket;
-	gameEngine.init();
+  //TODO: get the game mode in client??
+	gameEngine.init(1);//points mode*******************************************************************************************************************
 	gameEngine.start('canvas');
 	
 	var currentSession = getSessionWithID(currentSessionID);
@@ -470,7 +471,7 @@ function Client(){
                     }
                     newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
-					newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
+					          newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                 }
                 refreshSessionDisplay();
@@ -498,7 +499,7 @@ function Client(){
                     tempGameSession.abstractPlayersArray = playerList;
                     tempGameSession.abstractReadyArray = message.content.readyIDs;
                     tempGameSession.bol_isPlaying = message.content.isPlaying;
-					tempGameSession.game_Mode = message.content.gameMode;
+					          tempGameSession.game_Mode = message.content.gameMode;
                     console.log("edit game session");
                     
 					//if in current session, change button contents
@@ -525,7 +526,7 @@ function Client(){
                     newAbstractGameSession.abstractPlayersArray = playerList;
                     newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
-					newAbstractGameSession.game_Mode = message.content.gameMode;
+					          newAbstractGameSession.game_Mode = message.content.gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                     console.log("create new game session");
                 }
