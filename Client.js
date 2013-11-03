@@ -354,9 +354,12 @@ function Client(){
 	gameEngine = new Engine();
 	global.engineSocket = socket;
   //TODO: get the game mode in client??
-	gameEngine.init(1);//points mode*******************************************************************************************************************
-	gameEngine.start('canvas');
-	
+  
+	gameEngine.init();//points mode*******************************************************************************************************************
+ //  var currentSession = getSessionWithID(currentSessionID);
+ //  console.log("gamemode: "+currentSession.game_Mode);
+	// gameEngine.start('canvas', currentSession.game_Mode);
+	gameEngine.start('canvas', 1);
 	var currentSession = getSessionWithID(currentSessionID);
 	if(currentSession!=null){
 		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){

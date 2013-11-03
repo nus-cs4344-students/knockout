@@ -41,7 +41,7 @@ var Engine = function() {
 	var bol_Stop;
 	this.bol_Server = false;
 	
-	this.init = function(game_Mode){
+	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
 		b2BodyDef = Box2D.Dynamics.b2BodyDef;
 		b2Body = Box2D.Dynamics.b2Body;
@@ -51,8 +51,7 @@ var Engine = function() {
 		b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 		b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 		b2Listener = Box2D.Dynamics.b2ContactListener;
-		b2FilterData = Box2D.Dynamics.b2FilterData;
-		gameMode = game_Mode;//set game mode *******************************************************************************************
+		b2FilterData = Box2D.Dynamics.b2FilterData;		
 	}
 	
 	var setupCallbacks = function(){
@@ -70,7 +69,18 @@ var Engine = function() {
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
-				
+				console.log(shapes[tempBody.GetUserData()]);
+				if(gameMode == 1)
+				{
+					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
+						score.p1--;
+					if(shapes[tempBody.GetUserData()].id=="playerDisk2")
+						score.p2--;
+					if(shapes[tempBody.GetUserData()].id=="playerDisk3")
+						score.p3--;
+					if(shapes[tempBody.GetUserData()].id=="playerDisk4")
+						score.p4--;
+				}
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
 					shapes[tempBody.GetUserData()].fallDirection = 1;
@@ -110,7 +120,8 @@ var Engine = function() {
         }
 	}
 	
-	this.start = function(id){
+	this.start = function(id, game_Mode){
+		gameMode = game_Mode;
 		bol_Stop = false;
 		if(!that.bol_Server){
 			preloadImages();
@@ -215,7 +226,7 @@ var Engine = function() {
 			}
 			ctx.restore();
 			//Draw sprites on circles
-			//Placed below here because we don't want previous ctx manupilation affect this
+			//Placed below here because we don't want previous ctx manipulation affect this
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawSpriteOnShape(drawOrder[i]);
 			}
