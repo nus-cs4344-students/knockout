@@ -7,3 +7,6 @@ knockout
 Requires Node.js
 npm install express
 npm install sockjs
+
+Limitations:
+Doesn't work on iOS chrome, the contact listener doesn't seem to work

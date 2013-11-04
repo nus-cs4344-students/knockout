@@ -182,8 +182,14 @@ var Engine = function() {
 		$(window).bind('resize', function() {
 			autoScaleWithScreenSize();
 		});
+		
+		//For mobile devices
+		$(window).bind('orientationchange', function(){
+			autoScaleWithScreenSize();
+		});
 	}
 	
+	//Auto determine the width and height to scale to
 	var autoScaleWithScreenSize = function(){
 		if(that.bol_Server){
 			//Server does not require scaling
@@ -195,6 +201,7 @@ var Engine = function() {
 		scaleScreenSize(windowWidth,windowHeight);
 	}
 	
+	//Scale canvas to target width and height
 	var scaleScreenSize = function(width,height){
 		if(that.bol_Server){
 			//Server does not require scaling
@@ -219,6 +226,7 @@ var Engine = function() {
 		WORLD_HEIGHT = height-scrollbarSizeFix;
 	}
 	
+	//preload Images to make it faster
 	var preloadImages = function(){
 		img_Seal_L = new Image();
 		img_Seal_R = new Image();
@@ -286,6 +294,7 @@ var Engine = function() {
 		ctx.restore();
 	}
 	
+	//Get the ordering to draw so that some images are behind other images (e.g. falling behind the platform)
 	var getDrawOrder = function(){
 		var behindGround = [];
 		var infrontGround = [];
@@ -418,15 +427,31 @@ var Engine = function() {
 		if(window.DeviceOrientationEvent && orientation != undefined){
 			//Tweak sensitivity here
 			var sensitivity = 10;
+			var normalFrontBackAdjustment = 30;
+			
+			var frontBack = orientation.tiltFB;
+			var LeftRight = orientation.tiltLR;
+			var mql = window.matchMedia("(orientation: portrait)");
+			if(mql!=null){
+				if(mql.matches){
+					frontBack = orientation.tiltFB;
+					LeftRight = orientation.tiltLR;
+				}else{
+					//swap for landscape
+					frontBack = -orientation.tiltLR;
+					LeftRight = orientation.tiltFB;
+				}
+			
+			}
 			
 			//Front Back tilt (front is positive)
-			if(orientation.tiltFB != null && Math.abs(orientation.tiltFB)>sensitivity){
-				yPush += orientation.tiltFB;
+			if(frontBack != null && Math.abs(frontBack-normalFrontBackAdjustment)>sensitivity){
+				yPush += frontBack-normalFrontBackAdjustment;
 			}
 			
 			//Left Right tilt (right is positive)
-			if(orientation.tiltLR != null && Math.abs(orientation.tiltLR)>sensitivity){
-				xPush += orientation.tiltLR; 
+			if(LeftRight != null && Math.abs(LeftRight)>sensitivity){
+				xPush += LeftRight; 
 			}
 		}
       
