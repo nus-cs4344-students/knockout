@@ -251,7 +251,6 @@ var Engine = function() {
 		}else{
 			world.DrawDebugData();
 		}
-		console.log(shapes['id_Ground'].x);
 		
 		var drawOrder = getDrawOrder();
 		//Draw the drawOrder
