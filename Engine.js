@@ -106,18 +106,31 @@ var Engine = function() {
         world.SetContactListener(listener);
 
 		
-        if (!that.bol_Server && window.DeviceOrientationEvent) {
-          window.addEventListener('deviceorientation', function(eventData) {
-            orientation = {
-              // gamma is the left-to-right tilt in degrees, where right is positive
-              tiltLR: eventData.gamma,
-              // beta is the front-to-back tilt in degrees, where front is positive
-              tiltFB: eventData.beta,
-              // alpha is the compass direction the device is facing in degrees
-              dir: eventData.alpha
-            };
-          }, false);
-        }
+        if (!that.bol_Server){
+		
+			if(window.DeviceOrientationEvent) {
+				window.addEventListener('deviceorientation', function(eventData) {
+					orientation = {
+					  // gamma is the left-to-right tilt in degrees, where right is positive
+					  tiltLR: eventData.gamma,
+					  // beta is the front-to-back tilt in degrees, where front is positive
+					  tiltFB: eventData.beta,
+					  // alpha is the compass direction the device is facing in degrees
+					  dir: eventData.alpha
+					};
+				  }, false);
+			}
+			
+			//Auto resize when window size has been changed
+			$(window).bind('resize', function() {
+				autoScaleWithScreenSize();
+			});
+			
+			//For mobile devices
+			$(window).bind('orientationchange', function(){
+				autoScaleWithScreenSize();
+			});
+		}
 	}
 	
 	this.start = function(id, game_Mode){
@@ -177,16 +190,6 @@ var Engine = function() {
         ctx = canvas.getContext("2d");
 		
 		autoScaleWithScreenSize();
-		
-		//Auto resize when window size has been changed
-		$(window).bind('resize', function() {
-			autoScaleWithScreenSize();
-		});
-		
-		//For mobile devices
-		$(window).bind('orientationchange', function(){
-			autoScaleWithScreenSize();
-		});
 	}
 	
 	//Auto determine the width and height to scale to
@@ -194,9 +197,14 @@ var Engine = function() {
 		if(that.bol_Server){
 			//Server does not require scaling
 			return;
-		}		
+		}
+	
 		var windowHeight = window.innerHeight;
 		var windowWidth = window.innerWidth;
+		
+		//For mobile devices
+		var viewport = document.getElementsByName('viewport')[0];
+		viewport.setAttribute('content', 'width = ' + windowWidth + ', minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
 		
 		scaleScreenSize(windowWidth,windowHeight);
 	}
@@ -424,7 +432,7 @@ var Engine = function() {
 			yPush = +1;
 		}
 		
-		if(window.DeviceOrientationEvent && orientation != undefined){
+		if(window.DeviceOrientationEvent && orientation!= undefined && navigator.appVersion.indexOf("Mobile")>-1){
 			//Tweak sensitivity here
 			var sensitivity = 10;
 			var normalFrontBackAdjustment = 30;
