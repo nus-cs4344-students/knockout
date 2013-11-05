@@ -127,8 +127,10 @@ function GameSession(id) {
 			}
 		}, 2000);
 		
-	}else{
+	}else if(game_Mode==1){
 		//Points Mode
+	}else{
+		console.log('Unknown Game Mode found');
 	}
 	updateServerStates();
   }
@@ -141,6 +143,7 @@ function GameSession(id) {
 	}
   }
   
+  //For client to server communication
   this.updatePlayerState = function(playerID, playerState){
 	for(var i=0;i<playersArray.length;i++){
 		if(playersArray[i].playerID == playerID){

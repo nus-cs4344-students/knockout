@@ -248,15 +248,15 @@ var Engine = function() {
 		img_Eskimo_R = new Image();
 		pattern_Platform = new Image();
 		//preload images for chrome
-		img_Seal_L.src = '/images/Seal-L.png';
-		img_Seal_R.src = '/images/Seal-R.png';
-		img_Penguin_L.src = '/images/Penguin-L.png';
-		img_Penguin_R.src = '/images/Penguin-R.png';
-		img_Bear_L.src = '/images/Bear-L.png';
-		img_Bear_R.src = '/images/Bear-R.png';
-		img_Eskimo_L.src = '/images/Eskimo-L.png';
-		img_Eskimo_R.src = '/images/Eskimo-R.png';
-		pattern_Platform.src = '/images/snowGround.png';
+		img_Seal_L.src = 'http://' + GameConstants.SERVER_ADDRESS + '/images/Seal-L.png';
+		img_Seal_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Seal-R.png';
+		img_Penguin_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-L.png';
+		img_Penguin_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-R.png';
+		img_Bear_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-L.png';
+		img_Bear_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-R.png';
+		img_Eskimo_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-L.png';
+		img_Eskimo_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-R.png';
+		pattern_Platform.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/snowGround.png';
 	}
 	
 	var draw = function(){	
@@ -296,15 +296,19 @@ var Engine = function() {
 			//draw score
 			ctx.font="40px Lato";
 	        ctx.fillStyle = "#FFFFFF";
-	        // ctx.fillText("p1: " + score.p1,10,50);
-	        // ctx.fillText("p2: " + score.p2,10,100);
-	        // ctx.fillText("p3: " + score.p3,10,150);
-	        // ctx.fillText("p4: " + score.p4,10,200);
-	        ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,50);
-	        ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,100);
-	        ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,150);
-	        ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,200);
 
+			if(shapes["playerDisk1"]){
+				ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,50);
+			}
+			if(shapes["playerDisk2"]){
+				ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,100);
+			}
+			if(shapes["playerDisk3"]){
+				ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,150);
+			}
+			if(shapes["playerDisk4"]){
+				ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,200);
+			}
     	}
 		
 		ctx.restore();
@@ -379,8 +383,9 @@ var Engine = function() {
 			updateShapeUIFromBox2D();
 			updateCustomGravity();
 			//for points mode only
-			if(gameMode==1)//***************************************************************************************************************************
-				resetPositionAfterFall();
+			if(gameMode==1){//***************************************************************************************************************************
+				resetPositionAfterFall(); // this causing problems
+			}
 			
 			if(!that.bol_Server){
 				checkKeysAndOrientation();
@@ -406,7 +411,7 @@ var Engine = function() {
 	
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
-            if(shapes[b.GetUserData()].isFalling==true){
+            if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y <= (WORLD_HEIGHT*2)/SCALE){
 				b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
 			}
           }
@@ -520,14 +525,10 @@ var Engine = function() {
 	//Set position and velocity of player
 	var setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
 		var targetPlayerShape = bodies[shapeID];
-		if(targetPlayerShape!= null){
+		if(targetPlayerShape!= null && targetPlayerShape!='undefined'){
 			//Convergence
 			if(getDistance(x,y,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
 				targetPlayerShape.SetPosition(new b2Vec2(x,y));
-			}
-			
-			if(vx==0 && vy==0){
-				shapes[shapeID].isFalling=false;
 			}
 			
 			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
@@ -587,9 +588,8 @@ var Engine = function() {
 			}
           }
         }
-	
 	}
-		
+			
 	//Get random color (used for platform)
 	var getRandomColor = function(){
         var letters = '0123456789ABCDEF'.split('');
@@ -831,21 +831,25 @@ var Engine = function() {
 			return;
 		}
 		for(var i=0; i<playerStates.length; i++){
-			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
-			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling && playerStates[i].isFalling==true){
-				//Set fallDirection for drawing properly behind or infront the ground
-				if(shapes[playerStates[i].shapeID].y>shapes["id_Ground"].y){
-					shapes[playerStates[i].shapeID].fallDirection = 1;
+			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling){
+				if(playerStates[i].isFalling==true){
+					//Set fallDirection for drawing properly behind or infront the ground
+					if(shapes[playerStates[i].shapeID].y>shapes["id_Ground"].y){
+						shapes[playerStates[i].shapeID].fallDirection = 1;
+					}else{
+						shapes[playerStates[i].shapeID].fallDirection = -1;
+					}
+					shapes[playerStates[i].shapeID].isFalling = true;
 				}else{
-					shapes[playerStates[i].shapeID].fallDirection = -1;
+					shapes[playerStates[i].shapeID].fallDirection = 0;
+					shapes[playerStates[i].shapeID].isFalling = false;
 				}
-				//console.log(shapes[playerStates[i].shapeID]);
-				shapes[playerStates[i].shapeID].isFalling = true;
-			
 			}
+			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
 		}
 	}
 	
+	//Used for Convergence
 	var getDistance = function(x1,y1,x2,y2){
 		var dx = x1-x2;
 		var dy = y1-y2;

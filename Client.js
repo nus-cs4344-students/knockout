@@ -246,7 +246,7 @@ function Client(){
 
   var initSession = function(){
     $('#contentHTML').empty();
-    $('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/room.html',function(responseData){
+    $('#contentHTML').load('http://' + GameConstants.SERVER_ADDRESS + '/templates/room.html',function(responseData){
       //This part of code will run after content has loaded
         
       document.title='KnockOut | Room';
@@ -259,11 +259,13 @@ function Client(){
         
         //Set button functions
       $('#btn_leave').button().click( function(event){
+		event.preventDefault();
         leaveGameSession();
         initLobby();
       });
         
       $('#btn_start').button().click( function(event){
+		event.preventDefault();
         var currentSession = getSessionWithID(currentSessionID);
         if(currentSession!=null){
           $('#btn_start').tooltip('close');
@@ -282,10 +284,12 @@ function Client(){
       $('#btn_start').tooltip();
         
       $('#btn_ready').button().click( function(event){
+		event.preventDefault();
         toggleReady();
       });
 	  
 	  $('#btn_mode').button().click( function(event){
+		event.preventDefault();
         toggleGameMode();
       });
 
@@ -320,7 +324,7 @@ function Client(){
 
   var initLobby = function(){
     $('#contentHTML').empty();
-    $('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/lobby.html',function(responseData){
+    $('#contentHTML').load('http://' + GameConstants.SERVER_ADDRESS + '/templates/lobby.html',function(responseData){
       //This part of code will run after content has loaded
       document.title='KnockOut | Lobby';
       
@@ -360,14 +364,12 @@ function Client(){
 
 	gameEngine = new Engine();
 	global.engineSocket = socket;
-  //TODO: get the game mode in client??
-  
-	gameEngine.init();//points mode*******************************************************************************************************************
- //  var currentSession = getSessionWithID(currentSessionID);
- //  console.log("gamemode: "+currentSession.game_Mode);
-	// gameEngine.start('canvas', currentSession.game_Mode);
-	gameEngine.start('canvas', 1);
+
+	gameEngine.init();
+	
+	//gameEngine.start('canvas', 1); //causing problems because server thought it is 0 but u set as 1..
 	var currentSession = getSessionWithID(currentSessionID);
+	gameEngine.start('canvas', currentSession.game_Mode);
 	if(currentSession!=null){
 		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
 			if(currentSession.abstractPlayersArray[i].playerID == playerID){
@@ -381,7 +383,7 @@ function Client(){
   var initNetwork = function(){
     // Attempts to connect to game server
     try {
-      socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
+      socket = new SockJS('http://' + GameConstants.SERVER_ADDRESS + '/knockout');
       socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
         switch (message.type) {
