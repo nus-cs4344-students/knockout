@@ -128,7 +128,8 @@ function GameSession(id) {
 		}, 2000);
 		
 	}else{
-		//Points Mode
+		//Lives Mode
+    
 	}
 	updateServerStates();
   }
