@@ -371,6 +371,10 @@ function Client(){
         event.preventDefault();
         //TODO
         //alert('suppose to be quick join but using it to quick test game');
+		currentSessionID=-1;
+		var newAbstractGameSession = new AbstractGameSession("test",-1);
+		newAbstractGameSession.game_Mode = 0; //change game mode here to test
+		abstractSessionArray.push(newAbstractGameSession);
         initGame();
       });
       
@@ -391,7 +395,6 @@ function Client(){
 
 	gameEngine.init();
 	
-	//gameEngine.start('canvas', 1); //causing problems because server thought it is 0 but u set as 1..
 	var currentSession = getSessionWithID(currentSessionID);
 	gameEngine.start('canvas', currentSession.game_Mode);
 	if(currentSession!=null){
