@@ -10,6 +10,7 @@ function Client(){
   var playerID;
   var currentSessionID=null;
   var gameEngine=null;
+  var bol_init = false;
 
   var sendToServer = function(msg){
     socket.send(JSON.stringify(msg));
@@ -22,6 +23,12 @@ function Client(){
     }
   }
 
+  var updateNumOfPlayers = function(){
+	if($('#chatbox_title').length>0){
+		$('#chatbox_title').text('Global Chat ['+abstractPlayersArray.length+' player(s)]');
+	}
+  }
+  
   var showLoginHTML = function(){
     var html = "";
     html+='<div id="user-login" title="Login">'+"\n";
@@ -323,7 +330,7 @@ function Client(){
       if($('#chatbox').length>0){
         $('#chatbox').empty();
         appendToChat('Welcome '+playerName);
-        appendToChat('[There are '+abstractPlayersArray.length+' player(s) playing KnockOut right now]');
+		updateNumOfPlayers();
       }
       
       //Set button functions
@@ -431,6 +438,7 @@ function Client(){
                 if($('.lobby').length>0){
                     //Only show message if client is in lobby
                     appendToChat('['+message.name+' has logined]');
+					updateNumOfPlayers();
                 }
             break;
             case "removeLobbyPlayer":
@@ -441,6 +449,7 @@ function Client(){
                         if($('.lobby').length>0){
                             //Only show message if client is in lobby
                             appendToChat('['+abstractPlayersArray[i].playerName+' has left the game]');
+							updateNumOfPlayers();
                         }
                         abstractPlayersArray.splice(i,1);
                         break;
@@ -455,6 +464,9 @@ function Client(){
                     var newAbstractPlayer = new AbstractPlayer(message.abstractPlayers[i].name, message.abstractPlayers[i].id);
                     newAbstractPlayer.bol_isPlaying=message.abstractPlayers[i].isPlaying;
                     abstractPlayersArray.push(newAbstractPlayer);
+					if($('.lobby').length>0){
+						updateNumOfPlayers();
+					}
                 }
             break;
             case "updateLobbySessions":

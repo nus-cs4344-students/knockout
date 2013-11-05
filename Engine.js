@@ -108,18 +108,31 @@ var Engine = function() {
         world.SetContactListener(listener);
 
 		
-        if (!that.bol_Server && window.DeviceOrientationEvent) {
-          window.addEventListener('deviceorientation', function(eventData) {
-            orientation = {
-              // gamma is the left-to-right tilt in degrees, where right is positive
-              tiltLR: eventData.gamma,
-              // beta is the front-to-back tilt in degrees, where front is positive
-              tiltFB: eventData.beta,
-              // alpha is the compass direction the device is facing in degrees
-              dir: eventData.alpha
-            };
-          }, false);
-        }
+        if (!that.bol_Server){
+		
+			if(window.DeviceOrientationEvent) {
+				window.addEventListener('deviceorientation', function(eventData) {
+					orientation = {
+					  // gamma is the left-to-right tilt in degrees, where right is positive
+					  tiltLR: eventData.gamma,
+					  // beta is the front-to-back tilt in degrees, where front is positive
+					  tiltFB: eventData.beta,
+					  // alpha is the compass direction the device is facing in degrees
+					  dir: eventData.alpha
+					};
+				  }, false);
+			}
+			
+			//Auto resize when window size has been changed
+			$(window).bind('resize', function() {
+				autoScaleWithScreenSize();
+			});
+			
+			//For mobile devices
+			$(window).bind('orientationchange', function(){
+				autoScaleWithScreenSize();
+			});
+		}
 	}
 	
 	this.start = function(id, game_Mode){
@@ -129,7 +142,7 @@ var Engine = function() {
 			preloadImages();
 			setCanvas(id);
 		}
-
+		
         box2d.create.world();
         box2d.create.defaultFixture();
 		
@@ -159,29 +172,71 @@ var Engine = function() {
 		update();
 	}
 	
+	var getBrowser = function(){ 
+		if(navigator.userAgent.indexOf('Chrome') > -1){
+			return 'Chrome';
+		}else if(navigator.userAgent.indexOf('MSIE') > -1){
+			return 'IE';
+		}else if(navigator.userAgent.indexOf('Firefox') > -1){
+			return 'Firefox';
+		}else if(navigator.userAgent.indexOf("Presto") > -1){
+			return 'Opera';
+		}else if(navigator.userAgent.indexOf("Safari") > -1){
+			return 'Safari'; //safari must be placed behind chrome because chrome has the safrai keyword inside as well
+		}
+		return 'Unknown';
+	}
+	
 	var setCanvas = function(id){
 		canvas = document.getElementById(id);
         ctx = canvas.getContext("2d");
-
-		//Auto scale UI with window frame
-		var dw = window.innerWidth/ctx.canvas.width;
-		var dh = window.innerHeight/ctx.canvas.height;
-		var smaller;
-		if(dw<dh){
-			smaller = dw;
-		}else{
-			smaller = dh;
-		}
 		
-		//Firefox always render the scrollbar if it is totally full
-		var scrollbarSizeFix = 2;
-		SCALE = SCALE*smaller-scrollbarSizeFix;
-        ctx.canvas.width = window.innerWidth-scrollbarSizeFix;
-		ctx.canvas.height = window.innerHeight-scrollbarSizeFix;
-		WORLD_WIDTH = window.innerWidth-scrollbarSizeFix;
-		WORLD_HEIGHT = window.innerHeight-scrollbarSizeFix;
+		autoScaleWithScreenSize();
 	}
 	
+	//Auto determine the width and height to scale to
+	var autoScaleWithScreenSize = function(){
+		if(that.bol_Server){
+			//Server does not require scaling
+			return;
+		}
+	
+		var windowHeight = window.innerHeight;
+		var windowWidth = window.innerWidth;
+		
+		//For mobile devices
+		var viewport = document.getElementsByName('viewport')[0];
+		viewport.setAttribute('content', 'width = ' + windowWidth + ', minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
+		
+		scaleScreenSize(windowWidth,windowHeight);
+	}
+	
+	//Scale canvas to target width and height
+	var scaleScreenSize = function(width,height){
+		if(that.bol_Server){
+			//Server does not require scaling
+			return;
+		}
+
+		var scrollbarSizeFix = 0;
+		if(getBrowser() == 'Firefox'){
+			scrollbarSizeFix = 2;
+		}else if(getBrowser() == 'Chrome' || getBrowser() == 'IE'){
+			scrollbarSizeFix = 3;
+		}
+		//Auto scale UI with window frame
+		var dw = width/GameConstants.CANVAS_WIDTH;
+		var dh = height/GameConstants.CANVAS_HEIGHT;
+		var smaller = Math.min(dw,dh);
+		
+		SCALE = DEFAULT_SCALE*smaller;
+        ctx.canvas.width = width-scrollbarSizeFix;
+		ctx.canvas.height = height-scrollbarSizeFix;
+		WORLD_WIDTH = width-scrollbarSizeFix;
+		WORLD_HEIGHT = height-scrollbarSizeFix;
+	}
+	
+	//preload Images to make it faster
 	var preloadImages = function(){
 		img_Seal_L = new Image();
 		img_Seal_R = new Image();
@@ -205,8 +260,10 @@ var Engine = function() {
 	}
 	
 	var draw = function(){	
+	
+		ctx.save();
 		if (!debug){
-			//Paint background over
+			//Paint blue sky/water background over
 			ctx.fillStyle='#81BDF9';
 			ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 		}else{
@@ -219,7 +276,7 @@ var Engine = function() {
 			//Change to side view          
 			ctx.save();
 			ctx.scale(1, 0.5);
-			ctx.translate(0, WORLD_HEIGHT/2);
+			ctx.translate(WORLD_WIDTH/2, WORLD_HEIGHT);
 			drawOrder[i].draw();
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawDisplayNameOnShape(drawOrder[i]);
@@ -248,10 +305,12 @@ var Engine = function() {
 	        ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,150);
 	        ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,200);
 
-
     	}
+		
+		ctx.restore();
 	}
 	
+	//Get the ordering to draw so that some images are behind other images (e.g. falling behind the platform)
 	var getDrawOrder = function(){
 		var behindGround = [];
 		var infrontGround = [];
@@ -381,18 +440,34 @@ var Engine = function() {
 			yPush = +1;
 		}
 		
-		if(window.DeviceOrientationEvent && orientation != undefined){
+		if(window.DeviceOrientationEvent && orientation!= undefined && navigator.appVersion.indexOf("Mobile")>-1){
 			//Tweak sensitivity here
 			var sensitivity = 10;
+			var normalFrontBackAdjustment = 30;
+			
+			var frontBack = orientation.tiltFB;
+			var LeftRight = orientation.tiltLR;
+			var mql = window.matchMedia("(orientation: portrait)");
+			if(mql!=null){
+				if(mql.matches){
+					frontBack = orientation.tiltFB;
+					LeftRight = orientation.tiltLR;
+				}else{
+					//swap for landscape
+					frontBack = -orientation.tiltLR;
+					LeftRight = orientation.tiltFB;
+				}
+			
+			}
 			
 			//Front Back tilt (front is positive)
-			if(orientation.tiltFB != null && Math.abs(orientation.tiltFB)>sensitivity){
-				yPush += orientation.tiltFB;
+			if(frontBack != null && Math.abs(frontBack-normalFrontBackAdjustment)>sensitivity){
+				yPush += frontBack-normalFrontBackAdjustment;
 			}
 			
 			//Left Right tilt (right is positive)
-			if(orientation.tiltLR != null && Math.abs(orientation.tiltLR)>sensitivity){
-				xPush += orientation.tiltLR; 
+			if(LeftRight != null && Math.abs(LeftRight)>sensitivity){
+				xPush += LeftRight; 
 			}
 		}
       
@@ -463,8 +538,8 @@ var Engine = function() {
 	var createGround = function(r){
 		addCircle({
 			radius: r,
-            x: WORLD_WIDTH / SCALE / 2,
-            y: WORLD_HEIGHT / SCALE / 2,
+            x: 0,
+            y: 0,
             id: "id_Ground",
             isStatic: true,
             isSensor: true
@@ -504,7 +579,7 @@ var Engine = function() {
 				//Stop movements
 				b.SetAngularVelocity(0);
 				b.SetLinearVelocity(new b2Vec2(0,0));
-				b.SetPosition(new b2Vec2(WORLD_WIDTH / SCALE / 2,WORLD_HEIGHT / SCALE / 2));
+				b.SetPosition(new b2Vec2(shapes['id_Ground'].x,shapes['id_Ground'].y));
 				//Set back groupIndex to default 0 so that they will hit each other
 				b.GetFixtureList().SetFilterData(new b2FilterData);
 				//Update UI
@@ -618,7 +693,7 @@ var Engine = function() {
 	//Shape declaration-----------------------------------------------------------------------
 	var Shape = function(v) {
       this.id = v.id || Math.round(Math.random() * 1000000);
-      this.x = v.x || Math.random()*23 + 1;
+      this.x = v.x || 0;
       this.y = v.y || 0;
       this.angle = 0;
 	  this.color = v.color || getRandomColor();
@@ -652,11 +727,12 @@ var Engine = function() {
         ctx.translate(-(this.x) * SCALE, -(this.y) * SCALE);
 
         //ctx.fillStyle = this.color;
-		// ctx.fillStyle = this.color;
-        var grd=ctx.createRadialGradient(this.x * SCALE*0.9,this.y * SCALE*0.9,this.radius*SCALE*0.1,this.x * SCALE,this.y * SCALE,this.radius*SCALE);
+		ctx.fillStyle = this.color;
+		//temporary remove gradient as it slows down firefox
+        /*var grd=ctx.createRadialGradient(this.x * SCALE*0.9,this.y * SCALE*0.9,this.radius*SCALE*0.1,this.x * SCALE,this.y * SCALE,this.radius*SCALE);
         grd.addColorStop(0,this.color);
         grd.addColorStop(1,darkerShade(this.color, 0.1));
-        ctx.fillStyle=grd;
+        ctx.fillStyle=grd;*/
         ctx.beginPath();
         ctx.arc(this.x * SCALE, this.y * SCALE, this.radius * SCALE, 0, Math.PI * 2, true);
         ctx.closePath();
@@ -710,7 +786,10 @@ var Engine = function() {
 	this.stopAndDestroyWorld = function(){
 		if(world.IsLocked()){
 			bol_Stop = true;
-			window.setTimeout(stopAndDestroyWorld, 1000 / 60);
+			if(!that.bol_Server){
+				$(window).unbind('resize');
+			}
+			setTimeout(stopAndDestroyWorld, 1000 / 60);
 		}else{
 			world.ClearForces();
 			var bodies = world.GetBodyList();
@@ -819,21 +898,20 @@ var Engine = function() {
 			}
 		}
 		
-		
-		
 		var spriteWidth  = 100,
 			spriteHeight = 100,
 			//multiply by default scale so that afterwards the scaling will convert it back to normal values
 			canvasPosX   = (shape.x*DEFAULT_SCALE-(spriteWidth/2));
-			canvasPosY   = (shape.y*DEFAULT_SCALE+spriteHeight)*0.5;
+			canvasPosY   = (shape.y*DEFAULT_SCALE-spriteHeight*1.5);
 			
 		ctx.save();
 		try{
+			ctx.translate(WORLD_WIDTH/2, WORLD_HEIGHT*0.5);
 			//Scale the image according to UI Scaling
 			ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
 			ctx.drawImage(img,
 				canvasPosX,
-				canvasPosY
+				(canvasPosY*0.5)
 			);
 		}catch (e) {
 			console.log("Error in drawSprite: "+e);
