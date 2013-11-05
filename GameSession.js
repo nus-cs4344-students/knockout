@@ -128,7 +128,7 @@ function GameSession(id) {
 		}, 2000);
 		
 	}else if(game_Mode==1){
-		//Points Mode
+		//Lives Mode
 	}else{
 		console.log('Unknown Game Mode found');
 	}

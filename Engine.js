@@ -21,7 +21,8 @@ var Engine = function() {
         orientation, //used for mobile devices
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
-		score = {p1:10, p2:10, p3:10, p4:10}, //for points mode
+		lives = {p1:10, p2:10, p3:10, p4:10}, //for lives mode
+		score = {p1:0, p2:0, p3:0, p4:0},//for classic mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode,
@@ -75,13 +76,13 @@ var Engine = function() {
 				{
 					//console.log("display name: "+shapes[tempBody.GetUserData()].displayName);
 					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
-						score.p1--;
+					 lives.p1--;
 					if(shapes[tempBody.GetUserData()].id=="playerDisk2")
-						score.p2--;
+					 lives.p2--;
 					if(shapes[tempBody.GetUserData()].id=="playerDisk3")
-						score.p3--;
+					 lives.p3--;
 					if(shapes[tempBody.GetUserData()].id=="playerDisk4")
-						score.p4--;
+					 lives.p4--;
 				}
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
@@ -294,22 +295,26 @@ var Engine = function() {
 		}
 		if(gameMode == 1)//points mode
 		{
-			console.log("Printing scores");
-			//draw score
+			console.log("Printing livess");
+			//draw lives
 			ctx.font="40px Lato";
 	        ctx.fillStyle = "#FFFFFF";
+	        // ctx.fillText("p1: " + lives.p1,10,50);
+	        // ctx.fillText("p2: " + lives.p2,10,100);
+	        // ctx.fillText("p3: " + lives.p3,10,150);
+	        // ctx.fillText("p4: " + lives.p4,10,200);
 
 			if(shapes["playerDisk1"]){
-				ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,50);
+	        ctx.fillText(shapes["playerDisk1"].displayName+": " + lives.p1,10,50);
 			}
 			if(shapes["playerDisk2"]){
-				ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,100);
+				ctx.fillText(shapes["playerDisk2"].displayName+": " + lives.p2,10,100);
 			}
 			if(shapes["playerDisk3"]){
-				ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,150);
+				ctx.fillText(shapes["playerDisk3"].displayName+": " + lives.p3,10,150);
 			}
 			if(shapes["playerDisk4"]){
-				ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,200);
+				ctx.fillText(shapes["playerDisk4"].displayName+": " + lives.p4,10,200);
 			}
     	}
 		
@@ -576,7 +581,7 @@ var Engine = function() {
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
 			//if it is out of screen for a long time
-			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (WORLD_HEIGHT*2)/SCALE){
+			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (WORLD_HEIGHT*2)/SCALE && getPointsForShape(shapes[b.GetUserData()])> 0){
 				shapes[b.GetUserData()].isFalling = false;
 				shapes[b.GetUserData()].fallDirection = 0;
 				//Stop movements
@@ -591,7 +596,17 @@ var Engine = function() {
           }
         }
 	}
-			
+	var getPointsForShape = function(shape){
+		if(shape.id=="playerDisk1")
+			return lives.p1;
+		if(shape.id=="playerDisk2")
+			return lives.p2;
+		if(shape.id=="playerDisk3")
+			return lives.p3;
+		if(shape.id=="playerDisk4")
+			return lives.p4;
+	}
+
 	//Get random color (used for platform)
 	var getRandomColor = function(){
         var letters = '0123456789ABCDEF'.split('');
