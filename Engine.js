@@ -24,7 +24,8 @@ var Engine = function() {
 		score = {p1:10, p2:10, p3:10, p4:10}, //for points mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
-		gameMode;
+		gameMode,
+		rounds = 5;//for classic mode
 	
 	var debug = false;
 	var that = this;
@@ -69,9 +70,10 @@ var Engine = function() {
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
-				console.log(shapes[tempBody.GetUserData()]);
+				//console.log(shapes[tempBody.GetUserData()]);
 				if(gameMode == 1)
 				{
+					//console.log("display name: "+shapes[tempBody.GetUserData()].displayName);
 					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
 						score.p1--;
 					if(shapes[tempBody.GetUserData()].id=="playerDisk2")
@@ -233,13 +235,19 @@ var Engine = function() {
 		}
 		if(gameMode == 1)//points mode
 		{
+			console.log("Printing scores");
 			//draw score
 			ctx.font="40px Lato";
 	        ctx.fillStyle = "#FFFFFF";
-	        ctx.fillText("p1: " + score.p1,10,50);
-	        ctx.fillText("p2: " + score.p2,10,100);
-	        ctx.fillText("p3: " + score.p3,10,150);
-	        ctx.fillText("p4: " + score.p4,10,200);
+	        // ctx.fillText("p1: " + score.p1,10,50);
+	        // ctx.fillText("p2: " + score.p2,10,100);
+	        // ctx.fillText("p3: " + score.p3,10,150);
+	        // ctx.fillText("p4: " + score.p4,10,200);
+	        ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,50);
+	        ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,100);
+	        ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,150);
+	        ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,200);
+
 
     	}
 	}
@@ -752,7 +760,7 @@ var Engine = function() {
 				}else{
 					shapes[playerStates[i].shapeID].fallDirection = -1;
 				}
-				
+				//console.log(shapes[playerStates[i].shapeID]);
 				shapes[playerStates[i].shapeID].isFalling = true;
 			
 			}
