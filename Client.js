@@ -2,8 +2,15 @@
 "use strict"; 
 //Client will require the html to have jQuery installed
 
+//For Openshift network, client side only
+console.log(window.location.hostname);
+if(window.location.hostname == 'knockout-broccolicious.rhcloud.com'){
+	GameConstants.SERVER_NAME = 'knockout-broccolicious.rhcloud.com';
+	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME;
+}
+
 function Client(){
-  var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (does not include this client)
+  var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers
   var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
   var socket;
   var playerName="";
@@ -246,7 +253,7 @@ function Client(){
 
   var initSession = function(){
     $('#contentHTML').empty();
-    $('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/room.html',function(responseData){
+    $('#contentHTML').load('http://' + GameConstants.SERVER_ADDRESS + '/templates/room.html',function(responseData){
       //This part of code will run after content has loaded
         
       document.title='KnockOut | Room';
@@ -256,14 +263,18 @@ function Client(){
         $('#chatbox').empty();
         appendToChat('Welcome '+playerName);
       }
-        
+	  
         //Set button functions
       $('#btn_leave').button().click( function(event){
+		event.preventDefault();
         leaveGameSession();
         initLobby();
       });
+	  
+	
         
       $('#btn_start').button().click( function(event){
+		event.preventDefault();
         var currentSession = getSessionWithID(currentSessionID);
         if(currentSession!=null){
           $('#btn_start').tooltip('close');
@@ -282,12 +293,29 @@ function Client(){
       $('#btn_start').tooltip();
         
       $('#btn_ready').button().click( function(event){
+		event.preventDefault();
         toggleReady();
       });
 	  
 	  $('#btn_mode').button().click( function(event){
+		event.preventDefault();
         toggleGameMode();
       });
+	  
+		//Only place here after declaring btn_mode as button
+		if('#btn_mode'.length>0){
+			var currentSession = getSessionWithID(currentSessionID);
+			if(currentSession!=null){
+				//need include span otherwise the UI will mess up
+				if(currentSession.game_Mode==0){
+					$('#btn_mode span').text('Classic');
+				}else if(currentSession.game_Mode==1){
+					$('#btn_mode span').text('Points');
+				}else{
+					$('#btn_mode span').text('Unknown');
+				}
+			}
+		}
 
       refreshSessionPlayersDisplay();
     });
@@ -320,7 +348,7 @@ function Client(){
 
   var initLobby = function(){
     $('#contentHTML').empty();
-    $('#contentHTML').load('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/templates/lobby.html',function(responseData){
+    $('#contentHTML').load('http://' + GameConstants.SERVER_ADDRESS + '/templates/lobby.html',function(responseData){
       //This part of code will run after content has loaded
       document.title='KnockOut | Lobby';
       
@@ -343,6 +371,10 @@ function Client(){
         event.preventDefault();
         //TODO
         //alert('suppose to be quick join but using it to quick test game');
+		currentSessionID=-1;
+		var newAbstractGameSession = new AbstractGameSession("test",-1);
+		newAbstractGameSession.game_Mode = 0; //change game mode here to test
+		abstractSessionArray.push(newAbstractGameSession);
         initGame();
       });
       
@@ -360,14 +392,11 @@ function Client(){
 
 	gameEngine = new Engine();
 	global.engineSocket = socket;
-  //TODO: get the game mode in client??
-  
-	gameEngine.init();//points mode*******************************************************************************************************************
- //  var currentSession = getSessionWithID(currentSessionID);
- //  console.log("gamemode: "+currentSession.game_Mode);
-	// gameEngine.start('canvas', currentSession.game_Mode);
-	gameEngine.start('canvas', 1);
+
+	gameEngine.init();
+	
 	var currentSession = getSessionWithID(currentSessionID);
+	gameEngine.start('canvas', currentSession.game_Mode);
 	if(currentSession!=null){
 		for(var i=0;i<currentSession.abstractPlayersArray.length;i++){
 			if(currentSession.abstractPlayersArray[i].playerID == playerID){
@@ -381,7 +410,7 @@ function Client(){
   var initNetwork = function(){
     // Attempts to connect to game server
     try {
-      socket = new SockJS('http://' + GameConstants.SERVER_NAME + ':' + GameConstants.PORT + '/knockout');
+      socket = new SockJS('http://' + GameConstants.SERVER_ADDRESS + '/knockout');
       socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
         switch (message.type) {
@@ -486,7 +515,7 @@ function Client(){
                     }
                     newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
-					          newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
+					newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                 }
                 refreshSessionDisplay();
@@ -514,7 +543,7 @@ function Client(){
                     tempGameSession.abstractPlayersArray = playerList;
                     tempGameSession.abstractReadyArray = message.content.readyIDs;
                     tempGameSession.bol_isPlaying = message.content.isPlaying;
-					          tempGameSession.game_Mode = message.content.gameMode;
+					tempGameSession.game_Mode = message.content.gameMode;
                     console.log("edit game session");
                     
 					//if in current session, change button contents
@@ -541,7 +570,7 @@ function Client(){
                     newAbstractGameSession.abstractPlayersArray = playerList;
                     newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
-					          newAbstractGameSession.game_Mode = message.content.gameMode;
+					newAbstractGameSession.game_Mode = message.content.gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                     console.log("create new game session");
                 }
