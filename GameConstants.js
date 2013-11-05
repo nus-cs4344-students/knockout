@@ -2,7 +2,7 @@
   Declared as literal object (All variables are static)	  
   =====================================================*/
 var GameConstants = {
-	PORT : 8080,	// port of game
+	PORT : 8000,	// port of game
 	SERVER_NAME : 'localhost',
 	SERVER_INTERNAL_IP : '0.0.0.0',
 	CANVAS_HEIGHT: 500,

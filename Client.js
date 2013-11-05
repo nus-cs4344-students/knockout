@@ -5,6 +5,7 @@
 //For Openshift network, client side only
 console.log(window.location.hostname);
 if(window.location.hostname == 'knockout-broccolicious.rhcloud.com'){
+	//iOS safari requires Websock port 8000 due to Openshift. Else it doesn't load images
 	GameConstants.SERVER_NAME = 'knockout-broccolicious.rhcloud.com';
 	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME;
 }
@@ -173,40 +174,42 @@ function Client(){
   //This refreshes the lobby display of rooms
   var refreshSessionDisplay = function(){
     console.log("refreshSessionDisplay");
-    //Check if the display exist
-    if($('#sessionDisplay').length>0){
-      $('#sessionDisplay').empty()//remove all the sessions inside
-      for(var i=0;i<abstractSessionArray.length;i++){
-        var html="";
-        html+='<li>';
-        //Only allow clicking the room if it has less than the number of players needed and the game has not started yet
-        if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
-          html+='<a class="success button grid" href="#" sessionID="' +abstractSessionArray[i].sessionID+ '" >';
-        }else{
-          html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
-        }
-        html+='<h6>'+abstractSessionArray[i].sessionName+'</h6>';
-        html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/'+GameConstants.NUM_OF_PLAYERS+'</h2>';
-        if(abstractSessionArray[i].bol_isPlaying==false){
-          html+='<h3>Waiting</h3>';
-        }else{
-          html+='<h3>Playing</h3>';
-        }
-        html+='</a>';
-        html+='</li>';
-        $('#sessionDisplay').append(html);
-        $('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
-        
-        if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
-          //Only allow clicking it if some details satisfy
-          $('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
-            event.preventDefault();
-            showProcessing();
-            joinGameSession($(this).attr('sessionID'));
-          });
-        }
-      }
-    }
+		//Check if the display exist
+		if($('#sessionDisplay').length>0){
+		  $('#sessionDisplay').empty()//remove all the sessions inside
+		  for(var i=0;i<abstractSessionArray.length;i++){
+			var html="";
+			html+='<li>';
+			//Only allow clicking the room if it has less than the number of players needed and the game has not started yet
+			if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
+			  html+='<a class="success button grid" href="#" sessionID="' +abstractSessionArray[i].sessionID+ '" >';
+			}else{
+			  html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
+			}
+			html+='<h6>'+abstractSessionArray[i].sessionName+'</h6>';
+			html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/'+GameConstants.NUM_OF_PLAYERS+'</h2>';
+			if(abstractSessionArray[i].bol_isPlaying==false){
+			  html+='<h3>Waiting</h3>';
+			}else{
+			  html+='<h3>Playing</h3>';
+			}
+			html+='</a>';
+			html+='</li>';
+			$('#sessionDisplay').append(html);
+			$('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
+			
+			if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
+			  //Only allow clicking it if some details satisfy
+			  $('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
+				event.preventDefault();
+				showProcessing();
+				joinGameSession($(this).attr('sessionID'));
+			  });
+			}
+		  }
+		}else{
+			console.log("Couldn't find #sessionDisplay");
+		}
   }
 
   //This refreshes the room display of players
@@ -322,6 +325,7 @@ function Client(){
   }
 
   var initChatBox = function(){
+	console.log("initChatBox");
     //initialize chat box function
     $('#btn_sendChat').button().click( function(event){
       event.preventDefault();
@@ -347,6 +351,7 @@ function Client(){
   }
 
   var initLobby = function(){
+	console.log("initLobby");
     $('#contentHTML').empty();
     $('#contentHTML').load('http://' + GameConstants.SERVER_ADDRESS + '/templates/lobby.html',function(responseData){
       //This part of code will run after content has loaded
@@ -378,7 +383,9 @@ function Client(){
         initGame();
       });
       
-      refreshSessionDisplay();
+	  $( document ).ready(function(){
+		refreshSessionDisplay();
+	  });
     });
   }
 
@@ -387,9 +394,8 @@ function Client(){
     document.title='KnockOut | Game';
     
     $(document).unbind();
-    //TODO start binding onto gaming keys
     $('#contentHTML').append('<canvas id="canvas" width="'+GameConstants.CANVAS_WIDTH+'" height="'+GameConstants.CANVAS_HEIGHT+'" style="background: #F1F1F1;"></canvas>');
-
+	
 	gameEngine = new Engine();
 	global.engineSocket = socket;
 
@@ -410,7 +416,8 @@ function Client(){
   var initNetwork = function(){
     // Attempts to connect to game server
     try {
-      socket = new SockJS('http://' + GameConstants.SERVER_ADDRESS + '/knockout');
+	  //Do not change this to GameConstants.SERVER_ADDRESS
+      socket = new SockJS('http://' + GameConstants.SERVER_NAME+':'+GameConstants.PORT +'/knockout');
       socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
         switch (message.type) {
@@ -640,7 +647,7 @@ function Client(){
             }
         }
     } catch (e) {
-        console.log("Failed to connect to " + "http://" + GameConstants.SERVER_NAME + ":" + GameConstants.PORT);
+        console.log("Failed to connect to " + "http://" + GameConstants.SERVER_ADDRESS);
         console.log("Error: "+e);
     }
   }
@@ -701,7 +708,7 @@ function Client(){
   }
 
   this.start = function(){
-    initNetwork();
+    setTimeout(initNetwork,100);
   }	
 }
 

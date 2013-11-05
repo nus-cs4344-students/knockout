@@ -238,25 +238,27 @@ var Engine = function() {
 	
 	//preload Images to make it faster
 	var preloadImages = function(){
-		img_Seal_L = new Image();
-		img_Seal_R = new Image();
-		img_Penguin_L = new Image();
-		img_Penguin_R = new Image();
-		img_Bear_L = new Image();
-		img_Bear_R = new Image();
-		img_Eskimo_L = new Image();
-		img_Eskimo_R = new Image();
-		pattern_Platform = new Image();
-		//preload images for chrome
-		img_Seal_L.src = 'http://' + GameConstants.SERVER_ADDRESS + '/images/Seal-L.png';
-		img_Seal_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Seal-R.png';
-		img_Penguin_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-L.png';
-		img_Penguin_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-R.png';
-		img_Bear_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-L.png';
-		img_Bear_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-R.png';
-		img_Eskimo_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-L.png';
-		img_Eskimo_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-R.png';
-		pattern_Platform.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/snowGround.png';
+		$( document ).ready(function(){
+			img_Seal_L = new Image();
+			img_Seal_R = new Image();
+			img_Penguin_L = new Image();
+			img_Penguin_R = new Image();
+			img_Bear_L = new Image();
+			img_Bear_R = new Image();
+			img_Eskimo_L = new Image();
+			img_Eskimo_R = new Image();
+			pattern_Platform = new Image();
+			
+			img_Seal_L.src = 'http://' + GameConstants.SERVER_ADDRESS + '/images/Seal-L.png';
+			img_Seal_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Seal-R.png';
+			img_Penguin_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-L.png';
+			img_Penguin_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-R.png';
+			img_Bear_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-L.png';
+			img_Bear_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Bear-R.png';
+			img_Eskimo_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-L.png';
+			img_Eskimo_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-R.png';
+			pattern_Platform.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/snowGround.png';
+		});
 	}
 	
 	var draw = function(){	
