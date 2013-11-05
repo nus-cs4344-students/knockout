@@ -2,8 +2,15 @@
 "use strict"; 
 //Client will require the html to have jQuery installed
 
+//For Openshift network, client side only
+console.log(window.location.hostname);
+if(window.location.hostname == 'knockout-broccolicious.rhcloud.com'){
+	GameConstants.SERVER_NAME = 'knockout-broccolicious.rhcloud.com';
+	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME;
+}
+
 function Client(){
-  var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers (does not include this client)
+  var abstractPlayersArray = new Array(); //Array that contains AbstractPlayers
   var abstractSessionArray = new Array(); //Array that contains AbstractGameSessions
   var socket;
   var playerName="";
