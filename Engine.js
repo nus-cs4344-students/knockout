@@ -22,7 +22,7 @@ var Engine = function() {
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
 		lives = {p1:10, p2:10, p3:10, p4:10}, //for lives mode
-		score = {p1:0, p2:0, p3:0, p4:0},//for classic mode
+		score = {p1:0, p2:0, p3:0, p4:0},//for points mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode,
@@ -42,6 +42,12 @@ var Engine = function() {
 	var currentPlayerShapeID;
 	var bol_Stop;
 	this.bol_Server = false;
+	
+	//For measuring RTT
+	this.RTT = null;
+	this.AVG_RTT = null;
+	this.pingTime = null;
+	
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -484,7 +490,12 @@ var Engine = function() {
 		}
       
 		if(xPush!=0 || yPush!=0 ){
-			that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
+			if(that.AVG_RTT!=null){
+				//short circuiting (times 1.5 for jitter)
+				setTimeout(that.pushPlayerShape,that.AVG_RTT*2.0,currentPlayerShapeID,xPush,yPush);
+			}else{
+				that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
+			}
 			sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
 		}
 	}
@@ -511,34 +522,31 @@ var Engine = function() {
 		}
 	}
 	
-	//Set x and y position of player
-	//TODO remove if not used
-	var setPlayerShapePosition = function(shapeID,x,y){
-		var myDisk = bodies[shapeID];
-		if(myDisk!= null){
-			myDisk.SetPosition(new b2Vec2(x,y));
-		}
-	}
-	
-	//Set velocity of player
-	//TODO remove if not used
-	var setPlayerShapeVelocity = function(shapeID,vx,vy){
-		var myDisk = bodies[shapeID];
-		if(myDisk!= null){
-			myDisk.SetLinearVelocity(new b2Vec2(x,y));
-		}
-	}
-	
 	//Set position and velocity of player
 	var setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
 		var targetPlayerShape = bodies[shapeID];
 		if(targetPlayerShape!= null && targetPlayerShape!='undefined'){
-			//Convergence
-			if(getDistance(x,y,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
-				targetPlayerShape.SetPosition(new b2Vec2(x,y));
-			}
-			
+			targetPlayerShape.SetPosition(new b2Vec2(x,y));
+			//set velocity first, which will change afterwards
 			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
+		
+			//x and y must increase by vx and vy according to RTT
+			shapes[shapeID].serverX = x + vx*((that.AVG_RTT/2.5)/GameConstants.FRAME_RATE)/30;
+			shapes[shapeID].serverY = y + vy*((that.AVG_RTT/2.5)/GameConstants.FRAME_RATE)/30;
+			//Convergence
+			if(shapes[shapeID].isFalling==false && getDistance(shapes[shapeID].serverX,shapes[shapeID].serverY,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
+				targetPlayerShape.SetPosition(new b2Vec2(shapes[shapeID].serverX,shapes[shapeID].serverY));
+				console.log("serverX: "+shapes[shapeID].serverX+" serverY: "+shapes[shapeID].serverY);
+			}else if(x==0 && y==0){
+				targetPlayerShape.SetPosition(new b2Vec2(x,y));
+			}else if(vx!=0 && vy!=0){
+				//push it towards that direction instead of enforcing absolute position match
+				var force = 60;
+				var xForce = (x-targetPlayerShape.GetPosition().x)*force;
+				var yForce = (y-targetPlayerShape.GetPosition().y)*force;
+				console.log("xForce: "+xForce+" yForce: "+yForce);
+				targetPlayerShape.ApplyForce(new b2Vec2(xForce,yForce),targetPlayerShape.GetWorldCenter());
+			}
 		}
 	}
 	
@@ -596,6 +604,7 @@ var Engine = function() {
           }
         }
 	}
+	
 	var getPointsForShape = function(shape){
 		if(shape.id=="playerDisk1")
 			return lives.p1;
@@ -723,6 +732,9 @@ var Engine = function() {
 	  this.fallDirection = 0;
 	  this.sprite = Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
+	  //For sync
+	  this.serverX = null;
+	  this.serverY = null;
 	  
 	  //function to update coordinates from box2d bodies
       this.update = function(options) {
@@ -842,6 +854,8 @@ var Engine = function() {
 		return playerStatesArray;
 	}
 	
+	
+	//update player states from server
 	this.updatePlayerStates = function(playerStates){
 		//Update for client side only
 		if(that.bol_Server){
@@ -877,8 +891,14 @@ var Engine = function() {
 	var sendToServer = function(msg){
 		if(!that.bol_Server && global.engineSocket!=null){
 			global.engineSocket.send(JSON.stringify(msg));
+			
+			if(that.pingTime == null){
+				that.pingTime = Date.now();
+				//piggybag ping pong on sending anything to server during in game to determine RTT
+				global.engineSocket.send(JSON.stringify({type:"ping"}));
+			}
 		}
-	}	
+	}
 	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){

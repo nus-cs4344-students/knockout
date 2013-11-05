@@ -11,7 +11,7 @@ var GameConstants = {
 	PLATFORM_RADIUS : 10,
 	PLAYER_RADIUS : 1.4,
 	FRAME_RATE : 1000/60,
-	CONVERGENCE_SENSITIVITY : 0.5, //if server position player is <CONVERGENCE_SENSITIVITY> pixels away then converge
+	CONVERGENCE_SENSITIVITY : 0.8, //if server position player is <CONVERGENCE_SENSITIVITY> pixels away then converge
 	SERVER_ADDRESS : "", //for clients to connect to (can only be initialized later)
 	NUM_OF_PLAYERS : 4
 }
