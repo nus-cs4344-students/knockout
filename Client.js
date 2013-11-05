@@ -256,13 +256,15 @@ function Client(){
         $('#chatbox').empty();
         appendToChat('Welcome '+playerName);
       }
-        
+	  
         //Set button functions
       $('#btn_leave').button().click( function(event){
 		event.preventDefault();
         leaveGameSession();
         initLobby();
       });
+	  
+	
         
       $('#btn_start').button().click( function(event){
 		event.preventDefault();
@@ -292,6 +294,21 @@ function Client(){
 		event.preventDefault();
         toggleGameMode();
       });
+	  
+		//Only place here after declaring btn_mode as button
+		if('#btn_mode'.length>0){
+			var currentSession = getSessionWithID(currentSessionID);
+			if(currentSession!=null){
+				//need include span otherwise the UI will mess up
+				if(currentSession.game_Mode==0){
+					$('#btn_mode span').text('Classic');
+				}else if(currentSession.game_Mode==1){
+					$('#btn_mode span').text('Points');
+				}else{
+					$('#btn_mode span').text('Unknown');
+				}
+			}
+		}
 
       refreshSessionPlayersDisplay();
     });
@@ -488,7 +505,7 @@ function Client(){
                     }
                     newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
-					          newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
+					newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                 }
                 refreshSessionDisplay();
@@ -516,7 +533,7 @@ function Client(){
                     tempGameSession.abstractPlayersArray = playerList;
                     tempGameSession.abstractReadyArray = message.content.readyIDs;
                     tempGameSession.bol_isPlaying = message.content.isPlaying;
-					          tempGameSession.game_Mode = message.content.gameMode;
+					tempGameSession.game_Mode = message.content.gameMode;
                     console.log("edit game session");
                     
 					//if in current session, change button contents
@@ -543,7 +560,7 @@ function Client(){
                     newAbstractGameSession.abstractPlayersArray = playerList;
                     newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
                     newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
-					          newAbstractGameSession.game_Mode = message.content.gameMode;
+					newAbstractGameSession.game_Mode = message.content.gameMode;
                     abstractSessionArray.push(newAbstractGameSession);
                     console.log("create new game session");
                 }
