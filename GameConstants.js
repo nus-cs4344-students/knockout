@@ -22,8 +22,8 @@ GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME+':'+GameConstants.PORT;
 
 //For Openshift network, will run if server exist
 if(process.env.OPENSHIFT_APP_NAME){
-	GameConstants.PORT = process.env.OPENSHIFT_NODEJS_IP;
+	GameConstants.PORT = process.env.OPENSHIFT_NODEJS_PORT
 	GameConstants.SERVER_NAME = 'knockout-broccolicious.rhcloud.com';
 	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME;
-	GameConstants.SERVER_INTERNAL_IP = process.env.OPENSHIFT_NODEJS_PORT;
+	GameConstants.SERVER_INTERNAL_IP = process.env.OPENSHIFT_NODEJS_IP;
 }
