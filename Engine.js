@@ -276,6 +276,7 @@ var Engine = function() {
 		
 		//Must evenly space out players
 		var angle = 360/GameConstants.NUM_OF_PLAYERS;
+		var radian = Math.PI/180;
 		//Create circles according to number of player
 		for(var i=1;i<=GameConstants.NUM_OF_PLAYERS;i++){
 			var c;
@@ -294,8 +295,8 @@ var Engine = function() {
 			addCircle({
 				radius: GameConstants.PLAYER_RADIUS,
 				color: c,
-				x:shapes["id_Ground"].x + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
-				y:shapes["id_Ground"].y + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
+				x:shapes["id_Ground"].x + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.cos(angle*(i-1)*radian),
+				y:shapes["id_Ground"].y + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.sin(angle*(i-1)*radian),
 				id: GameConstants.SHAPE_NAME+i,
 				sprite: i,
 			});
@@ -862,10 +863,12 @@ var Engine = function() {
       this.radius = options.radius || 1;
             
       this.draw = function() {
+		var newX = this.x * SCALE;
+		var newY = this.y * SCALE;
         ctx.save();
-        ctx.translate(this.x * SCALE, this.y * SCALE);
+        ctx.translate(newX, newY);
         ctx.rotate(this.angle);
-        ctx.translate(-(this.x) * SCALE, -(this.y) * SCALE);
+        ctx.translate(-newX, -newY);
 
         //ctx.fillStyle = this.color;
 		ctx.fillStyle = this.color;
@@ -875,7 +878,7 @@ var Engine = function() {
         grd.addColorStop(1,darkerShade(this.color, 0.1));
         ctx.fillStyle=grd;*/
         ctx.beginPath();
-        ctx.arc(this.x * SCALE, this.y * SCALE, this.radius * SCALE, 0, Math.PI * 2, true);
+        ctx.arc(newX, newY, this.radius * SCALE, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.fill();
 		ctx.restore();
@@ -1058,9 +1061,10 @@ var Engine = function() {
 			
 		ctx.save();
 		try{
-			ctx.translate(WORLD_WIDTH/2, (WORLD_HEIGHT+100*SCALE/DEFAULT_SCALE)*0.5 );
+			var newScale = SCALE/DEFAULT_SCALE;
+			ctx.translate(WORLD_WIDTH/2, (WORLD_HEIGHT+100*newScale)*0.5 );
 			//Scale the image according to UI Scaling
-			ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
+			ctx.scale(newScale,newScale);
 			ctx.drawImage(img,
 				canvasPosX,
 				(canvasPosY*0.5)
