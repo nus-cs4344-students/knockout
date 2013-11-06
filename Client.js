@@ -58,7 +58,11 @@ function Client(){
             $('#username').tooltip('close');
             $('#username').prop('title', 'Username cannot be empty');
             $('#username').tooltip('open');
-          }else{
+          }else if($('#username').val().trim().length>17){
+			$('#username').tooltip('close');
+            $('#username').prop('title', 'Username cannot more than 17 characters');
+            $('#username').tooltip('open');
+		  }else{
             playerName = $('#username').val();
             updatePlayerName(playerName);
             $(this).dialog('close');
