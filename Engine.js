@@ -21,11 +21,12 @@ var Engine = function() {
         orientation, //used for mobile devices
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
-		lives = {p1:10, p2:10, p3:10, p4:10}, //for lives mode
+		lives = {p1:5, p2:5, p3:5, p4:5}, //for lives mode
 		score = {p1:0, p2:0, p3:0, p4:0},//for classic mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode,
+		dead = {p1:0, p2:0, p3:0, p4:0},//for lives mode
 		rounds = 5;//for classic mode
 	
 	var debug = false;
@@ -76,13 +77,29 @@ var Engine = function() {
 				{
 					//console.log("display name: "+shapes[tempBody.GetUserData()].displayName);
 					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
-					 lives.p1--;
-					if(shapes[tempBody.GetUserData()].id=="playerDisk2")
-					 lives.p2--;
-					if(shapes[tempBody.GetUserData()].id=="playerDisk3")
-					 lives.p3--;
-					if(shapes[tempBody.GetUserData()].id=="playerDisk4")
-					 lives.p4--;
+					{
+						 lives.p1--;
+						 if(lives.p1==0)
+						 	dead.p1 = 1;
+					}
+					else if(shapes[tempBody.GetUserData()].id=="playerDisk2")
+					{
+						 lives.p2--;
+						 if(lives.p2==0)
+						 	dead.p2 = 1;
+					}
+					else if(shapes[tempBody.GetUserData()].id=="playerDisk3")
+					{
+					 	lives.p3--;
+					 	if(lives.p3==0)
+					 		dead.p3 = 1;
+					}
+					else if(shapes[tempBody.GetUserData()].id=="playerDisk4")
+					{
+					 	lives.p4--;
+					 	if(lives.p4==0)
+					 		dead.p4 = 1;
+					}
 				}
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
@@ -104,6 +121,29 @@ var Engine = function() {
 				}
 				
 				tempBody.GetFixtureList().SetFilterData(filter);
+				if(gameMode == 1)
+				{
+					if(dead.p2==1 && dead.p3==1 && dead.p4==1)
+					{
+						//WINNER is p1
+						console.log("WINNER IS p1");
+					}
+					else if(dead.p1==1 && dead.p3==1 && dead.p4==1)
+					{
+						//WINNER is p2
+						console.log("WINNER IS p2");
+					}
+					else if(dead.p1==1 && dead.p2==1 && dead.p4==1)
+					{
+						//WINNER is p3
+						console.log("WINNER IS p3");
+					}
+					else if(dead.p1==1 && dead.p2==1 && dead.p3==1)
+					{
+						//WINNER is p4
+						console.log("WINNER IS p4");
+					}
+				}
 			}
         }
         world.SetContactListener(listener);
@@ -303,7 +343,7 @@ var Engine = function() {
 	        // ctx.fillText("p4: " + lives.p4,10,200);
 
 			if(shapes["playerDisk1"]){
-	        ctx.fillText(shapes["playerDisk1"].displayName+": " + lives.p1,10,50);
+	        	ctx.fillText(shapes["playerDisk1"].displayName+": " + lives.p1,10,50);
 			}
 			if(shapes["playerDisk2"]){
 				ctx.fillText(shapes["playerDisk2"].displayName+": " + lives.p2,10,100);
@@ -579,6 +619,7 @@ var Engine = function() {
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
 			//if it is out of screen for a long time
+			//TODO delete the shape instead
 			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (WORLD_HEIGHT*2)/SCALE && getPointsForShape(shapes[b.GetUserData()])> 0){
 				shapes[b.GetUserData()].isFalling = false;
 				shapes[b.GetUserData()].fallDirection = 0;

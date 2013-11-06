@@ -4,6 +4,7 @@
 var GameConstants = {
 	PORT : 8080,	// port of game
 	SERVER_NAME : 'localhost',
+	//SERVER_NAME : '192.168.2.6',
 	SERVER_INTERNAL_IP : '0.0.0.0',
 	CANVAS_HEIGHT: 500,
 	CANVAS_WIDTH: 600,
