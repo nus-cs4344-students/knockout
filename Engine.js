@@ -42,6 +42,9 @@ var Engine = function() {
 	var bol_Stop;
 	this.bol_Server = false;
 	
+	//for mobile leave game
+	this.mobileLeaveTimer = null;
+	
 	//For measuring RTT
 	this.RTT = null;
 	this.AVG_RTT = null;
@@ -147,11 +150,20 @@ var Engine = function() {
 			
 			//for mobile devices
 			if(navigator.appVersion.indexOf("Mobile")>-1){
-				//TODO not working for mobile
-				/*canvas.on('press', function(e){
-					console.log("leave game");
-					sendToServer({type:"leaveGameSession"});
-				});*/
+				canvas.addEventListener("touchstart",function(event){
+					event.preventDefault();
+					mobileLeaveTimer = setTimeout(function(){
+						console.log("leave game");
+						sendToServer({type:"leaveGameSession"});
+					}, 1000 );
+				});
+				canvas.addEventListener("touchend",function(event){
+					event.preventDefault();
+					if(mobileLeaveTimer!=null){
+						clearTimeout(mobileLeaveTimer);
+						mobileLeaveTimer = null;
+					}
+				});
 			}
 		}
 	}
@@ -1157,7 +1169,7 @@ var Engine = function() {
 		ctx.font= textScale+'px Lato';
 		ctx.fillStyle='#FFFFFF';
 		if(navigator.appVersion.indexOf("Mobile")>-1){
-			ctx.fillText("Double tap to leave",x,y+textScale);
+			ctx.fillText("Long press to leave",x,y+textScale);
 		}else{
 			ctx.fillText("Press Esc to leave",x,y+textScale);
 		}
