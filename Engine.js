@@ -141,10 +141,18 @@ var Engine = function() {
 				autoScaleWithScreenSize();
 			});
 			
-			//For mobile devices
 			$(window).bind('orientationchange', function(){
 				autoScaleWithScreenSize();
 			});
+			
+			//for mobile devices
+			if(navigator.appVersion.indexOf("Mobile")>-1){
+				//TODO not working for mobile
+				/*canvas.on('press', function(e){
+					console.log("leave game");
+					sendToServer({type:"leaveGameSession"});
+				});*/
+			}
 		}
 	}
 	
@@ -329,6 +337,7 @@ var Engine = function() {
 		
 		
 		drawInterfaceForScoreOrLives();
+		drawLeaveText();
 		
 		ctx.restore();
 	}
@@ -393,9 +402,9 @@ var Engine = function() {
 	}
 	
 	var update = function(){
+		setTimeout(update,GameConstants.FRAME_RATE);
 		if(bol_Stop==false){
 			//http://stackoverflow.com/questions/729921/settimeout-or-setinterval
-			setTimeout(update,GameConstants.FRAME_RATE);
 			world.Step(1 / 60, 10, 10);
 			world.ClearForces();
 			checkToDestroy();
@@ -403,7 +412,6 @@ var Engine = function() {
 			updateCustomGravity();
 
 			if(!that.bol_Server){
-				checkKeysAndOrientation();
 				draw();
 			}
 			
@@ -414,14 +422,17 @@ var Engine = function() {
 				resetPositionForPoints();
 			}
 		}
+		if(!that.bol_Server){
+			checkKeysAndOrientation();
+		}
 	}
 	
 	//Checks to see which object is in destroy_list and must be removed from game
 	var checkToDestroy = function(){
 		for (var i in destroy_list) {
 			world.DestroyBody(destroy_list[i]);
-			delete shapes[destroy_list[i].GetUserData()];
-			delete bodies[destroy_list[i].GetUserData()];
+			delete shapes[destroy_list[i]];
+			delete bodies[destroy_list[i]];
 		}
         // Reset the array
         destroy_list.length = 0;
@@ -460,6 +471,12 @@ var Engine = function() {
 	var checkKeysAndOrientation = function(){
 		var xPush=0;
 		var yPush=0;
+		
+		//For browsers to quit game
+		if(Key.isDown(Key.ESC)){
+			console.log("leave game");
+			sendToServer({type:"leaveGameSession"});
+		}
 		
 		//The numbers here do not determine the force
 		if(Key.isDown(Key.LEFT)){
@@ -749,7 +766,6 @@ var Engine = function() {
 				bol_Stop = false;
 				resetPositionForClassic();
 				round++;
-				update();
 			},2000);
 		}
 	}
@@ -958,8 +974,8 @@ var Engine = function() {
 
 	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
+		bol_Stop = true;
 		if(world.IsLocked()){
-			bol_Stop = true;
 			if(!that.bol_Server){
 				$(window).unbind('resize');
 			}
@@ -1130,6 +1146,24 @@ var Engine = function() {
 		ctx.restore();
 	}
 
+	var drawLeaveText = function(){
+		var currentScale = (SCALE/DEFAULT_SCALE)/2;
+		var textScale = SCALE;
+		var x = WORLD_WIDTH/currentScale-(textScale*8);
+		var y = WORLD_HEIGHT/currentScale-textScale*1.5;
+		
+		ctx.save();
+		ctx.scale(currentScale,currentScale);
+		ctx.font= textScale+'px Lato';
+		ctx.fillStyle='#FFFFFF';
+		if(navigator.appVersion.indexOf("Mobile")>-1){
+			ctx.fillText("Double tap to leave",x,y+textScale);
+		}else{
+			ctx.fillText("Press Esc to leave",x,y+textScale);
+		}
+		ctx.restore();  
+	}
+	
 	var drawInterfaceForScoreOrLives = function(){
 		ctx.save();
 		var currentScale = (SCALE/DEFAULT_SCALE)/2;
@@ -1208,8 +1242,6 @@ var Engine = function() {
 				x+=width;
 			}
 		}
-		
-		
 		
 		ctx.restore();
 	}

@@ -610,6 +610,24 @@ function Client(){
                 hideProcessing();
                 alert('Failed to join room, sorry :(');
             break;  
+			case "successfulLeaveGameSession":
+				if(gameEngine!=null){
+					initLobby();
+					gameEngine.stopAndDestroyWorld();
+					gameEngine = null;
+					
+					//Remove testing session
+					if(currentSessionID==-1){
+						 for(var i=0; i<abstractSessionArray.length; i++)
+						{
+							if(abstractSessionArray[i].sessionID == -1){
+								abstractSessionArray.splice(i,1);
+							}
+						}
+					}
+				}
+				currentSessionID=null;
+			break;
 
             case "startGame":
                 appendToChat('[Game is Starting in 5]');
@@ -704,7 +722,6 @@ function Client(){
 
   var leaveGameSession = function(){
     sendToServer({type:"leaveGameSession"});
-    currentSessionID=null;
   }
 
   var getPlayerWithID = function(id){

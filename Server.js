@@ -122,6 +122,7 @@ function Server(){
                   gameLobby.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
                 }
               }
+			  unicast(conn,{type:"successfulLeaveGameSession"});
               break;
             
             case "toggleReady":
