@@ -672,6 +672,9 @@ var Engine = function() {
 				//everybody loses if no one is alive or the last one alive is falling as well
 				console.log("everybody lost");
 				textToDraw = "Everybody Lost :(";
+				if(shapes[foundAliveID].dead==false){
+					shapes[foundAliveID].lives--;
+				}
 			}else{
 				//one player wins the round
 				console.log(shapes[foundAliveID].displayName+" won the round!");
