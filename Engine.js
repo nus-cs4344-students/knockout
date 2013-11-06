@@ -24,8 +24,8 @@ var Engine = function() {
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode, //0 is classic, 1 is points
-		round = 1,
-		numRounds = 5;//for classic mode
+		pointsTimer = 60,
+		round = 1;
 	
 	var debug = false;
 	var that = this;
@@ -72,10 +72,27 @@ var Engine = function() {
 			}
 			else if (contact.GetFixtureB().GetBody().GetUserData() == 'id_Ground') {
 				tempBody = contact.GetFixtureA().GetBody();
+			}else if(gameMode==1){
+				//Points mode
+				//Both not ground, means between players
+				var id1 = contact.GetFixtureA().GetBody().GetUserData();
+				var id2 = contact.GetFixtureB().GetBody().GetUserData();
+				if(id1!=null && id2!=null){
+					shapes[id1].lastPlayerTouched=id2;
+					shapes[id2].lastPlayerTouched=id1;
+				}
 			}
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
+				
+				//Points mode, increase other player's points
+				if(gameMode==1){
+					var id = shapes[tempBody.GetUserData()].lastPlayerTouched;
+					if(id!=null){
+						shapes[id].score+=50;
+					}
+				}
 				
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
@@ -98,7 +115,8 @@ var Engine = function() {
 				
 				tempBody.GetFixtureList().SetFilterData(filter);
 			}
-        }
+        
+		}
         world.SetContactListener(listener);
 
 		
@@ -180,6 +198,11 @@ var Engine = function() {
 		
 		//update will auto setTimeout recursively
 		update();
+		
+		//Set timer to run
+		if(gameMode==1){
+			setTimeout(reducePointsTimer,1000);
+		}
 	}
 	
 	var getBrowser = function(){ 
@@ -586,6 +609,7 @@ var Engine = function() {
 					shapes[b.GetUserData()].isFalling = false;
 					shapes[b.GetUserData()].fallDirection = 0;
 					shapes[b.GetUserData()].dead = false;
+					shapes[b.GetUserData()].lastPlayerTouched = null;
 					//Stop movements
 					b.SetAngularVelocity(0);
 					b.SetLinearVelocity(new b2Vec2(0,0));
@@ -597,6 +621,38 @@ var Engine = function() {
 				}
 			}
         }
+	}
+	
+	var reducePointsTimer = function(){
+		if(pointsTimer>0){
+			pointsTimer--;
+			setTimeout(reducePointsTimer,1000);
+		}else{
+			bol_Stop = true;
+			
+			if(!that.bol_Server){
+				var highestScore=0;
+				var highestNames="";
+				//find the names for highscore
+				for(var i in shapes){
+					if(shapes[i].score==highestScore){
+						if(highestNames.length>0){
+							highestNames+=", ";
+						}
+						highestNames+=shapes[i].displayName;
+					}else if(shapes[i].score>highestScore){
+						highestScore=shapes[i].score;
+						highestNames=shapes[i].displayName;
+					}
+				}
+				var textToDraw = highestNames+" has won the game!";
+				ctx.save();
+				ctx.font= SCALE+"px Segoe UI";
+				ctx.fillStyle = "#808080";
+				ctx.fillText(textToDraw,WORLD_WIDTH/2-(textToDraw.length/3.5)*SCALE,WORLD_HEIGHT/2+SCALE);
+				ctx.restore();
+			}
+		}
 	}
 	
 	//for classic mode
@@ -812,11 +868,13 @@ var Engine = function() {
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
 	  this.dead = false;
-	  this.lives = 5;
-	  this.score = 0;
+	  this.lives = 5; // for classic mode
+	  this.score = 0; //for points mode
 	  this.fallDirection = 0;
 	  this.sprite = v.sprite || Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
+	  this.lastPlayerTouched = null; //id for contact in points mode
+	  
 	  //For sync
 	  this.serverX = null;
 	  this.serverY = null;
@@ -1092,6 +1150,10 @@ var Engine = function() {
 			ctx.font= textScale+'px Lato';
 			ctx.fillStyle = "#FFFFFF";
 			ctx.fillText("Round: "+round,x,y+height+textY);
+		}else if(gameMode==1){
+			ctx.font= textScale+'px Lato';
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillText("Time Left: "+pointsTimer,x,y+height+textY);
 		}
 		
 		for(var i in shapes){
