@@ -80,7 +80,7 @@ var Engine = function() {
 				//Both not ground, means between players
 				var id1 = contact.GetFixtureA().GetBody().GetUserData();
 				var id2 = contact.GetFixtureB().GetBody().GetUserData();
-				if(id1!=null && id2!=null){
+				if(id1!=null && id2!=null && shapes[id1].isFalling==false && shapes[id2].isFalling==false){
 					shapes[id1].lastPlayerTouched=id2;
 					shapes[id2].lastPlayerTouched=id1;
 				}
@@ -563,6 +563,12 @@ var Engine = function() {
 	//Move player around
 	this.pushPlayerShape = function(shapeID,xPush,yPush){
 		var force=150;
+		
+		if(xPush!=0 && yPush!=0){
+			//diagonal force should be much lesser
+			force = force * 0.7;
+		}
+		
 		//Anti cheat on server side
 		if(xPush<0){
 			xPush=-force;
@@ -654,6 +660,12 @@ var Engine = function() {
 					shapes[b.GetUserData()].fallDirection = 0;
 					shapes[b.GetUserData()].dead = false;
 					shapes[b.GetUserData()].lastPlayerTouched = null;
+					//remove touching others
+					for(var i in shapes){
+						if(shapes[i].lastPlayerTouched == b.GetUserData()){
+							shapes[i].lastPlayerTouched = null;
+						}
+					}
 					//Stop movements
 					b.SetAngularVelocity(0);
 					b.SetLinearVelocity(new b2Vec2(0,0));
@@ -861,10 +873,18 @@ var Engine = function() {
           }
         },
         defaultFixture: function() {
-          fixDef = new b2FixtureDef;
-          fixDef.density = 0.6; //0.3
-          // fixDef.friction = 0.5;
-          fixDef.restitution = 0.3; //1.5
+			fixDef = new b2FixtureDef;
+			
+			if(gameMode==0){
+				//classic mode
+				fixDef.density = 0.6;
+				ixDef.restitution = 0.5; //1.5
+			}else if(gameMode==1){
+				//points mode
+				fixDef.density = 0.6; //0.3
+				//fixDef.friction = 0.5;
+				fixDef.restitution = 1.2; //1.5
+			}
         },
         bodyDef: function(shape) {
           var bodyDef = new b2BodyDef;
