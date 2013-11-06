@@ -289,7 +289,7 @@ var Engine = function() {
 		
 		//FOR TESTING ONLY, SHOULD BE SET BY SERVER
 		currentPlayerShapeID = 'playerDisk1';
-		that.setShapeName(currentPlayerShapeID,"omg test bbq");
+		that.setShapeName(currentPlayerShapeID,"omg test bbq vv");
 
         setupCallbacks();
 		
@@ -403,7 +403,7 @@ var Engine = function() {
 			//Change to side view          
 			ctx.save();
 			ctx.scale(1, 0.5);
-			ctx.translate(WORLD_WIDTH/2, WORLD_HEIGHT);
+			ctx.translate(WORLD_WIDTH/2, WORLD_HEIGHT+100*SCALE/DEFAULT_SCALE);
 			drawOrder[i].draw();
 			if(drawOrder[i] != shapes["id_Ground"]){
 				drawDisplayNameOnShape(drawOrder[i]);
@@ -417,48 +417,9 @@ var Engine = function() {
 				drawSpriteOnShape(drawOrder[i]);
 			}
 		}
-		if(gameMode == 1)//points mode
-		{
-			console.log("Printing livess");
-			//draw lives
-			ctx.font="40px Lato";
-	        ctx.fillStyle = "#FFFFFF";
-	        // ctx.fillText("p1: " + lives.p1,10,50);
-	        // ctx.fillText("p2: " + lives.p2,10,100);
-	        // ctx.fillText("p3: " + lives.p3,10,150);
-	        // ctx.fillText("p4: " + lives.p4,10,200);
-
-			if(shapes["playerDisk1"]){
-	        	ctx.fillText(shapes["playerDisk1"].displayName+": " + lives.p1,10,50);
-			}
-			if(shapes["playerDisk2"]){
-				ctx.fillText(shapes["playerDisk2"].displayName+": " + lives.p2,10,100);
-			}
-			if(shapes["playerDisk3"]){
-				ctx.fillText(shapes["playerDisk3"].displayName+": " + lives.p3,10,150);
-			}
-			if(shapes["playerDisk4"]){
-				ctx.fillText(shapes["playerDisk4"].displayName+": " + lives.p4,10,200);
-			}
-    	}
-    	else if(gameMode == 0)
-    	{
-    		ctx.font="40px Lato";
-	        ctx.fillStyle = "#FFFFFF";
-	        ctx.fillText("Round: "+round, 10, 50);
-	        if(shapes["playerDisk1"]){
-	        	ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,100);
-			}
-			if(shapes["playerDisk2"]){
-				ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,150);
-			}
-			if(shapes["playerDisk3"]){
-				ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,200);
-			}
-			if(shapes["playerDisk4"]){
-				ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,250);
-			}
-    	}
+		
+		
+		drawInterfaceForScoreOrLives();
 		
 		ctx.restore();
 	}
@@ -991,7 +952,6 @@ var Engine = function() {
 		return playerStatesArray;
 	}
 	
-	
 	//update player states from server
 	this.updatePlayerStates = function(playerStates){
 		//Update for client side only
@@ -1084,7 +1044,7 @@ var Engine = function() {
 			
 		ctx.save();
 		try{
-			ctx.translate(WORLD_WIDTH/2, WORLD_HEIGHT*0.5);
+			ctx.translate(WORLD_WIDTH/2, (WORLD_HEIGHT+100*SCALE/DEFAULT_SCALE)*0.5 );
 			//Scale the image according to UI Scaling
 			ctx.scale(SCALE/DEFAULT_SCALE,SCALE/DEFAULT_SCALE);
 			ctx.drawImage(img,
@@ -1119,6 +1079,94 @@ var Engine = function() {
 		}catch (e) {
 			console.log("Error in drawGround: "+e);
 		}
+		ctx.restore();
+	}
+
+	var drawInterfaceForScoreOrLives = function(){
+		ctx.save();
+		var currentScale = (SCALE/DEFAULT_SCALE)/2;
+		var textScale = DEFAULT_SCALE*1.5;
+		
+		
+		var width = 410;
+		//start x
+		var x = (WORLD_WIDTH/currentScale-(GameConstants.NUM_OF_PLAYERS*width))/2;
+		var y = 10;
+		var height = 100;
+		var textX = 100;
+		var textY = 40;
+		ctx.scale(currentScale,currentScale);
+		for(var i in shapes){
+			if(shapes[i].id!='id_Ground'){
+				//Paint background
+				ctx.fillStyle=shapes[i].color;
+				ctx.fillRect(
+					x,
+					y,
+					width,
+					height
+				);
+			
+				//Paint image
+				var img;
+				switch(shapes[i].sprite){
+					case 4:
+						img = img_Eskimo_R;
+						break;
+					case 3:
+						img = img_Bear_R;
+						break;
+					case 2:
+						img = img_Penguin_R;
+						break;
+					case 1:
+					default:
+						img = img_Seal_R;
+						break;
+				}
+				ctx.save();
+				ctx.drawImage(img,x,y);
+				ctx.restore();
+				
+				//Paint text
+				ctx.font= textScale+'px Lato';
+				ctx.fillStyle = "#FFFFFF";
+				if(shapes[i].displayName.length>0){
+					ctx.fillText(shapes[i].displayName,x+textX,y+textY);
+				}
+				var textToDraw="";
+				//classic lives mode
+				if(gameMode==0){
+					textToDraw = "Lives: ";
+					if(i=='playerDisk1'){
+						textToDraw += lives.p1;
+					}else if(i=='playerDisk2'){
+						textToDraw += lives.p2;
+					}else if(i=='playerDisk3'){
+						textToDraw += lives.p3;
+					}else if(i=='playerDisk4'){
+						textToDraw += lives.p4;
+					}
+				}else if(gameMode==1){
+					//points mode
+					textToDraw = "Score: ";
+					if(i=='playerDisk1'){
+						textToDraw += score.p1;
+					}else if(i=='playerDisk2'){
+						textToDraw += score.p2;
+					}else if(i=='playerDisk3'){
+						textToDraw += score.p3;
+					}else if(i=='playerDisk4'){
+						textToDraw += score.p4;
+					}
+				}
+				ctx.fillText(textToDraw,x+textX,y+textY+textScale);
+				
+				//incremental paint
+				x+=width;
+			}
+		}
+		
 		ctx.restore();
 	}
 }

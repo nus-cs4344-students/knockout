@@ -58,9 +58,9 @@ function Client(){
             $('#username').tooltip('close');
             $('#username').prop('title', 'Username cannot be empty');
             $('#username').tooltip('open');
-          }else if($('#username').val().trim().length>17){
+          }else if($('#username').val().trim().length>15){
 			$('#username').tooltip('close');
-            $('#username').prop('title', 'Username cannot more than 17 characters');
+            $('#username').prop('title', 'Username cannot more than 15 characters');
             $('#username').tooltip('open');
 		  }else{
             playerName = $('#username').val();
