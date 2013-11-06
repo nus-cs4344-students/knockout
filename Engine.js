@@ -87,7 +87,7 @@ var Engine = function() {
 						}
 						else if(gameMode ==0)
 						{
-
+							dead.p1 = 1;
 						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk2")
@@ -100,7 +100,7 @@ var Engine = function() {
 						}
 						else if(gameMode ==0)
 						{
-							
+							dead.p2 = 1;
 						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk3")
@@ -113,7 +113,7 @@ var Engine = function() {
 					 	}
 					 	else if(gameMode ==0)
 						{
-							
+							dead.p3 = 1;
 						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk4")
@@ -126,7 +126,7 @@ var Engine = function() {
 						}
 						else if(gameMode ==0)
 						{
-							
+							dead.p4 = 1;
 						}
 					}
 				//}
@@ -150,29 +150,78 @@ var Engine = function() {
 				}
 				
 				tempBody.GetFixtureList().SetFilterData(filter);
-				if(gameMode == 1)
-				{
+				//if(gameMode == 1)
+				//{
 					if(dead.p2==1 && dead.p3==1 && dead.p4==1)
 					{
-						//WINNER is p1
-						console.log("WINNER IS p1");
+						if(gameMode ==1)
+						{
+							//WINNER is p1
+							console.log("WINNER IS p1");
+						}
+						else if(gameMode==0)
+						{
+							round++;
+							score.p1++;
+						}
 					}
 					else if(dead.p1==1 && dead.p3==1 && dead.p4==1)
 					{
-						//WINNER is p2
-						console.log("WINNER IS p2");
+						if(gameMode ==1)
+						{
+							//WINNER is p2
+							console.log("WINNER IS p2");
+						}
+						else if(gameMode==0)
+						{
+							round++;
+							score.p2++;
+						}
 					}
 					else if(dead.p1==1 && dead.p2==1 && dead.p4==1)
 					{
-						//WINNER is p3
-						console.log("WINNER IS p3");
+						if(gameMode ==1)
+						{
+							//WINNER is p3
+							console.log("WINNER IS p3");
+						}
+						else if(gameMode==0)
+						{
+							round++;
+							score.p3++;
+						}
 					}
 					else if(dead.p1==1 && dead.p2==1 && dead.p3==1)
 					{
-						//WINNER is p4
-						console.log("WINNER IS p4");
+						if(gameMode ==1)
+						{
+							//WINNER is p4
+							console.log("WINNER IS p4");
+						}
+						else if(gameMode==0)
+						{
+							round++;
+							score.p4++;
+						}
 					}
-				}
+					if(gameMode == 0)
+					{
+						if(round == numRounds+1)//end of game
+						{
+							var max = 0;
+							var winner;
+							for(var k = 0; k<4;k++)//find who has the most points
+							{
+								if(score[k]>max)
+								{
+									max = score[k];
+									winner = "p"+k+1;
+								}
+							}
+							console.log("WINNER is "+winner);
+						}
+					}
+				//}
 			}
         }
         world.SetContactListener(listener);
@@ -400,6 +449,7 @@ var Engine = function() {
 			}
 			if(shapes["playerDisk4"]){
 				ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,250);
+			}
     	}
 		
 		ctx.restore();
