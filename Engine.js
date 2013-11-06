@@ -27,7 +27,8 @@ var Engine = function() {
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode,
 		dead = {p1:0, p2:0, p3:0, p4:0},//for lives mode
-		rounds = 5;//for classic mode
+		round = 1,
+		numRounds = 5;//for classic mode
 	
 	var debug = false;
 	var that = this;
@@ -73,34 +74,62 @@ var Engine = function() {
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
 				//console.log(shapes[tempBody.GetUserData()]);
-				if(gameMode == 1)
-				{
+				//if(gameMode == 1)
+				//{
 					//console.log("display name: "+shapes[tempBody.GetUserData()].displayName);
 					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
 					{
-						 lives.p1--;
-						 if(lives.p1==0)
-						 	dead.p1 = 1;
+						if(gameMode ==1)
+						{
+							 lives.p1--;
+							 if(lives.p1==0)
+							 	dead.p1 = 1;
+						}
+						else if(gameMode ==0)
+						{
+
+						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk2")
 					{
-						 lives.p2--;
-						 if(lives.p2==0)
-						 	dead.p2 = 1;
+						if(gameMode ==1)
+						{
+							 lives.p2--;
+							 if(lives.p2==0)
+							 	dead.p2 = 1;
+						}
+						else if(gameMode ==0)
+						{
+							
+						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk3")
 					{
-					 	lives.p3--;
-					 	if(lives.p3==0)
-					 		dead.p3 = 1;
+						if(gameMode ==1)
+						{
+						 	lives.p3--;
+						 	if(lives.p3==0)
+						 		dead.p3 = 1;
+					 	}
+					 	else if(gameMode ==0)
+						{
+							
+						}
 					}
 					else if(shapes[tempBody.GetUserData()].id=="playerDisk4")
 					{
-					 	lives.p4--;
-					 	if(lives.p4==0)
-					 		dead.p4 = 1;
+						if(gameMode ==1)
+						{
+						 	lives.p4--;
+						 	if(lives.p4==0)
+						 		dead.p4 = 1;
+						}
+						else if(gameMode ==0)
+						{
+							
+						}
 					}
-				}
+				//}
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
 					shapes[tempBody.GetUserData()].fallDirection = 1;
@@ -354,6 +383,23 @@ var Engine = function() {
 			if(shapes["playerDisk4"]){
 				ctx.fillText(shapes["playerDisk4"].displayName+": " + lives.p4,10,200);
 			}
+    	}
+    	else if(gameMode == 0)
+    	{
+    		ctx.font="40px Lato";
+	        ctx.fillStyle = "#FFFFFF";
+	        ctx.fillText("Round: "+round, 10, 50);
+	        if(shapes["playerDisk1"]){
+	        	ctx.fillText(shapes["playerDisk1"].displayName+": " + score.p1,10,100);
+			}
+			if(shapes["playerDisk2"]){
+				ctx.fillText(shapes["playerDisk2"].displayName+": " + score.p2,10,150);
+			}
+			if(shapes["playerDisk3"]){
+				ctx.fillText(shapes["playerDisk3"].displayName+": " + score.p3,10,200);
+			}
+			if(shapes["playerDisk4"]){
+				ctx.fillText(shapes["playerDisk4"].displayName+": " + score.p4,10,250);
     	}
 		
 		ctx.restore();
