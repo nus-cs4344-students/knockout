@@ -21,12 +21,9 @@ var Engine = function() {
         orientation, //used for mobile devices
         shapes = {}, //used for UI
         bodies = {}, //body of box2d
-		lives = {p1:5, p2:5, p3:5, p4:5}, //for lives mode
-		score = {p1:0, p2:0, p3:0, p4:0},//for points mode
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
-		gameMode,
-		dead = {p1:0, p2:0, p3:0, p4:0},//for lives mode
+		gameMode, //0 is classic, 1 is points
 		round = 1,
 		numRounds = 5;//for classic mode
 	
@@ -79,63 +76,7 @@ var Engine = function() {
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
-				//console.log(shapes[tempBody.GetUserData()]);
-				//if(gameMode == 1)
-				//{
-					//console.log("display name: "+shapes[tempBody.GetUserData()].displayName);
-					if(shapes[tempBody.GetUserData()].id=="playerDisk1")
-					{
-						if(gameMode ==1)
-						{
-							 lives.p1--;
-							 if(lives.p1==0)
-							 	dead.p1 = 1;
-						}
-						else if(gameMode ==0)
-						{
-							dead.p1 = 1;
-						}
-					}
-					else if(shapes[tempBody.GetUserData()].id=="playerDisk2")
-					{
-						if(gameMode ==1)
-						{
-							 lives.p2--;
-							 if(lives.p2==0)
-							 	dead.p2 = 1;
-						}
-						else if(gameMode ==0)
-						{
-							dead.p2 = 1;
-						}
-					}
-					else if(shapes[tempBody.GetUserData()].id=="playerDisk3")
-					{
-						if(gameMode ==1)
-						{
-						 	lives.p3--;
-						 	if(lives.p3==0)
-						 		dead.p3 = 1;
-					 	}
-					 	else if(gameMode ==0)
-						{
-							dead.p3 = 1;
-						}
-					}
-					else if(shapes[tempBody.GetUserData()].id=="playerDisk4")
-					{
-						if(gameMode ==1)
-						{
-						 	lives.p4--;
-						 	if(lives.p4==0)
-						 		dead.p4 = 1;
-						}
-						else if(gameMode ==0)
-						{
-							dead.p4 = 1;
-						}
-					}
-				//}
+				
 				//Set fallDirection for drawing properly behind or infront the ground
 				if(shapes[tempBody.GetUserData()].y>shapes["id_Ground"].y){
 					shapes[tempBody.GetUserData()].fallDirection = 1;
@@ -156,85 +97,14 @@ var Engine = function() {
 				}
 				
 				tempBody.GetFixtureList().SetFilterData(filter);
-				//if(gameMode == 1)
-				//{
-					if(dead.p2==1 && dead.p3==1 && dead.p4==1)
-					{
-						if(gameMode ==1)
-						{
-							//WINNER is p1
-							console.log("WINNER IS p1");
-						}
-						else if(gameMode==0)
-						{
-							round++;
-							score.p1++;
-						}
-					}
-					else if(dead.p1==1 && dead.p3==1 && dead.p4==1)
-					{
-						if(gameMode ==1)
-						{
-							//WINNER is p2
-							console.log("WINNER IS p2");
-						}
-						else if(gameMode==0)
-						{
-							round++;
-							score.p2++;
-						}
-					}
-					else if(dead.p1==1 && dead.p2==1 && dead.p4==1)
-					{
-						if(gameMode ==1)
-						{
-							//WINNER is p3
-							console.log("WINNER IS p3");
-						}
-						else if(gameMode==0)
-						{
-							round++;
-							score.p3++;
-						}
-					}
-					else if(dead.p1==1 && dead.p2==1 && dead.p3==1)
-					{
-						if(gameMode ==1)
-						{
-							//WINNER is p4
-							console.log("WINNER IS p4");
-						}
-						else if(gameMode==0)
-						{
-							round++;
-							score.p4++;
-						}
-					}
-					if(gameMode == 0)
-					{
-						if(round == numRounds+1)//end of game
-						{
-							var max = 0;
-							var winner;
-							for(var k = 0; k<4;k++)//find who has the most points
-							{
-								if(score[k]>max)
-								{
-									max = score[k];
-									winner = "p"+k+1;
-								}
-							}
-							console.log("WINNER is "+winner);
-						}
-					}
-				//}
 			}
         }
         world.SetContactListener(listener);
 
 		
         if (!that.bol_Server){
-		
+			//for client side only
+			
 			if(window.DeviceOrientationEvent) {
 				window.addEventListener('deviceorientation', function(eventData) {
 					orientation = {
@@ -434,6 +304,7 @@ var Engine = function() {
 		}
 		
 		
+		
 		drawInterfaceForScoreOrLives();
 		
 		ctx.restore();
@@ -507,14 +378,17 @@ var Engine = function() {
 			checkToDestroy();
 			updateShapeUIFromBox2D();
 			updateCustomGravity();
-			//for points mode only
-			if(gameMode==1){//***************************************************************************************************************************
-				resetPositionAfterFall(); // this causing problems
-			}
-			
+
 			if(!that.bol_Server){
 				checkKeysAndOrientation();
 				draw();
+			}
+			
+			//Check after draw
+			if(gameMode==0){
+				checkToResetForClassic();
+			}else if(gameMode==1){
+				resetPositionForPoints();
 			}
 		}
 	}
@@ -536,8 +410,15 @@ var Engine = function() {
 	
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
-            if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y <= (WORLD_HEIGHT*2)/SCALE){
-				b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
+            if(shapes[b.GetUserData()].isFalling==true){
+				if(b.GetPosition().y <= (WORLD_HEIGHT*2)/SCALE){
+					b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
+				}else if(shapes[b.GetUserData()].dead==false){
+					shapes[b.GetUserData()].dead=true;
+					if(gameMode==0){
+						shapes[b.GetUserData()].lives--;
+					}
+				}
 			}
           }
         }
@@ -697,38 +578,123 @@ var Engine = function() {
 
 	//for points mode
 	//When sphere drops out of map, reset position to middle
-	var resetPositionAfterFall = function(){
+	var resetPositionForPoints = function(){
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
-          if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
-			//if it is out of screen for a long time
-			//TODO delete the shape instead
-			if(shapes[b.GetUserData()].isFalling==true && b.GetPosition().y > (WORLD_HEIGHT*2)/SCALE && getPointsForShape(shapes[b.GetUserData()])> 0){
-				shapes[b.GetUserData()].isFalling = false;
-				shapes[b.GetUserData()].fallDirection = 0;
+			if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
+				//if it is out of screen for a long time
+				if(shapes[b.GetUserData()].dead==true){
+					shapes[b.GetUserData()].isFalling = false;
+					shapes[b.GetUserData()].fallDirection = 0;
+					shapes[b.GetUserData()].dead = false;
+					//Stop movements
+					b.SetAngularVelocity(0);
+					b.SetLinearVelocity(new b2Vec2(0,0));
+					b.SetPosition(new b2Vec2(shapes['id_Ground'].x,shapes['id_Ground'].y));
+					//Set back groupIndex to default 0 so that they will hit each other
+					b.GetFixtureList().SetFilterData(new b2FilterData);
+					//Update UI
+					shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
+				}
+			}
+        }
+	}
+	
+	//for classic mode
+	//to reset after everybody has died
+	var resetPositionForClassic = function(){
+		var angle = 360/GameConstants.NUM_OF_PLAYERS;
+		var radian = Math.PI/180;
+		var count = 0;
+		for(var i in shapes){
+			if(shapes[i].id!='id_Ground'){
+				var x = shapes["id_Ground"].x + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.cos(angle*(count)*radian);
+				var y = shapes["id_Ground"].y + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.sin(angle*(count)*radian);
+				shapes[i].isFalling = false;
+				shapes[i].fallDirection = 0;
+				shapes[i].dead = false;
+				
+				var b = bodies[i];
 				//Stop movements
 				b.SetAngularVelocity(0);
 				b.SetLinearVelocity(new b2Vec2(0,0));
-				b.SetPosition(new b2Vec2(shapes['id_Ground'].x,shapes['id_Ground'].y));
+				b.SetPosition(new b2Vec2(x,y));
 				//Set back groupIndex to default 0 so that they will hit each other
 				b.GetFixtureList().SetFilterData(new b2FilterData);
 				//Update UI
 				shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
+				count++;
 			}
-          }
-        }
-	}
-	
-	var getPointsForShape = function(shape){
-		if(shape.id=="playerDisk1")
-			return lives.p1;
-		if(shape.id=="playerDisk2")
-			return lives.p2;
-		if(shape.id=="playerDisk3")
-			return lives.p3;
-		if(shape.id=="playerDisk4")
-			return lives.p4;
+		
+		}
 	}
 
+	var checkToResetForClassic = function(){
+		var foundAliveID = null;
+		//check for remaining survivor
+		for(var i in shapes){
+			if(i=='id_Ground'){
+				continue;
+			}
+			if(foundAliveID!=null && shapes[i].dead==false){
+				//stop checking if more than 1 not dead
+				return;
+			}else if(shapes[i].dead==false){
+				foundAliveID = i;
+			}
+		}
+		
+		//Stop moving or rendering
+		bol_Stop = true;
+		var textToDraw = "";
+		var otherPlayersStillAlive=false;
+		
+		//check for lifes
+		for(var i in shapes){
+			if(i=='id_Ground' || (foundAliveID!=null && i==foundAliveID)){
+				continue;
+			}
+			if(shapes[i].lives>0){
+				otherPlayersStillAlive=true;
+				break;
+			}
+		}
+		
+		if(!that.bol_Server){
+			if(otherPlayersStillAlive == false){
+				if(foundAliveID!=null){
+					console.log(shapes[foundAliveID].displayName+" wins the game!");
+					textToDraw = shapes[foundAliveID].displayName + " won!";
+				}else{
+					console.log("Nobody won the game!");
+					textToDraw = "DRAW";
+				}
+			}else if(foundAliveID==null || shapes[foundAliveID].isFalling==true){
+				//everybody loses if no one is alive or the last one alive is falling as well
+				console.log("everybody lost");
+				textToDraw = "Everybody Lost :(";
+			}else{
+				//one player wins the round
+				console.log(shapes[foundAliveID].displayName+" won the round!");
+				textToDraw = "WINNER";
+			}
+			ctx.save();
+			ctx.font= SCALE+"px Segoe UI";
+			ctx.fillStyle = "#808080";
+			ctx.fillText(textToDraw,WORLD_WIDTH/2-(textToDraw.length/3.5)*SCALE,WORLD_HEIGHT/2+SCALE);
+			ctx.restore();
+		}
+
+		if(otherPlayersStillAlive==true){
+			//Auto start after awhile
+			setTimeout(function(){
+				bol_Stop = false;
+				resetPositionForClassic();
+				round++;
+				update();
+			},2000);
+		}
+	}
+	
 	//Get random color (used for platform)
 	var getRandomColor = function(){
         var letters = '0123456789ABCDEF'.split('');
@@ -842,6 +808,9 @@ var Engine = function() {
       //this.maskBits = v.maskBits || null;
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
+	  this.dead = false;
+	  this.lives = 5;
+	  this.score = 0;
 	  this.fallDirection = 0;
 	  this.sprite = v.sprite || Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
@@ -1163,28 +1132,10 @@ var Engine = function() {
 				var textToDraw="";
 				//classic lives mode
 				if(gameMode==0){
-					textToDraw = "Lives: ";
-					if(i=='playerDisk1'){
-						textToDraw += lives.p1;
-					}else if(i=='playerDisk2'){
-						textToDraw += lives.p2;
-					}else if(i=='playerDisk3'){
-						textToDraw += lives.p3;
-					}else if(i=='playerDisk4'){
-						textToDraw += lives.p4;
-					}
+					textToDraw = "Lives: "+shapes[i].lives;
 				}else if(gameMode==1){
 					//points mode
-					textToDraw = "Score: ";
-					if(i=='playerDisk1'){
-						textToDraw += score.p1;
-					}else if(i=='playerDisk2'){
-						textToDraw += score.p2;
-					}else if(i=='playerDisk3'){
-						textToDraw += score.p3;
-					}else if(i=='playerDisk4'){
-						textToDraw += score.p4;
-					}
+					textToDraw = "Score: "+shapes[i].score;
 				}
 				ctx.fillText(textToDraw,x+textX,y+textY+textScale);
 				
