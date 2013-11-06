@@ -2,7 +2,7 @@
   Declared as literal object (All variables are static)	  
   =====================================================*/
 var GameConstants = {
-	PORT : 8000,	// port of game
+	PORT : 4000,	// port of game
 	SERVER_NAME : 'localhost',
 	//SERVER_NAME : '192.168.2.6',
 	SERVER_INTERNAL_IP : '0.0.0.0',
@@ -20,9 +20,3 @@ var GameConstants = {
 // For node.js require
 global.GameConstants = GameConstants;
 GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME+':'+GameConstants.PORT;
-
-//For Openshift network, will run if server exist
-if(process.env.OPENSHIFT_APP_NAME){
-	GameConstants.PORT = process.env.OPENSHIFT_NODEJS_PORT
-	GameConstants.SERVER_INTERNAL_IP = process.env.OPENSHIFT_NODEJS_IP;
-}

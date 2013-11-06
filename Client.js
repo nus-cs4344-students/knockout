@@ -2,12 +2,11 @@
 "use strict"; 
 //Client will require the html to have jQuery installed
 
-//For Openshift network, client side only
+//This part is for easy debugging so that when we upload to server we don't need to keep changing it in GameConstants
 console.log(window.location.hostname);
-if(window.location.hostname == 'knockout-broccolicious.rhcloud.com'){
-	//iOS safari requires Websock port 8000 due to Openshift. Else it doesn't load images
-	GameConstants.SERVER_NAME = 'knockout-broccolicious.rhcloud.com';
-	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME;
+if(window.location.hostname == 'knockout-48824.apse1.actionbox.io'){
+	GameConstants.SERVER_NAME = 'knockout-48824.apse1.actionbox.io';
+	GameConstants.SERVER_ADDRESS = GameConstants.SERVER_NAME+':'+GameConstants.PORT;
 }
 
 function Client(){
@@ -416,8 +415,7 @@ function Client(){
   var initNetwork = function(){
     // Attempts to connect to game server
     try {
-	  //Do not change this to GameConstants.SERVER_ADDRESS
-      socket = new SockJS('http://' + GameConstants.SERVER_NAME+':'+GameConstants.PORT +'/knockout');
+      socket = new SockJS('http://' + GameConstants.SERVER_ADDRESS +'/knockout');
       socket.onmessage = function (e) {
         var message = JSON.parse(e.data);
         switch (message.type) {
