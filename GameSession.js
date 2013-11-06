@@ -117,7 +117,7 @@ function GameSession(id) {
 		//Classic Ground Shrink Mode
 		intervalShrink = setInterval(function() {
 			//Shrink until a certain limit
-			if(game_Platform_Radius>1.5){
+			if(game_Platform_Radius>3.0){
 				game_Platform_Radius-=0.1;
 				gameEngine.shrinkGroundToRadius(game_Platform_Radius);
 				that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});

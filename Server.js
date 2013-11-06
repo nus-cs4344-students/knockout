@@ -156,6 +156,11 @@ function Server(){
 					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
 				}
 			break;
+			
+			//Ping from Client Engine, reply with pong
+			case "ping":
+				 unicast(conn, {type:"pong"});
+			break;
             
             default:
               //Report unknown message type
