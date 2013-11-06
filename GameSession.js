@@ -8,7 +8,7 @@ require(LIB_PATH + "Engine.js");
 function GameSession(id) {
   //Private variables
   var playersArray = new Array(); //Array that stores the players
-  var readyArray = new Array();
+  var readyArray = new Array(); //contains ID only
   //Public variables
   this.sessionName; //Name of the session (can be duplicate)
   this.sessionID;
@@ -20,11 +20,9 @@ function GameSession(id) {
   
   //GameSession Engine values
   var game_Mode = 0;
-  var game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
   var bol_gameHasEnded = false;
   var intervalShrink = null;
-  var gameEngine;
-  
+  var gameEngine=null;
   
   this.broadcast = function (msg) {
     for (var i=0; i<playersArray.length; i++){
@@ -84,6 +82,15 @@ function GameSession(id) {
         playersArray.splice(i,1);
       }
     }
+	for (var i=0; i<readyArray.length; i++){
+		if(readyArray[i]==player.playerID){
+			readyArray.splice(i,1);
+		}
+	}
+	if(gameEngine!=null && player.shapeID!=null){
+		gameEngine.removePlayerWithShapeID(player.shapeID);
+	}
+	player.shapeID = null;
   }
   
   this.canStartGame = function(){
@@ -109,7 +116,11 @@ function GameSession(id) {
 	gameEngine.bol_Server = true;
 	gameEngine.init();
 	gameEngine.start('canvas', game_Mode);//add game_Mode to the engine ****************************************************************************************
-	game_Platform_Radius = GameConstants.PLATFORM_RADIUS;
+	//Set name so that can remove from engine later
+	for(var i=0;i<playersArray.length;i++){
+		playersArray[i].shapeID = GameConstants.SHAPE_NAME+(i+1);
+	}
+	
 	if(game_Mode==0){
 		if(intervalShrink!=null){
 			clearInterval(intervalShrink);
@@ -117,10 +128,10 @@ function GameSession(id) {
 		//Classic Ground Shrink Mode
 		intervalShrink = setInterval(function() {
 			//Shrink until a certain limit
-			if(game_Platform_Radius>3.0){
-				game_Platform_Radius-=0.1;
-				gameEngine.shrinkGroundToRadius(game_Platform_Radius);
-				that.broadcast({type:"updateGameStates", groundRadius: game_Platform_Radius});
+			if(gameEngine.currentGroundRadius()>3.0){
+				var newRadius = gameEngine.currentGroundRadius()-0.1;
+				gameEngine.shrinkGroundToRadius(newRadius);
+				that.broadcast({type:"updateGameStates", groundRadius: newRadius});
 			}else{
 				clearInterval(intervalShrink);
 				intervalShrink = null;

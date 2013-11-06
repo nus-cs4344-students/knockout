@@ -9,6 +9,7 @@ function Player(s, n, id){
 	this.playerName;
 	this.bol_isPlaying = false;
 	this.currentGameSession = null;
+	this.shapeID = null;
 	this.playerID;
 	
 	//constructor
@@ -21,6 +22,7 @@ function Player(s, n, id){
 		//Returns text form of this Player which will be converted
 		//to AbstractPlayer on client side
 		return {id: this.playerID , name: this.playerName, isPlaying: this.bol_isPlaying};
+		//shapeID is not updated on either sides
 	}
 }
 

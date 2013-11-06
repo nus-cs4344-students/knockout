@@ -412,6 +412,7 @@ function Client(){
 				gameEngine.setPlayerShapeID(GameConstants.SHAPE_NAME+(i+1));
 			}
 			gameEngine.setShapeName(GameConstants.SHAPE_NAME+(i+1),currentSession.abstractPlayersArray[i].playerName);
+			currentSession.abstractPlayersArray[i].shapeID = GameConstants.SHAPE_NAME+(i+1);
 		}
 	}
   }
@@ -547,7 +548,13 @@ function Client(){
                 
                 var tempGameSession = getSessionWithID(message.content.id);
                 if(tempGameSession != null){
-                    //edit old
+					//used for removing players who left the game when playing
+					var oldAbstractPlayersArray = null; 
+					if(gameEngine!=null && tempGameSession.abstractPlayersArray.length != playerList){
+						oldAbstractPlayersArray = tempGameSession.abstractPlayersArray;
+					}
+					
+                    //edit old session
                     tempGameSession.name = message.content.name;
                     tempGameSession.abstractPlayersArray = playerList;
                     tempGameSession.abstractReadyArray = message.content.readyIDs;
@@ -555,21 +562,37 @@ function Client(){
 					tempGameSession.game_Mode = message.content.gameMode;
                     console.log("edit game session");
                     
-					//if in current session, change button contents
                     if(currentSessionID!=null && message.content.id == currentSessionID){
-                        if($('#btn_start').length>0){
-                            //refresh tooltip if current game session has updates
-                            $('#btn_start').tooltip('close');
-                            $('#btn_start').prop('title','');
-                        }
-						if('#btn_mode'.length>0){
-							//need include span otherwise the UI will mess up
-							if(message.content.gameMode==0){
-								$('#btn_mode span').text('Classic');
-							}else if(message.content.gameMode==1){
-								$('#btn_mode span').text('Points');
-							}else{
-								$('#btn_mode span').text('Unknown');
+                        if(gameEngine==null){
+							//if in current session, change button contents
+							if($('#btn_start').length>0){
+								//refresh tooltip if current game session has updates
+								$('#btn_start').tooltip('close');
+								$('#btn_start').prop('title','');
+							}
+							if('#btn_mode'.length>0){
+								//need include span otherwise the UI will mess up
+								if(message.content.gameMode==0){
+									$('#btn_mode span').text('Classic');
+								}else if(message.content.gameMode==1){
+									$('#btn_mode span').text('Points');
+								}else{
+									$('#btn_mode span').text('Unknown');
+								}
+							}
+						}else if(oldAbstractPlayersArray!=null){
+							//In game and playing, remove players that are missing
+							for(var i=0;i<oldAbstractPlayersArray.length;i++){
+								var bol_idFound = false;
+								for(var j=0;j<playerList.length && bol_idFound==false;j++){
+									if(oldAbstractPlayersArray[i].playerID == playerList[j].playerID){
+										bol_idFound = true;
+									}
+								}
+								//if not found in curren list, means it should be removed from game
+								if(bol_idFound==false){
+									gameEngine.removePlayerWithShapeID(oldAbstractPlayersArray[i].shapeID);
+								}
 							}
 						}
                     }
@@ -613,20 +636,20 @@ function Client(){
 			case "successfulLeaveGameSession":
 				if(gameEngine!=null){
 					initLobby();
-					gameEngine.stopAndDestroyWorld();
-					gameEngine = null;
-					
 					//Remove testing session
-					if(currentSessionID==-1){
-						 for(var i=0; i<abstractSessionArray.length; i++)
+					if(currentSessionID == -1){
+						console.log("remove test session");
+						for(var i=0; i<abstractSessionArray.length; i++)
 						{
 							if(abstractSessionArray[i].sessionID == -1){
 								abstractSessionArray.splice(i,1);
 							}
 						}
 					}
+					gameEngine.stopAndDestroyWorld();
+					gameEngine = null;
 				}
-				currentSessionID=null;
+				currentSessionID = null;
 			break;
 
             case "startGame":
@@ -674,7 +697,7 @@ function Client(){
 						gameEngine.AVG_RTT = Math.round(gameEngine.AVG_RTT*0.8 + gameEngine.RTT*0.2);
 					}
 					
-					console.log("RTT is: "+gameEngine.AVG_RTT);
+					//console.log("RTT is: "+gameEngine.AVG_RTT);
 				}
 			break;
             default: 

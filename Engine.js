@@ -42,14 +42,13 @@ var Engine = function() {
 	var bol_Stop;
 	this.bol_Server = false;
 	
-	//for mobile leave game
+	//For mobile leave game
 	this.mobileLeaveTimer = null;
 	
 	//For measuring RTT
 	this.RTT = null;
 	this.AVG_RTT = null;
 	this.pingTime = null;
-	
 	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -443,8 +442,13 @@ var Engine = function() {
 	
 	//Checks to see which object is in destroy_list and must be removed from game
 	var checkToDestroy = function(){
-		for (var i in destroy_list) {
-			world.DestroyBody(destroy_list[i]);
+		for (var i=0; i<destroy_list.length;i++) {
+			var jointList = bodies[destroy_list[i]].GetJointList();
+			for(var j in jointList){
+				world.DestroyJoint(jointList[j]);
+			}
+			
+			world.DestroyBody(bodies[destroy_list[i]]);
 			delete shapes[destroy_list[i]];
 			delete bodies[destroy_list[i]];
 		}
@@ -491,14 +495,14 @@ var Engine = function() {
 				keysTimer=FRAME_RATE;
 			}
 		}
-		
-		setTimeout(checkKeysAndOrientation,keysTimer);
 	
 		//For browsers to quit game
 		if(Key.isDown(Key.ESC)){
 			console.log("leave game");
 			sendToServer({type:"leaveGameSession"});
 			return;
+		}else{
+			setTimeout(checkKeysAndOrientation,keysTimer);
 		}
 
 		if(bol_Stop == false){
@@ -641,14 +645,20 @@ var Engine = function() {
 	
 	//Shrinks platform to a target radius
 	this.shrinkGroundToRadius = function(radius){
-		shapes["id_Ground"].radius = radius;
-		bodies["id_Ground"].radius = radius;
-		//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
-		bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius-GameConstants.PLAYER_RADIUS);
-		//Change color of ground everytime it shrinks
-		shapes["id_Ground"].color = getRandomColor();
+		if(bol_Stop==false){
+			shapes["id_Ground"].radius = radius;
+			bodies["id_Ground"].radius = radius;
+			//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
+			bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius-GameConstants.PLAYER_RADIUS);
+			//Change color of ground everytime it shrinks
+			shapes["id_Ground"].color = getRandomColor();
+		}
 	}
 
+	
+	this.currentGroundRadius = function(){
+		return shapes["id_Ground"].radius;
+	}
 	//for points mode
 	//When sphere drops out of map, reset position to middle
 	var resetPositionForPoints = function(){
@@ -738,6 +748,8 @@ var Engine = function() {
 			}
 		
 		}
+		//reset ground radius
+		that.shrinkGroundToRadius(GameConstants.PLATFORM_RADIUS);
 	}
 
 	var checkToResetForClassic = function(){
@@ -878,7 +890,7 @@ var Engine = function() {
 			if(gameMode==0){
 				//classic mode
 				fixDef.density = 0.6;
-				ixDef.restitution = 0.5; //1.5
+				fixDef.restitution = 0.5; //1.5
 			}else if(gameMode==1){
 				//points mode
 				fixDef.density = 0.6; //0.3
@@ -1029,7 +1041,6 @@ var Engine = function() {
 			setTimeout(stopAndDestroyWorld, 1000 / 60);
 		}else{
 			world.ClearForces();
-			var bodies = world.GetBodyList();
 			for(var i in bodies){
 				destroy_list.push(i);
 			}
@@ -1084,6 +1095,16 @@ var Engine = function() {
 				}
 			}
 			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
+		}
+	}
+	
+	
+	//Player left the game, remove from current game, server will tell client to do so
+	this.removePlayerWithShapeID = function(shapeID){
+		for(var i in shapes){
+			if(shapes[i].id == shapeID){
+				destroy_list.push(i);
+			}
 		}
 	}
 	
@@ -1215,7 +1236,6 @@ var Engine = function() {
 		ctx.save();
 		var currentScale = (SCALE/DEFAULT_SCALE)/2;
 		var textScale = DEFAULT_SCALE*1.5;
-		
 		
 		var width = 410;
 		//start x
