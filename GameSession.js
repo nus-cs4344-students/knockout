@@ -22,7 +22,12 @@ function GameSession(id) {
   var game_Mode = 0;
   var bol_gameHasEnded = false;
   var intervalShrink = null;
+  var intervalUpdateServerStates = null;
   var gameEngine=null;
+  
+  //Bucket
+  var BucketList = [];
+  var intervalBucket = null;
   
   this.broadcast = function (msg) {
     for (var i=0; i<playersArray.length; i++){
@@ -121,6 +126,8 @@ function GameSession(id) {
 		playersArray[i].shapeID = GameConstants.SHAPE_NAME+(i+1);
 	}
 	
+	intervalBucket = setInterval(processBucket,100); //100 because client checks keys at 100 interval
+	
 	if(game_Mode==0){
 		if(intervalShrink!=null){
 			clearInterval(intervalShrink);
@@ -143,25 +150,59 @@ function GameSession(id) {
 	}else{
 		console.log('Unknown Game Mode found');
 	}
-	updateServerStates();
+	
+	//Every frame update player position
+	intervalUpdateServerStates = setInterval(updateServerStates,GameConstants.FRAME_RATE);
   }
   
   var updateServerStates = function(){
-	if(bol_gameHasEnded==false){
-		//Every frame update player position
-		setTimeout(updateServerStates, GameConstants.FRAME_RATE);
-		that.broadcast({type:"updatePlayerStates", playerStates: gameEngine.getPlayerStates()});
+	that.broadcast({type:"updatePlayerStates", playerStates: gameEngine.getPlayerStates()});
+  }
+  
+  this.cleanup = function(){
+	bol_gameHasEnded = true;
+	if(gameEngine!=null){
+		gameEngine.stopAndDestroyWorld();
+		gameEngine=null;
+	}
+	if(intervalUpdateServerStates!=null){
+		clearInterval(intervalUpdateServerStates);
+		intervalUpdateServerStates=null;
+	}
+	if(intervalShrink!=null){
+		clearInterval(intervalShrink);
+		intervalShrink=null;
+	}
+	if(intervalBucket!=null){
+		clearInterval(intervalBucket);
+		intervalBucket=null;
 	}
   }
   
   //For client to server communication
   this.updatePlayerState = function(playerID, playerState){
-	for(var i=0;i<playersArray.length;i++){
-		if(playersArray[i].playerID == playerID){
-			gameEngine.pushPlayerShape(GameConstants.SHAPE_NAME+(i+1),playerState.moveX,playerState.moveY);
-			break;
+	var bol_found = false;
+	for(var i=0;i<BucketList.length && bol_found==false;i++){
+		if(BucketList[i].id == playerID){
+			BucketList[i].message = playerState;
+			bol_found=true;
 		}
 	}
+	if(bol_found==false){
+		BucketList.push(new BucketSlot(playerID,playerState));
+	}
+  }
+  
+  var processBucket = function(){
+	for(var j=0;j<BucketList.length;j++){
+		for(var i=0;i<playersArray.length;i++){
+			if(playersArray[i].playerID == BucketList[j].id){
+				gameEngine.pushPlayerShape(GameConstants.SHAPE_NAME+(i+1),BucketList[j].message.moveX,BucketList[j].message.moveY);
+				break;
+			}
+		}
+	}
+	BucketList = [];
   }
   
   //privilege method
@@ -172,6 +213,12 @@ function GameSession(id) {
     }
     return {id: this.sessionID , name:this.sessionName, 'playerIDs':playerIDs, 'readyIDs':readyArray, 'isPlaying':this.bol_isPlaying, 'gameMode':game_Mode};
   }
+}
+
+//for bucket sync
+function BucketSlot(id,message){
+	this.id = id;
+	this.message = message;
 }
 
 global.GameSession = GameSession;

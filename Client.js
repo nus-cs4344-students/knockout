@@ -381,7 +381,7 @@ function Client(){
         //alert('suppose to be quick join but using it to quick test game');
 		currentSessionID=-1;
 		var newAbstractGameSession = new AbstractGameSession("test",-1);
-		newAbstractGameSession.game_Mode = 1; //change game mode here to test
+		newAbstractGameSession.game_Mode = 0; //change game mode here to test
 		abstractSessionArray.push(newAbstractGameSession);
         initGame();
       });

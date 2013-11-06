@@ -71,8 +71,7 @@ var Engine = function() {
 			var tempBody;
 			if (contact.GetFixtureA().GetBody().GetUserData() == 'id_Ground') {
 				tempBody = contact.GetFixtureB().GetBody();
-			}
-			else if (contact.GetFixtureB().GetBody().GetUserData() == 'id_Ground') {
+			}else if (contact.GetFixtureB().GetBody().GetUserData() == 'id_Ground') {
 				tempBody = contact.GetFixtureA().GetBody();
 			}else if(gameMode==1){
 				//Points mode
@@ -443,14 +442,16 @@ var Engine = function() {
 	//Checks to see which object is in destroy_list and must be removed from game
 	var checkToDestroy = function(){
 		for (var i=0; i<destroy_list.length;i++) {
-			var jointList = bodies[destroy_list[i]].GetJointList();
-			for(var j in jointList){
-				world.DestroyJoint(jointList[j]);
+			if(typeof bodies[destroy_list[i]] !== 'undefined' && bodies[destroy_list[i]]!=null){
+				var jointList = bodies[destroy_list[i]].GetJointList();
+				for(var j in jointList){
+					world.DestroyJoint(jointList[j]);
+				}
+				
+				world.DestroyBody(bodies[destroy_list[i]]);
+				delete shapes[destroy_list[i]];
+				delete bodies[destroy_list[i]];
 			}
-			
-			world.DestroyBody(bodies[destroy_list[i]]);
-			delete shapes[destroy_list[i]];
-			delete bodies[destroy_list[i]];
 		}
         // Reset the array
         destroy_list.length = 0;
@@ -611,10 +612,10 @@ var Engine = function() {
 				targetPlayerShape.SetPosition(new b2Vec2(x,y));
 			}else if(vx!=0 && vy!=0){
 				//push it towards that direction instead of enforcing absolute position match
-				var force = 60;
+				var force = 150;
 				var xForce = (x-targetPlayerShape.GetPosition().x)*force;
 				var yForce = (y-targetPlayerShape.GetPosition().y)*force;
-				console.log("xForce: "+xForce+" yForce: "+yForce);
+				//console.log("xForce: "+xForce+" yForce: "+yForce);
 				targetPlayerShape.ApplyForce(new b2Vec2(xForce,yForce),targetPlayerShape.GetWorldCenter());
 			}
 		}

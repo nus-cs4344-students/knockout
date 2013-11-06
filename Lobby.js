@@ -45,6 +45,7 @@ function Lobby() {
   
   this.removeGameSession = function(session){
     sessionsArray.splice(sessionsArray.indexOf(session),1);
+	session.cleanup();
   }
   
   this.createNewPlayer = function(socket,playerName){
