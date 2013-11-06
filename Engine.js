@@ -223,6 +223,11 @@ var Engine = function() {
 		if(gameMode==1){
 			setTimeout(reducePointsTimer,1000);
 		}
+		
+		if(!that.bol_Server){
+			//checkKeysAndOrientation will auto setTimeout recursively
+			checkKeysAndOrientation();
+		}
 	}
 	
 	var getBrowser = function(){ 
@@ -434,9 +439,6 @@ var Engine = function() {
 				resetPositionForPoints();
 			}
 		}
-		if(!that.bol_Server){
-			checkKeysAndOrientation();
-		}
 	}
 	
 	//Checks to see which object is in destroy_list and must be removed from game
@@ -481,73 +483,86 @@ var Engine = function() {
 	
 	//Checks for key press and do actions based on key press
 	var checkKeysAndOrientation = function(){
-		var xPush=0;
-		var yPush=0;
+		//Framerate is 1000/60, we do not want to send the data over so frequently
+		var keysTimer = 100;  //100 feels the most responsive
+		if(that.AVG_RTT!=null){
+			keysTimer-=that.AVG_RTT;
+			if(keysTimer<GameConstants.FRAME_RATE){
+				keysTimer=FRAME_RATE;
+			}
+		}
 		
+		setTimeout(checkKeysAndOrientation,keysTimer);
+	
 		//For browsers to quit game
 		if(Key.isDown(Key.ESC)){
 			console.log("leave game");
 			sendToServer({type:"leaveGameSession"});
+			return;
 		}
-		
-		//The numbers here do not determine the force
-		if(Key.isDown(Key.LEFT)){
-			xPush = -1;
-		}else if(Key.isDown(Key.RIGHT)){
-			xPush = 1;
-		}
-		
-		if(Key.isDown(Key.UP)){
-			yPush = -1;
-		}else if(Key.isDown(Key.DOWN)){
-			yPush = +1;
-		}
-		
-		if(window.DeviceOrientationEvent && orientation!= undefined && navigator.appVersion.indexOf("Mobile")>-1){
-			//Tweak sensitivity here
-			var sensitivity = 10;
-			var normalFrontBackAdjustment = 30;
+
+		if(bol_Stop == false){
+			var xPush=0;
+			var yPush=0;
+			//The numbers here do not determine the force
+			if(Key.isDown(Key.LEFT)){
+				xPush = -1;
+			}else if(Key.isDown(Key.RIGHT)){
+				xPush = 1;
+			}
 			
-			var frontBack = orientation.tiltFB;
-			var LeftRight = orientation.tiltLR;
-			var mql = window.matchMedia("(orientation: portrait)");
-			if(mql!=null){
-				if(mql.matches){
-					frontBack = orientation.tiltFB;
-					LeftRight = orientation.tiltLR;
-				}else{
-					//swap for landscape
-					frontBack = -orientation.tiltLR;
-					LeftRight = orientation.tiltFB;
+			if(Key.isDown(Key.UP)){
+				yPush = -1;
+			}else if(Key.isDown(Key.DOWN)){
+				yPush = +1;
+			}
+			
+			if(window.DeviceOrientationEvent && orientation!= undefined && navigator.appVersion.indexOf("Mobile")>-1){
+				//Tweak sensitivity here
+				var sensitivity = 10;
+				var normalFrontBackAdjustment = 30;
+				
+				var frontBack = orientation.tiltFB;
+				var LeftRight = orientation.tiltLR;
+				var mql = window.matchMedia("(orientation: portrait)");
+				if(mql!=null){
+					if(mql.matches){
+						frontBack = orientation.tiltFB;
+						LeftRight = orientation.tiltLR;
+					}else{
+						//swap for landscape
+						frontBack = -orientation.tiltLR;
+						LeftRight = orientation.tiltFB;
+					}
+				
 				}
-			
+				
+				//Front Back tilt (front is positive)
+				if(frontBack != null && Math.abs(frontBack-normalFrontBackAdjustment)>sensitivity){
+					yPush += frontBack-normalFrontBackAdjustment;
+				}
+				
+				//Left Right tilt (right is positive)
+				if(LeftRight != null && Math.abs(LeftRight)>sensitivity){
+					xPush += LeftRight; 
+				}
 			}
-			
-			//Front Back tilt (front is positive)
-			if(frontBack != null && Math.abs(frontBack-normalFrontBackAdjustment)>sensitivity){
-				yPush += frontBack-normalFrontBackAdjustment;
+		  
+			if(xPush!=0 || yPush!=0 ){
+				if(that.AVG_RTT!=null){
+					//short circuiting (times 1.5 for jitter)
+					setTimeout(that.pushPlayerShape,that.AVG_RTT*2.0,currentPlayerShapeID,xPush,yPush);
+				}else{
+					that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
+				}
+				sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
 			}
-			
-			//Left Right tilt (right is positive)
-			if(LeftRight != null && Math.abs(LeftRight)>sensitivity){
-				xPush += LeftRight; 
-			}
-		}
-      
-		if(xPush!=0 || yPush!=0 ){
-			if(that.AVG_RTT!=null){
-				//short circuiting (times 1.5 for jitter)
-				setTimeout(that.pushPlayerShape,that.AVG_RTT*2.0,currentPlayerShapeID,xPush,yPush);
-			}else{
-				that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
-			}
-			sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
 		}
 	}
 	
 	//Move player around
 	this.pushPlayerShape = function(shapeID,xPush,yPush){
-		var force=30;
+		var force=150;
 		//Anti cheat on server side
 		if(xPush<0){
 			xPush=-force;
