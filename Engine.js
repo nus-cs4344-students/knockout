@@ -278,12 +278,26 @@ var Engine = function() {
 		var angle = 360/GameConstants.NUM_OF_PLAYERS;
 		//Create circles according to number of player
 		for(var i=1;i<=GameConstants.NUM_OF_PLAYERS;i++){
+			var c;
+			if(i==1){
+				c='#5647FF';
+			}else if(i==2){
+				c='#FF6D8D';
+			}else if(i==3){
+				c='#FFFA77';
+			}else if(i==4){
+				c='#91FFBF';
+			}else{
+				c=getRandomColor();
+			}
+		
 			addCircle({
 				radius: GameConstants.PLAYER_RADIUS,
-				color: getRandomColor(),
+				color: c,
 				x:shapes["id_Ground"].x + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.cos(angle*(i-1)*Math.PI/180),
 				y:shapes["id_Ground"].y + (GameConstants.PLATFORM_RADIUS-GameConstants.PLAYER_RADIUS)*Math.sin(angle*(i-1)*Math.PI/180),
 				id: GameConstants.SHAPE_NAME+i,
+				sprite: i,
 			});
 		}		
 		
@@ -828,7 +842,7 @@ var Engine = function() {
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
 	  this.fallDirection = 0;
-	  this.sprite = Math.floor((Math.random()*4)+1); //return random number between 1 and 4
+	  this.sprite = v.sprite || Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
 	  //For sync
 	  this.serverX = null;
