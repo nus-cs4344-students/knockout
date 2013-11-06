@@ -1114,6 +1114,14 @@ var Engine = function() {
 		var textX = 100;
 		var textY = 40;
 		ctx.scale(currentScale,currentScale);
+		
+		//Print number of rounds
+		if(gameMode==0){
+			ctx.font= textScale+'px Lato';
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillText("Round: "+round,x,y+height+textY);
+		}
+		
 		for(var i in shapes){
 			if(shapes[i].id!='id_Ground'){
 				//Paint background
@@ -1184,6 +1192,8 @@ var Engine = function() {
 				x+=width;
 			}
 		}
+		
+		
 		
 		ctx.restore();
 	}
