@@ -24,8 +24,10 @@ var Engine = function() {
 		WORLD_HEIGHT = GameConstants.CANVAS_HEIGHT,
 		WORLD_WIDTH = GameConstants.CANVAS_WIDTH,
 		gameMode, //0 is classic, 1 is points
-		pointsTimer = 60,
-		round = 1;
+		pointsTimer = 60, //Total time for points
+		round = 1, //current round in classic
+		numOfRounds = 5, //total number of rounds in classic
+		middleText = ""; //Used to display winner messages
 	
 	var debug = false;
 	var that = this;
@@ -44,6 +46,9 @@ var Engine = function() {
 	
 	//For mobile leave game
 	this.mobileLeaveTimer = null;
+	
+	var intervalUpdateTimer = null;
+	var timeoutCheckKeysAndOrientation = null;
 	
 	//For measuring RTT
 	this.RTT = null;
@@ -215,7 +220,7 @@ var Engine = function() {
         setupCallbacks();
 		
 		//update will auto setTimeout recursively
-		update();
+		intervalUpdateTimer = setInterval(update,GameConstants.FRAME_RATE);
 		
 		//Set timer to run
 		if(gameMode==1){
@@ -318,7 +323,6 @@ var Engine = function() {
 	}
 	
 	var draw = function(){	
-	
 		ctx.save();
 		if (!debug){
 			//Paint blue sky/water background over
@@ -349,11 +353,9 @@ var Engine = function() {
 			}
 		}
 		
-		
-		
-		drawInterfaceForScoreOrLives();
+		drawInterfaceForScore();
 		drawLeaveText();
-		
+		drawMiddleText();
 		ctx.restore();
 	}
 	
@@ -417,7 +419,6 @@ var Engine = function() {
 	}
 	
 	var update = function(){
-		setTimeout(update,GameConstants.FRAME_RATE);
 		if(bol_Stop==false){
 			//http://stackoverflow.com/questions/729921/settimeout-or-setinterval
 			world.Step(1 / 60, 10, 10);
@@ -425,10 +426,6 @@ var Engine = function() {
 			checkToDestroy();
 			updateShapeUIFromBox2D();
 			updateCustomGravity();
-
-			if(!that.bol_Server){
-				draw();
-			}
 			
 			//Check after draw
 			if(gameMode==0){
@@ -436,6 +433,9 @@ var Engine = function() {
 			}else if(gameMode==1){
 				resetPositionForPoints();
 			}
+		}
+		if(!that.bol_Server){
+			draw();
 		}
 	}
 	
@@ -464,13 +464,15 @@ var Engine = function() {
 		for (var b = world.GetBodyList(); b; b = b.m_next) {
           if (b.IsActive() && typeof b.GetUserData() !== 'undefined' && b.GetUserData() != null) {
             if(shapes[b.GetUserData()].isFalling==true){
-				if(b.GetPosition().y <= (WORLD_HEIGHT*2)/SCALE){
+				if(b.GetPosition().y <= (WORLD_HEIGHT*2+100)/SCALE){
+					//if still on screen, make it fall
 					b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
 				}else if(shapes[b.GetUserData()].dead==false){
+					//Once out of screen, set it as dead
 					shapes[b.GetUserData()].dead=true;
-					if(gameMode==0){
-						shapes[b.GetUserData()].lives--;
-					}
+					//Once dead, make it stop moving
+					b.SetAngularVelocity(0);
+					b.SetLinearVelocity(new b2Vec2(0,0));
 				}
 			}
           }
@@ -503,7 +505,7 @@ var Engine = function() {
 			sendToServer({type:"leaveGameSession"});
 			return;
 		}else{
-			setTimeout(checkKeysAndOrientation,keysTimer);
+			timeoutCheckKeysAndOrientation = setTimeout(checkKeysAndOrientation,keysTimer);
 		}
 
 		if(bol_Stop == false){
@@ -712,12 +714,7 @@ var Engine = function() {
 						highestNames=shapes[i].displayName;
 					}
 				}
-				var textToDraw = highestNames+" has won the game!";
-				ctx.save();
-				ctx.font= SCALE+"px Segoe UI";
-				ctx.fillStyle = "#808080";
-				ctx.fillText(textToDraw,WORLD_WIDTH/2-(textToDraw.length/3.5)*SCALE,WORLD_HEIGHT/2+SCALE);
-				ctx.restore();
+				middleText = highestNames+" has won the game!";
 			}
 		}
 	}
@@ -770,54 +767,52 @@ var Engine = function() {
 		
 		//Stop moving or rendering
 		bol_Stop = true;
-		var textToDraw = "";
-		var otherPlayersStillAlive=false;
-		
-		//check for lifes
-		for(var i in shapes){
-			if(i=='id_Ground' || (foundAliveID!=null && i==foundAliveID)){
-				continue;
-			}
-			if(shapes[i].lives>0){
-				otherPlayersStillAlive=true;
-				break;
-			}
-		}
 		
 		if(!that.bol_Server){
-			if(otherPlayersStillAlive == false){
-				if(foundAliveID!=null){
-					console.log(shapes[foundAliveID].displayName+" wins the game!");
-					textToDraw = shapes[foundAliveID].displayName + " won!";
+			if(round<numOfRounds){
+				if(foundAliveID==null || shapes[foundAliveID].isFalling==true){
+					//everybody loses if no one is alive or the last one alive is falling as well
+					console.log("everybody lost");
+					middleText = "Everybody Lost :(";
 				}else{
-					console.log("Nobody won the game!");
-					textToDraw = "DRAW";
-				}
-			}else if(foundAliveID==null || shapes[foundAliveID].isFalling==true){
-				//everybody loses if no one is alive or the last one alive is falling as well
-				console.log("everybody lost");
-				textToDraw = "Everybody Lost :(";
-				if(shapes[foundAliveID].dead==false){
-					shapes[foundAliveID].lives--;
+					//one player wins the round
+					console.log(shapes[foundAliveID].displayName+" won the round!");
+					middleText = "WINNER";
+					shapes[foundAliveID].score++;
 				}
 			}else{
-				//one player wins the round
-				console.log(shapes[foundAliveID].displayName+" won the round!");
-				textToDraw = "WINNER";
+				//add the score for final round
+				if(foundAliveID!=null && shapes[foundAliveID].isFalling==false){
+					shapes[foundAliveID].score++;
+				}
+				
+				//find highest score
+				console.log("Game ended");
+				var highestScore=0;
+				var highestNames="";
+				//find the names for highscore
+				for(var i in shapes){
+					if(shapes[i].score==highestScore){
+						if(highestNames.length>0){
+							highestNames+=", ";
+						}
+						highestNames+=shapes[i].displayName;
+					}else if(shapes[i].score>highestScore){
+						highestScore=shapes[i].score;
+						highestNames=shapes[i].displayName;
+					}
+				}
+				middleText = highestNames+" has won the game!";
 			}
-			ctx.save();
-			ctx.font= SCALE+"px Segoe UI";
-			ctx.fillStyle = "#808080";
-			ctx.fillText(textToDraw,WORLD_WIDTH/2-(textToDraw.length/3.5)*SCALE,WORLD_HEIGHT/2+SCALE);
-			ctx.restore();
 		}
 
-		if(otherPlayersStillAlive==true){
+		if(round < numOfRounds){
 			//Auto start after awhile
 			setTimeout(function(){
 				bol_Stop = false;
 				resetPositionForClassic();
-				round++;
+				round++; //it will run when round<numOfRounds, means last number will reach is numOfRounds
+				middleText = "";
 			},2000);
 		}
 	}
@@ -944,8 +939,7 @@ var Engine = function() {
       this.isSensor = v.isSensor || false;
 	  this.isFalling = false;
 	  this.dead = false;
-	  this.lives = 5; // for classic mode
-	  this.score = 0; //for points mode
+	  this.score = 0; //for both classic and points mode
 	  this.fallDirection = 0;
 	  this.sprite = v.sprite || Math.floor((Math.random()*4)+1); //return random number between 1 and 4
 	  this.displayName = "";
@@ -1035,17 +1029,30 @@ var Engine = function() {
 	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
 		bol_Stop = true;
+		if(intervalUpdateTimer!=null){
+			clearInterval(intervalUpdateTimer);
+			intervalUpdateTimer = null;
+		}
+		if(timeoutCheckKeysAndOrientation!=null){
+			clearTimeout(timeoutCheckKeysAndOrientation);
+			timeoutCheckKeysAndOrientation=null;
+		}
+		if(!that.bol_Server){
+			$(window).unbind('resize');
+		}
 		if(world.IsLocked()){
-			if(!that.bol_Server){
-				$(window).unbind('resize');
-			}
-			setTimeout(stopAndDestroyWorld, 1000 / 60);
+			setTimeout(stopAndDestroyWorld, GameConstants.FRAME_RATE);
 		}else{
+			if(!that.bol_Server){
+				console.log("destroy game world");
+			}
 			world.ClearForces();
 			for(var i in bodies){
 				destroy_list.push(i);
 			}
 			checkToDestroy();
+			shapes = [];
+			bodies = [];
 		}
 	}
 	
@@ -1131,6 +1138,11 @@ var Engine = function() {
 	
 	//Draw bitmap following a shape
 	var drawSpriteOnShape = function(shape){
+		//Do not draw if shape is dead
+		if(shape.dead==true){
+			return;
+		}
+	
 		var img;
 		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
 		//Change image according to direction it is moving
@@ -1192,7 +1204,7 @@ var Engine = function() {
 
 	//Draw display name below the shape
 	var drawDisplayNameOnShape = function(shape){
-		if(shape.displayName.length>0){
+		if(shape.displayName.length>0 && shape.dead==false){
 			ctx.save();
 			ctx.font= SCALE+"px Segoe UI";
 			ctx.fillStyle = "#808080";
@@ -1233,7 +1245,17 @@ var Engine = function() {
 		ctx.restore();  
 	}
 	
-	var drawInterfaceForScoreOrLives = function(){
+	var drawMiddleText = function(){
+		if(middleText.length>0){
+			ctx.save();
+			ctx.font= SCALE+"px Segoe UI";
+			ctx.fillStyle = "#B959FF";
+			ctx.fillText(middleText,WORLD_WIDTH/2-(middleText.length/4)*SCALE,WORLD_HEIGHT/2+SCALE);
+			ctx.restore();
+		}
+	}
+	
+	var drawInterfaceForScore = function(){
 		ctx.save();
 		var currentScale = (SCALE/DEFAULT_SCALE)/2;
 		var textScale = DEFAULT_SCALE*1.5;
@@ -1297,9 +1319,9 @@ var Engine = function() {
 					ctx.fillText(shapes[i].displayName,x+textX,y+textY);
 				}
 				var textToDraw="";
-				//classic lives mode
+				//classic mode
 				if(gameMode==0){
-					textToDraw = "Lives: "+shapes[i].lives;
+					textToDraw = "Rounds Won: "+shapes[i].score;
 				}else if(gameMode==1){
 					//points mode
 					textToDraw = "Score: "+shapes[i].score;

@@ -22,7 +22,6 @@ function GameSession(id) {
   var game_Mode = 0;
   var bol_gameHasEnded = false;
   var intervalShrink = null;
-  var intervalUpdateServerStates = null;
   var gameEngine=null;
   
   //Bucket
@@ -150,9 +149,6 @@ function GameSession(id) {
 	}else{
 		console.log('Unknown Game Mode found');
 	}
-	
-	//Every frame update player position
-	intervalUpdateServerStates = setInterval(updateServerStates,GameConstants.FRAME_RATE);
   }
   
   var updateServerStates = function(){
@@ -164,10 +160,6 @@ function GameSession(id) {
 	if(gameEngine!=null){
 		gameEngine.stopAndDestroyWorld();
 		gameEngine=null;
-	}
-	if(intervalUpdateServerStates!=null){
-		clearInterval(intervalUpdateServerStates);
-		intervalUpdateServerStates=null;
 	}
 	if(intervalShrink!=null){
 		clearInterval(intervalShrink);
@@ -203,6 +195,8 @@ function GameSession(id) {
 		}
 	}
 	BucketList = [];
+	//Every frame update player position
+	setTimeout(updateServerStates,GameConstants.FRAME_RATE);
   }
   
   //privilege method
