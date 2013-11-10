@@ -158,13 +158,20 @@ function Server(){
 				}
 			break;
 
-      case "updatePlayerScores":
-        var currentGameSession = currentPlayer.currentGameSession;
-        if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
-          //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
-          currentGameSession.broadcast({type:"updatePlayerScores", playerScores: message.playerScores});
-        }
-      break;
+      // case "updatePlayerScores":
+      //   var currentGameSession = currentPlayer.currentGameSession;
+      //   if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
+      //     //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
+      //     currentGameSession.broadcast({type:"updatePlayerScores", playerScores: message.playerScores});
+      //   }
+      // break;
+      // case "updatePlayerDeaths":
+      //   var currentGameSession = currentPlayer.currentGameSession;
+      //   if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
+      //     //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
+      //     currentGameSession.broadcast({type:"updatePlayerDeaths", playerScores: message.playerDeaths});
+      //   }
+      // break;
 			
 			//Ping from Client Engine, reply with pong
 			case "ping":
