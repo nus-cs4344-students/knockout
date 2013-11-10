@@ -131,6 +131,10 @@ function Client(){
                         $('#sessionname').tooltip('close');
                         $('#sessionname').prop('title', 'Room Name Cannot Be Empty');
                         $('#sessionname').tooltip('open');
+                    }else if($('#sessionname').val().trim().length>14){
+                        $('#sessionname').tooltip('close');
+                        $('#sessionname').prop('title', 'Room Name Cannot Be More Than 14 Characters');
+                        $('#sessionname').tooltip('open');
                     }else{
                         createGameSession($('#sessionname').val().trim());
                         $(this).dialog('close');

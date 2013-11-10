@@ -436,6 +436,41 @@ var Engine = function() {
 		}
 		if(!that.bol_Server){
 			draw();
+			convergeClient();
+		}
+	}
+	
+	var convergeClient = function(){
+		if(bol_Stop==false){
+			for(var i in shapes){
+				if(i == 'id_Ground'){
+					continue;
+				}
+				if(shapes[i].isFalling==false && typeof shapes[i]!='undefined' && typeof bodies[i]!='undefined' && shapes[i].serverX != null && shapes[i].serverY != null){
+					var currentX = bodies[i].GetPosition().x;
+					var currentY = bodies[i].GetPosition().y;
+					var currentVX = bodies[i].GetLinearVelocity().x;
+					var currentVY = bodies[i].GetLinearVelocity().y;
+					
+					var vScaling = 0.3;
+					if(currentX < shapes[i].serverX){
+						currentVX = currentVX*(1+vScaling);
+						//console.log("currentX < shapes[i].serverX");
+					}else if(currentX > shapes[i].serverX){
+						currentVX = currentVX*(1-vScaling);
+						//console.log("currentX > shapes[i].serverX");
+					}
+					
+					if(currentY < shapes[i].serverY){
+						currentVY = currentVY*(1+vScaling);
+						//console.log("currentY < shapes[i].serverY");
+					}else if(currentY > shapes[i].serverY){
+						currentVY = currentVY*(1-vScaling);
+						//console.log("currentY > shapes[i].serverY");
+					}
+					bodies[i].SetLinearVelocity(new b2Vec2(currentVX,currentVY));
+				}
+			}
 		}
 	}
 	
@@ -526,7 +561,7 @@ var Engine = function() {
 			if(Key.isDown(Key.UP)){
 				yPush = -1;
 			}else if(Key.isDown(Key.DOWN)){
-				yPush = +1;
+				yPush = 1;
 			}
 			
 			if(window.DeviceOrientationEvent && orientation!= undefined && navigator.appVersion.indexOf("Mobile")>-1){
@@ -562,8 +597,8 @@ var Engine = function() {
 		  
 			if(xPush!=0 || yPush!=0 ){
 				if(that.AVG_RTT!=null){
-					//short circuiting (times 1.5 for jitter)
-					setTimeout(that.pushPlayerShape,that.AVG_RTT*2.0,currentPlayerShapeID,xPush,yPush);
+					//short circuiting (times 1.2 for jitter)
+					setTimeout(that.pushPlayerShape,that.AVG_RTT*1.2,currentPlayerShapeID,xPush,yPush);
 				}else{
 					that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
 				}
@@ -583,13 +618,13 @@ var Engine = function() {
 		
 		//Anti cheat on server side
 		if(xPush<0){
-			xPush=-force;
+			xPush=(-force);
 		}else if(xPush>0){
 			xPush=force;
 		}
 		
 		if(yPush<0){
-			yPush=-force;
+			yPush=(-force);
 		}else if(yPush>0){
 			yPush=force;
 		}
@@ -602,28 +637,27 @@ var Engine = function() {
 	
 	//Set position and velocity of player
 	var setPlayerShapeParameters = function(shapeID,x,y,vx,vy){
+		//For client side only
+		if(that.bol_Server){
+			console.log("Server attempted to use setPlayerShapeParameters in Engine.js");
+			return;
+		}
+		
 		var targetPlayerShape = bodies[shapeID];
-		if(targetPlayerShape!= null && targetPlayerShape!='undefined'){
-			targetPlayerShape.SetPosition(new b2Vec2(x,y));
+		if(typeof targetPlayerShape!='undefined' && targetPlayerShape!= null){
 			//set velocity first, which will change afterwards
 			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
-		
+			
 			//x and y must increase by vx and vy according to RTT
-			shapes[shapeID].serverX = x + vx*((that.AVG_RTT/2.5)/GameConstants.FRAME_RATE)/30;
-			shapes[shapeID].serverY = y + vy*((that.AVG_RTT/2.5)/GameConstants.FRAME_RATE)/30;
-			//Convergence
-			if(shapes[shapeID].isFalling==false && getDistance(shapes[shapeID].serverX,shapes[shapeID].serverY,targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y)>GameConstants.CONVERGENCE_SENSITIVITY){
-				targetPlayerShape.SetPosition(new b2Vec2(shapes[shapeID].serverX,shapes[shapeID].serverY));
-				console.log("serverX: "+shapes[shapeID].serverX+" serverY: "+shapes[shapeID].serverY);
-			}else if(x==0 && y==0){
+			shapes[shapeID].serverX = x;
+			shapes[shapeID].serverY = y;
+			
+			//If reset to middle, just reset
+			if(x==0 && y==0){
 				targetPlayerShape.SetPosition(new b2Vec2(x,y));
-			}else if(vx!=0 && vy!=0){
-				//push it towards that direction instead of enforcing absolute position match
-				var force = 150;
-				var xForce = (x-targetPlayerShape.GetPosition().x)*force;
-				var yForce = (y-targetPlayerShape.GetPosition().y)*force;
-				//console.log("xForce: "+xForce+" yForce: "+yForce);
-				targetPlayerShape.ApplyForce(new b2Vec2(xForce,yForce),targetPlayerShape.GetWorldCenter());
+			}else if(shapes[shapeID].isFalling==false && getDistance(targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y,x,y)>GameConstants.CONVERGENCE_SENSITIVITY){
+				targetPlayerShape.SetPosition(new b2Vec2(x,y));
+				console.log("disruptive convergence");
 			}
 		}
 	}
@@ -643,7 +677,7 @@ var Engine = function() {
 	
 	//Shrinks platform to a target radius
 	this.shrinkGroundToRadius = function(radius){
-		if(bol_Stop==false){
+		if(bol_Stop==false && typeof shapes["id_Ground"]!='undefined' && typeof bodies["id_Ground"]!='undefined'){
 			shapes["id_Ground"].radius = radius;
 			bodies["id_Ground"].radius = radius;
 			//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
@@ -1166,8 +1200,9 @@ var Engine = function() {
 	
 	//Used for Convergence
 	var getDistance = function(x1,y1,x2,y2){
-		var dx = x1-x2;
-		var dy = y1-y2;
+		//Need to do
+		var dx = x2-x1;
+		var dy = y2-y1;
 		return Math.sqrt(dx*dx + dy*dy);
 	}
 	
