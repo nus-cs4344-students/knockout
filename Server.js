@@ -119,6 +119,7 @@ function Server(){
                   //Server will inform others if the session has no players left and to be removed
                   gameLobby.broadcast({type:"removeLobbySession", id:currentGameSession.sessionID});
                 }else{
+					//Server will inform others that the session requires update
                   gameLobby.broadcast({type:"updateSingleLobbySession", content:tempGameSession.getAbstractGameSessionText()});
                 }
               }
@@ -150,28 +151,14 @@ function Server(){
 				gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
 				}
 			break;
-
+			
 			case "updatePlayerState":
+				//client updates its movements to server
 				var currentGameSession = currentPlayer.currentGameSession;
 				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
 					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
 				}
 			break;
-
-      // case "updatePlayerScores":
-      //   var currentGameSession = currentPlayer.currentGameSession;
-      //   if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
-      //     //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
-      //     currentGameSession.broadcast({type:"updatePlayerScores", playerScores: message.playerScores});
-      //   }
-      // break;
-      // case "updatePlayerDeaths":
-      //   var currentGameSession = currentPlayer.currentGameSession;
-      //   if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
-      //     //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
-      //     currentGameSession.broadcast({type:"updatePlayerDeaths", playerScores: message.playerDeaths});
-      //   }
-      // break;
 			
 			//Ping from Client Engine, reply with pong
 			case "ping":

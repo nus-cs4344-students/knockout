@@ -693,16 +693,6 @@ function Client(){
                             gameEngine.updatePlayerScores(message.playerScores);
                         }
                     break;
-                    //update from server of player deaths
-                    case "updatePlayerDeaths":
-                        if(gameEngine==null || gameEngine == 'undefined'){
-                            console.log("updatePlayerDeaths but gameEngine does not exist");
-                            break;
-                        }
-                        if(message.playerDeaths){
-                            gameEngine.updatePlayerDeaths(message.playerDeaths);
-                        }
-                    break;
                     case "pong":
                         if(gameEngine==null || gameEngine == 'undefined'){
                             console.log("pong but gameEngine does not exist");

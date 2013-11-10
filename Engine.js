@@ -479,11 +479,11 @@ var Engine = function() {
 					//if still on screen, make it fall
 					b.ApplyForce(new b2Vec2(0,customGravityForce),b.GetWorldCenter());
 				}else if(shapes[b.GetUserData()].dead==false){
-					//Once out of screen, set it as dead
-					shapes[b.GetUserData()].dead=true;
-					//shapes[b.GetUserData()].isFalling=false;
-					//sendToServer({type:"updatePlayerDeaths", playerDeaths: this.getPlayerDeaths});//******************************************************
-					console.log("updateplayerdeaths");
+					//Once out of screen, set it as dead. (dead is determined by server and not client)
+					if(that.bol_Server){
+						shapes[b.GetUserData()].dead=true;
+					}
+					
 					//Once dead, make it stop moving
 					b.SetAngularVelocity(0);
 					b.SetLinearVelocity(new b2Vec2(0,0));
@@ -512,14 +512,13 @@ var Engine = function() {
 				keysTimer=GameConstants.FRAME_RATE;
 			}
 		}
+		timeoutCheckKeysAndOrientation = setTimeout(checkKeysAndOrientation,keysTimer);
 	
 		//For browsers to quit game
 		if(Key.isDown(Key.ESC)){
 			console.log("leave game");
 			sendToServer({type:"leaveGameSession"});
 			return;
-		}else{
-			timeoutCheckKeysAndOrientation = setTimeout(checkKeysAndOrientation,keysTimer);
 		}
 
 		if(bol_Stop == false){
@@ -736,6 +735,9 @@ var Engine = function() {
 	//for classic mode
 	//to reset after everybody has died
 	var resetPositionForClassic = function(){
+		//reset ground radius
+		that.shrinkGroundToRadius(GameConstants.PLATFORM_RADIUS);
+		
 		var angle = 360/GameConstants.NUM_OF_PLAYERS;
 		var radian = Math.PI/180;
 		var count = 0;
@@ -760,8 +762,6 @@ var Engine = function() {
 			}
 		
 		}
-		//reset ground radius
-		that.shrinkGroundToRadius(GameConstants.PLATFORM_RADIUS);
 	}
 
 	var checkToResetForClassic = function(){
@@ -782,29 +782,29 @@ var Engine = function() {
 			}
 		}
 		
-		////Stop moving or rendering
-		//bol_Stop = true;
-		
-		if(!that.bol_Server && !bol_Stop){
+		if(!bol_Stop){
 			if(round<numOfRounds){
 				if(foundAliveID==null || shapes[foundAliveID].isFalling==true){
 					//everybody loses if no one is alive or the last one alive is falling as well
 					console.log("everybody lost");
 					middleText = "Everybody Lost :(";
 				}else{
-					console.log("score1");
 					//one player wins the round
 					console.log(shapes[foundAliveID].displayName+" won the round!");
 					middleText = "WINNER";
-					shapes[foundAliveID].score++;
-					//sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});//******************************************************************************
-
+					
+					if(that.bol_Server){
+						//only server calculates score
+						shapes[foundAliveID].score++;
+					}
 				}
 			}else{
 				//add the score for final round
 				if(foundAliveID!=null && shapes[foundAliveID].isFalling==false){
-					console.log("score2");
-					shapes[foundAliveID].score++;
+					if(that.bol_Server){
+						//only server calculates score
+						shapes[foundAliveID].score++;
+					}
 				}
 				
 				//find highest score
@@ -829,22 +829,18 @@ var Engine = function() {
 
 		//Stop moving or rendering
 		bol_Stop = true;
-		//TODO: send to server player scores
-		//sendToServer({type:"updatePlayerDeaths", playerDeaths: this.getPlayerDeaths});
-		//sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});//******************************************************************************
+
 		if(round < numOfRounds){
-			
 			//Auto start after awhile
 			setTimeout(function(){
-				console.log("timeout");
+				//console.log("timeout");
 				
 				resetPositionForClassic();
 				round++; //it will run when round<numOfRounds, means last number will reach is numOfRounds
 				middleText = "";
 				
 				bol_Stop = false;
-				console.log("timeout end");
-				//PrintShapes();
+				//console.log("timeout end");
 			},2000);
 		}
 	}
@@ -1107,22 +1103,7 @@ var Engine = function() {
 	this.setShapeName = function(shapeID, name){
 		shapes[shapeID].displayName = name;
 	}
-	this.getPlayerDeaths = function(){
-		var playerDeathsArray = [];
-		for(var i in bodies){
-			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
-				playerDeathsArray.push({shapeID: bodies[i].GetUserData(),
-										dead: shapes[i].dead});
-			}
-		}
-		return playerDeathsArray;
-	}
-	this.updatePlayerDeaths = function(playerDeaths)
-	{
-		for(var i=0; i<playerDeaths.length; i++){
-			shapes[playerDeaths[i].shapeID].dead = playerDeaths[i].dead;
-		}
-	}
+	
 	//Used for server to generate scores to send to players
 	this.getPlayerScores = function(){
 		var playerScoresArray = [];
@@ -1142,6 +1123,7 @@ var Engine = function() {
 			shapes[playerScores[i].shapeID].score = playerScores[i].score;
 		}
 	}
+	
 	//Used for server to generate states (x,y,vx,vy) to send to players
 	this.getPlayerStates = function(){
 		var playerStatesArray = [];
@@ -1152,7 +1134,8 @@ var Engine = function() {
 											y: bodies[i].GetPosition().y, 
 											vx: bodies[i].GetLinearVelocity().x, 
 											vy: bodies[i].GetLinearVelocity().y, 
-											isFalling: shapes[i].isFalling
+											isFalling: shapes[i].isFalling,
+											dead: shapes[i].dead
 											});
 			}
 		}
@@ -1166,7 +1149,7 @@ var Engine = function() {
 			return;
 		}
 		for(var i=0; i<playerStates.length; i++){
-			
+			shapes[playerStates[i].shapeID].dead = playerStates[i].dead;
 			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling){
 				if(playerStates[i].isFalling==true){
 					//Set fallDirection for drawing properly behind or infront the ground
@@ -1185,7 +1168,6 @@ var Engine = function() {
 			setPlayerShapeParameters(playerStates[i].shapeID,playerStates[i].x,playerStates[i].y,playerStates[i].vx,playerStates[i].vy);
 		}
 	}
-	
 	
 	//Player left the game, remove from current game, server will tell client to do so
 	this.removePlayerWithShapeID = function(shapeID){
