@@ -90,13 +90,12 @@ var Engine = function() {
 			}
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
-				console.log("isfalling is true2");
 				shapes[tempBody.GetUserData()].isFalling = true;
-				console.log(shapes[tempBody.GetUserData()].id + " is falling");
+				//console.log(shapes[tempBody.GetUserData()].id + " is falling");
 				//Points mode, increase other player's points
 				if(gameMode==1){
 					var id = shapes[tempBody.GetUserData()].lastPlayerTouched;
-					if(id!=null){
+					if(id!=null && typeof shapes[id]!='undefined'){
 						shapes[id].score+=50;
 					}
 				}
