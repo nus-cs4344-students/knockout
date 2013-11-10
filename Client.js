@@ -700,7 +700,7 @@ function Client(){
                             break;
                         }
                         if(message.playerDeaths){
-                            gameEngine.updatePlayerScores(message.playerDeaths);
+                            gameEngine.updatePlayerDeaths(message.playerDeaths);
                         }
                     break;
                     case "pong":

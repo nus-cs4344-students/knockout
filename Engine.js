@@ -1108,10 +1108,10 @@ var Engine = function() {
 		shapes[shapeID].displayName = name;
 	}
 	this.getPlayerDeaths = function(){
-		playerDeathsArray = [];
+		var playerDeathsArray = [];
 		for(var i in bodies){
 			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
-				playerDeathsArray.push({shapeID: bodies[i].GetUserData,
+				playerDeathsArray.push({shapeID: bodies[i].GetUserData(),
 										dead: shapes[i].dead});
 			}
 		}
@@ -1120,7 +1120,7 @@ var Engine = function() {
 	this.updatePlayerDeaths = function(playerDeaths)
 	{
 		for(var i=0; i<playerDeaths.length; i++){
-			shapes[playerDeaths[i].shapeID].dead = playerScores[i].dead;
+			shapes[playerDeaths[i].shapeID].dead = playerDeaths[i].dead;
 		}
 	}
 	//Used for server to generate scores to send to players
@@ -1128,7 +1128,7 @@ var Engine = function() {
 		var playerScoresArray = [];
 		for(var i in bodies){
 			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
-				playerScoresArray.push({shapeID: bodies[i].GetUserData,
+				playerScoresArray.push({shapeID: bodies[i].GetUserData(),
 										score: shapes[i].score});
 			}
 		}
@@ -1137,8 +1137,9 @@ var Engine = function() {
 
 	//update player scores from server
 	this.updatePlayerScores = function(playerScores){
+		//console.log("shapes size"+shapes.length);
 		for(var i=0; i<playerScores.length; i++){
-			shapes[playerStates[i].shapeID].score = playerScores[i].score;
+			shapes[playerScores[i].shapeID].score = playerScores[i].score;
 		}
 	}
 	//Used for server to generate states (x,y,vx,vy) to send to players

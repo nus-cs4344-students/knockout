@@ -156,11 +156,11 @@ function GameSession(id) {
   }
 
   var updateServerScores = function(){
-     that.broadcast({type:"updatePlayerScores", playerStates: gameEngine.getPlayerScores()});
+     that.broadcast({type:"updatePlayerScores", playerScores: gameEngine.getPlayerScores()});
   }
 
   var updateServerDeaths = function(){
-     that.broadcast({type:"updatePlayerDeaths", playerStates: gameEngine.getPlayerDeaths()});
+     that.broadcast({type:"updatePlayerDeaths", playerDeaths: gameEngine.getPlayerDeaths()});
   }
   
   this.cleanup = function(){
@@ -205,8 +205,8 @@ function GameSession(id) {
 	BucketList = [];
 	//Every frame update player position
 	setTimeout(updateServerStates,GameConstants.FRAME_RATE);
-  setTimeout(updateServerScores,GameConstants.FRAME_RATE);
-  setTimeout(updateServerDeaths,GameConstants.FRAME_RATE);
+  //setTimeout(updateServerScores,GameConstants.FRAME_RATE);
+  //setTimeout(updateServerDeaths,GameConstants.FRAME_RATE);
   }
   
   //privilege method
