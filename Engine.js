@@ -452,21 +452,21 @@ var Engine = function() {
 					var currentVX = bodies[i].GetLinearVelocity().x;
 					var currentVY = bodies[i].GetLinearVelocity().y;
 					
-					var vScaling = 0.3;
-					if(currentX < shapes[i].serverX){
-						currentVX = currentVX*(1+vScaling);
-						//console.log("currentX < shapes[i].serverX");
-					}else if(currentX > shapes[i].serverX){
-						currentVX = currentVX*(1-vScaling);
-						//console.log("currentX > shapes[i].serverX");
+					var vScaling = 0.25; //this needs to increase with lag
+					if(that.AVG_RTT!=null){
+						vScaling = vScaling*(1+that.AVG_RTT/GameConstants.FRAME_RATE);
 					}
 					
-					if(currentY < shapes[i].serverY){
+					if((currentX < shapes[i].serverX && currentVX>0) || (currentX > shapes[i].serverX && currentVX<0)){
+						currentVX = currentVX*(1+vScaling);
+					}else if((currentX > shapes[i].serverX && currentVX>0) || (currentX < shapes[i].serverX && currentVX<0)){
+						currentVX = currentVX*(1-vScaling);
+					}
+					
+					if((currentY < shapes[i].serverY && currentVY>0) || (currentY > shapes[i].serverY && currentVY<0)){
 						currentVY = currentVY*(1+vScaling);
-						//console.log("currentY < shapes[i].serverY");
-					}else if(currentY > shapes[i].serverY){
+					}else if((currentY > shapes[i].serverY && currentVY>0) || (currentY < shapes[i].serverY && currentVY<0)){
 						currentVY = currentVY*(1-vScaling);
-						//console.log("currentY > shapes[i].serverY");
 					}
 					bodies[i].SetLinearVelocity(new b2Vec2(currentVX,currentVY));
 				}
@@ -602,7 +602,7 @@ var Engine = function() {
 				}else{
 					that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
 				}
-				sendToServer({type:"updatePlayerState", moveX:xPush, moveY:yPush});
+				sendToServer({type:"updatePlayerState", moveX: xPush, moveY: yPush});
 			}
 		}
 	}
@@ -613,7 +613,7 @@ var Engine = function() {
 		
 		if(xPush!=0 && yPush!=0){
 			//diagonal force should be much lesser
-			force = force * 0.7;
+			force = (force * 0.7);
 		}
 		
 		//Anti cheat on server side
@@ -1203,7 +1203,8 @@ var Engine = function() {
 		//Need to do
 		var dx = x2-x1;
 		var dy = y2-y1;
-		return Math.sqrt(dx*dx + dy*dy);
+		return Math.sqrt(dx*dx + dy*dy
+		);
 	}
 	
 	//For Client only

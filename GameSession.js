@@ -183,6 +183,7 @@ function GameSession(id) {
             BucketList.push(new BucketSlot(playerID, playerState));
         }
     }
+	
     var processBucket = function () {
         for (var j = 0; j < BucketList.length; j++) {
             for (var i = 0; i < playersArray.length; i++) {
@@ -197,6 +198,7 @@ function GameSession(id) {
         setTimeout(updateServerStates, GameConstants.FRAME_RATE);
 		setTimeout(updateServerScores,GameConstants.FRAME_RATE);
     }
+	
     //privilege method
     this.getAbstractGameSessionText = function () {
         var playerIDs = [];
