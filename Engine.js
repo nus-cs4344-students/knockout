@@ -91,7 +91,7 @@ var Engine = function() {
 			
 			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
-				
+				console.log(shapes[tempBody.GetUserData()].id + " is falling");
 				//Points mode, increase other player's points
 				if(gameMode==1){
 					var id = shapes[tempBody.GetUserData()].lastPlayerTouched;
@@ -121,7 +121,14 @@ var Engine = function() {
 				
 				tempBody.GetFixtureList().SetFilterData(filter);
 			}
-        
+			if(gameMode==0){
+				//shapes[tempBody.GetUserData()].dead = true;
+				checkToResetForClassic();
+			}else if(gameMode==1){
+				resetPositionForPoints();
+			}
+        	//TODO: send to server the scores**********************************************************************************************************
+        	sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});
 		}
         world.SetContactListener(listener);
 
@@ -779,6 +786,8 @@ var Engine = function() {
 					console.log(shapes[foundAliveID].displayName+" won the round!");
 					middleText = "WINNER";
 					shapes[foundAliveID].score++;
+					sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});//******************************************************************************
+
 				}
 			}else{
 				//add the score for final round
@@ -805,7 +814,8 @@ var Engine = function() {
 				middleText = highestNames+" has won the game!";
 			}
 		}
-
+		//TODO: send to server player scores
+		sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});//******************************************************************************
 		if(round < numOfRounds){
 			//Auto start after awhile
 			setTimeout(function(){
@@ -1069,13 +1079,37 @@ var Engine = function() {
 	this.setShapeName = function(shapeID, name){
 		shapes[shapeID].displayName = name;
 	}
-	
+
+	//Used for server to generate scores to send to players
+	this.getPlayerScores = function(){
+		var playerScoresArray = [];
+		for(var i in bodies){
+			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
+				playerScoresArray.push({shapeID: bodies[i].GetUserData,
+										score: shapes[i].score});
+			}
+		}
+		return playerScoresArray;
+	}
+
+	//update player scores from server
+	this.updatePlayerScores = function(playerScores){
+		for(var i=0; i<playerScores.length; i++){
+			shapes[playerStates[i].shapeID].score = playerScores[i].score;
+		}
+	}
 	//Used for server to generate states (x,y,vx,vy) to send to players
 	this.getPlayerStates = function(){
 		var playerStatesArray = [];
 		for(var i in bodies){
 			if(bodies[i].GetUserData()!=null && bodies[i].GetUserData()!='undefined' && bodies[i].GetUserData()!='id_Ground'){
-				playerStatesArray.push({shapeID: bodies[i].GetUserData(), x: bodies[i].GetPosition().x, y: bodies[i].GetPosition().y, vx: bodies[i].GetLinearVelocity().x, vy: bodies[i].GetLinearVelocity().y, isFalling: shapes[i].isFalling});
+				playerStatesArray.push({shapeID: bodies[i].GetUserData(), 
+											x: bodies[i].GetPosition().x, 
+											y: bodies[i].GetPosition().y, 
+											vx: bodies[i].GetLinearVelocity().x, 
+											vy: bodies[i].GetLinearVelocity().y, 
+											isFalling: shapes[i].isFalling
+											});
 			}
 		}
 		return playerStatesArray;
@@ -1088,6 +1122,7 @@ var Engine = function() {
 			return;
 		}
 		for(var i=0; i<playerStates.length; i++){
+			
 			if(shapes[playerStates[i].shapeID].isFalling != playerStates[i].isFalling){
 				if(playerStates[i].isFalling==true){
 					//Set fallDirection for drawing properly behind or infront the ground

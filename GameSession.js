@@ -170,7 +170,7 @@ function GameSession(id) {
 		intervalBucket=null;
 	}
   }
-  
+
   //For client to server communication
   this.updatePlayerState = function(playerID, playerState){
 	var bol_found = false;

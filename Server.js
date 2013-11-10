@@ -157,6 +157,14 @@ function Server(){
 					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
 				}
 			break;
+
+      case "updatePlayerScores":
+        var currentGameSession = currentPlayer.currentGameSession;
+        if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
+          //currentGameSession.updatePlayerScores(currentPlayer.playerID,message);
+          currentGameSession.broadcast({type:"updatePlayerScores", playerScores: message.playerScores});
+        }
+      break;
 			
 			//Ping from Client Engine, reply with pong
 			case "ping":
