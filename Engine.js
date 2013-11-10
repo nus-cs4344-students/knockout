@@ -834,12 +834,11 @@ var Engine = function() {
 			//Auto start after awhile
 			setTimeout(function(){
 				//console.log("timeout");
-				
+				//must set bol_Stop to false first else the ground cannot reset the radius
+				bol_Stop = false;
 				resetPositionForClassic();
 				round++; //it will run when round<numOfRounds, means last number will reach is numOfRounds
 				middleText = "";
-				
-				bol_Stop = false;
 				//console.log("timeout end");
 			},2000);
 		}
