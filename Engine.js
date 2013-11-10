@@ -89,12 +89,15 @@ var Engine = function() {
 				}
 			}
 			
-			if (tempBody!=null && tempBody.IsActive() && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
+			if (tempBody!=null && tempBody.IsActive()==true && typeof tempBody.GetUserData() !== 'undefined' && tempBody.GetUserData() != null){
 				shapes[tempBody.GetUserData()].isFalling = true;
 				//console.log(shapes[tempBody.GetUserData()].id + " is falling");
 				//Points mode, increase other player's points
 				if(gameMode==1){
 					var id = shapes[tempBody.GetUserData()].lastPlayerTouched;
+					
+					//Add for client, which will be synced from Server as well
+					//Unlike classic which only server adds the score and sync with client
 					if(id!=null && typeof shapes[id]!='undefined'){
 						shapes[id].score+=50;
 					}
@@ -112,30 +115,20 @@ var Engine = function() {
 				filter.categoryBits = 0x0002;
 				filter.maskBits = 0x0000
 
+				tempBody.GetFixtureList().SetFilterData(filter);
+				
 				//flag all current contacts for filtering again since we changed the filter
 				var contactList = tempBody.GetContactList();
 				for(var ce = contactList; ce; ce = ce.next){
 					var contact = ce.contact;
 					contact.FlagForFiltering();
 				}
-				
-				tempBody.GetFixtureList().SetFilterData(filter);
 			}
-			// if(gameMode==0){
-			// 	//shapes[tempBody.GetUserData()].dead = true;
-			// 	checkToResetForClassic();
-			// }else if(gameMode==1){
-			// 	resetPositionForPoints();
-			// }
-        	//TODO: send to server the scores**********************************************************************************************************
-        	//sendToServer({type:"updatePlayerScores", playerScores: this.getPlayerScores});
 		}
         world.SetContactListener(listener);
 
-		
         if (!that.bol_Server){
 			//for client side only
-			
 			if(window.DeviceOrientationEvent) {
 				window.addEventListener('deviceorientation', function(eventData) {
 					orientation = {
@@ -648,16 +641,6 @@ var Engine = function() {
 		that.shrinkGroundToRadius(r);
 	}
 	
-	//Shrink platform
-	var shrinkGround = function(){
-		//This reduces the platform radius
-		var r = shapes["id_Ground"].radius;
-        if (r > 1.5) {
-		  r = r-0.1;
-		  that.shrinkGroundToRadius(r);
-        }
-	}
-	
 	//Shrinks platform to a target radius
 	this.shrinkGroundToRadius = function(radius){
 		if(bol_Stop==false){
@@ -666,11 +649,10 @@ var Engine = function() {
 			//Fixture will determine where the player will drop (minus off PLAYER_RADIUS so that player drops when half of it's ellipse is outside the platform)
 			bodies["id_Ground"].GetFixtureList().GetShape().SetRadius(radius-GameConstants.PLAYER_RADIUS);
 			//Change color of ground everytime it shrinks
-			shapes["id_Ground"].color = getRandomColor();
+			//shapes["id_Ground"].color = getRandomColor();
 		}
 	}
 
-	
 	this.currentGroundRadius = function(){
 		return shapes["id_Ground"].radius;
 	}
@@ -758,9 +740,14 @@ var Engine = function() {
 				//Update UI
 				shapes[b.GetUserData()].update(box2d.get.bodySpec(b));
 				count++;
+				
+				//For Box2D Bug fixing where it doesn't detect the shapes are in contact with the ground when setting a new position
+				b.SetActive(false);
+				b.SetActive(true);
 			}
 		
 		}
+		world.ClearForces();
 	}
 
 	var checkToResetForClassic = function(){
@@ -893,6 +880,8 @@ var Engine = function() {
         
         fixDef.isSensor = shape.isSensor;
         body.CreateFixture(fixDef);
+		//Don't let it rotate for better performance
+		body.SetFixedRotation(true);
         bodies[shape.id] = body;
       },
       create: {
@@ -1156,7 +1145,6 @@ var Engine = function() {
 					}else{
 						shapes[playerStates[i].shapeID].fallDirection = -1;
 					}
-					console.log("isfalling is true1");
 					shapes[playerStates[i].shapeID].isFalling = true;
 				}else{
 					shapes[playerStates[i].shapeID].fallDirection = 0;
