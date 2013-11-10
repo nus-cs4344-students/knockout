@@ -174,6 +174,22 @@ function Client(){
         });
     }
 
+	var showNoAvailableSessionsToJoin = function(){
+		var html = "";
+        html+='<div id="showNoAvailableSessionsToJoin" title="Quick Join">'+"\n";
+        html+='<p class="validateTips">There are no available rooms to join, please create a new room.</p>'+"\n";
+        html+='</div>'+"\n";
+        $('html').append(html);
+        $('#showNoAvailableSessionsToJoin').dialog({
+            autoOpen: true,
+            modal: true,
+            draggable: false,
+            close: function() { 
+                $('#showNoAvailableSessionsToJoin').remove(); //remove the close button
+            }
+        });
+	}
+	
     //This refreshes the lobby display of rooms
     var refreshSessionDisplay = function(){
         console.log("refreshSessionDisplay");
@@ -377,13 +393,17 @@ function Client(){
 
             $('#btn_quick_join').button().click( function(event){
                 event.preventDefault();
-                //TODO
-                //alert('suppose to be quick join but using it to quick test game');
-                currentSessionID=-1;
-                var newAbstractGameSession = new AbstractGameSession("test",-1);
-                newAbstractGameSession.game_Mode = 0; //change game mode here to test
-                abstractSessionArray.push(newAbstractGameSession);
-                initGame();
+				for(var i=0;i<abstractSessionArray.length;i++){
+					if(abstractSessionArray[i].abstractPlayersArray.length<GameConstants.NUM_OF_PLAYERS){
+						//Find a session that is not full and just join that session
+						showProcessing();
+                        joinGameSession(abstractSessionArray[i].sessionID);
+						return;
+					}
+				}
+				
+				//if no available sessions found, show dialog
+				showNoAvailableSessionsToJoin();
             });
 
             $( document ).ready(function(){
@@ -637,16 +657,6 @@ function Client(){
                     case "successfulLeaveGameSession":
                         if(gameEngine!=null){
                             initLobby();
-                            //Remove testing session
-                            if(currentSessionID == -1){
-                                console.log("remove test session");
-                                for(var i=0; i<abstractSessionArray.length; i++)
-                                {
-                                    if(abstractSessionArray[i].sessionID == -1){
-                                        abstractSessionArray.splice(i,1);
-                                    }
-                                }
-                            }
                             gameEngine.stopAndDestroyWorld();
                             gameEngine = null;
                         }
