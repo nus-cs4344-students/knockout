@@ -500,7 +500,7 @@ function Client(){
                         abstractPlayersArray.push(newAbstractPlayer);
                         if($('.lobby').length>0){
                             //Only show message if client is in lobby
-                            appendToChat('['+message.name+' has logined]');
+                            appendToChat('['+message.name+' has logged in.]');
                             updateNumOfPlayers();
                         }
                     break;
@@ -511,7 +511,7 @@ function Client(){
                             if(abstractPlayersArray[i].playerID == message.id){
                                 if($('.lobby').length>0){
                                     //Only show message if client is in lobby
-                                    appendToChat('['+abstractPlayersArray[i].playerName+' has left the game]');
+                                    appendToChat('['+abstractPlayersArray[i].playerName+' has left the game.]');
                                     updateNumOfPlayers();
                                 }
                                 abstractPlayersArray.splice(i,1);
