@@ -26,6 +26,10 @@ function GameSession(id) {
     //Bucket
     var BucketList = [];
     var intervalBucket = null;
+	
+	//Score sync
+	var scoreSync = null;
+	
     this.broadcast = function (msg) {
         for (var i = 0; i < playersArray.length; i++) {
             playersArray[i].socket.write(JSON.stringify(msg));
@@ -139,7 +143,7 @@ function GameSession(id) {
             , 2000);
         }
         else if (game_Mode == 1) {
-            //Lives Mode
+            //Points Mode
         }
         else {
             console.log('Unknown Game Mode found');
@@ -170,6 +174,15 @@ function GameSession(id) {
              intervalBucket = null;
         }
     }
+	
+	//Detect only if score change then send score
+	var checkIfUpdateServerScoresNeeded = function(){
+		if(scoreSync==null || scoreSync!=gameEngine.getPlayerScores()){
+			updateServerScores();
+			scoreSync = gameEngine.getPlayerScores();
+		}
+	}
+	
     //For client to server communication
     this.updatePlayerState = function (playerID, playerState) {
         var bol_found = false;
@@ -196,7 +209,7 @@ function GameSession(id) {
         BucketList = [];
         //Next frame update player position
         setTimeout(updateServerStates, GameConstants.FRAME_RATE);
-		setTimeout(updateServerScores,GameConstants.FRAME_RATE);
+		setTimeout(checkIfUpdateServerScoresNeeded,GameConstants.FRAME_RATE);
     }
 	
     //privilege method
