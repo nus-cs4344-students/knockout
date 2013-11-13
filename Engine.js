@@ -597,7 +597,7 @@ var Engine = function() {
 		  
 			if(xPush!=0 || yPush!=0 ){
 				if(that.AVG_RTT!=null){
-					//short circuiting (divide 1.8 for jitter)
+					//local lag (divide 1.8 for jitter)
 					setTimeout(that.pushPlayerShape,that.AVG_RTT/1.8,currentPlayerShapeID,xPush,yPush);
 				}else{
 					that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
