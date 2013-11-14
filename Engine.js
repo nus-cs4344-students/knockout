@@ -458,7 +458,7 @@ var Engine = function() {
 					
 					var vScaling = 0.15; //this needs to increase with lag
 					if(that.AVG_RTT!=null){
-						vScaling = vScaling*(1+that.AVG_RTT/GameConstants.FRAME_RATE);
+						vScaling = vScaling*(1+that.AVG_RTT*0.6/GameConstants.FRAME_RATE);
 					}
 					
 					if((currentX < shapes[i].serverX && currentVX>0) || (currentX > shapes[i].serverX && currentVX<0)){
@@ -538,7 +538,7 @@ var Engine = function() {
 		//Framerate is 1000/60, we do not want to send the data over so frequently
 		var keysTimer = 100;  //100 feels the most responsive
 		if(that.AVG_RTT!=null){
-			keysTimer-=that.AVG_RTT;
+			keysTimer-=that.AVG_RTT*0.6;
 			if(keysTimer<GameConstants.FRAME_RATE){
 				keysTimer=GameConstants.FRAME_RATE;
 			}
