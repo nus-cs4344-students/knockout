@@ -659,8 +659,8 @@ var Engine = function() {
 			if(that.AVG_RTT!=null){
 				//x and y must increase by vx and vy according to RTT
 				//Divided by 60 because in every step, we set the world.step as 1/60 of a second
-				shapes[shapeID].serverX+= vx*(that.AVG_RTT/GameConstants.FRAME_RATE)/60;
-				shapes[shapeID].serverY+= vy*(that.AVG_RTT/GameConstants.FRAME_RATE)/60;
+				shapes[shapeID].serverX+= vx*(that.AVG_RTT*0.6/GameConstants.FRAME_RATE)/60;
+				shapes[shapeID].serverY+= vy*(that.AVG_RTT*0.6/GameConstants.FRAME_RATE)/60;
 			}
 			
 			//If reset to middle, just reset
