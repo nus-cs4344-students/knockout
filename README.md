@@ -26,3 +26,5 @@ Points Mode
 Time limit of 60 seconds, last person in contact with player and pushes him down gets points
 Player with the most points wins the game
 
+Music by ItsTheAshtray
+http://www.newgrounds.com/audio/listen/470211

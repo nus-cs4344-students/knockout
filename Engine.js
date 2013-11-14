@@ -55,6 +55,9 @@ var Engine = function() {
 	this.AVG_RTT = null;
 	this.pingTime = null;
 	
+	//var music
+	var audio = null;
+	
 	this.init = function(){
 		b2Vec2 = Box2D.Common.Math.b2Vec2;
 		b2BodyDef = Box2D.Dynamics.b2BodyDef;
@@ -310,6 +313,7 @@ var Engine = function() {
 			img_Eskimo_R = new Image();
 			pattern_Platform = new Image();
 			
+			
 			img_Seal_L.src = 'http://' + GameConstants.SERVER_ADDRESS + '/images/Seal-L.png';
 			img_Seal_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Seal-R.png';
 			img_Penguin_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Penguin-L.png';
@@ -319,6 +323,13 @@ var Engine = function() {
 			img_Eskimo_L.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-L.png';
 			img_Eskimo_R.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/Eskimo-R.png';
 			pattern_Platform.src = 'http://' + GameConstants.SERVER_ADDRESS +'/images/snowGround.png';
+			
+			audio = new Audio('http://' + GameConstants.SERVER_ADDRESS +'/470211_Snowball-Ambush.mp3');
+			audio.setAttribute('autoplay', 'autoplay');
+			audio.setAttribute('loop', 'loop');
+			audio.addEventListener("load", function() {
+				audio.play();
+			}, true);
 		});
 	}
 	
@@ -1070,6 +1081,7 @@ var Engine = function() {
 	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
 		bol_Stop = true;
+		audio.pause();
 		if(intervalUpdateTimer!=null){
 			clearInterval(intervalUpdateTimer);
 			intervalUpdateTimer = null;
