@@ -157,13 +157,14 @@ function Server(){
 				var currentGameSession = currentPlayer.currentGameSession;
 				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
 					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
+					unicast(conn, {type:"pong"});
 				}
 			break;
 			
 			//Ping from Client Engine, reply with pong
-			case "ping":
+			/*case "ping":
 				 unicast(conn, {type:"pong"});
-			break;
+			break;*/
             
             default:
               //Report unknown message type

@@ -441,6 +441,10 @@ var Engine = function() {
 	}
 	
 	var convergeClient = function(){
+		//For clients only
+		if(that.bol_Server){
+			return;
+		}
 		if(bol_Stop==false){
 			for(var i in shapes){
 				if(i == 'id_Ground'){
@@ -452,7 +456,7 @@ var Engine = function() {
 					var currentVX = bodies[i].GetLinearVelocity().x;
 					var currentVY = bodies[i].GetLinearVelocity().y;
 					
-					var vScaling = 0.25; //this needs to increase with lag
+					var vScaling = 0.15; //this needs to increase with lag
 					if(that.AVG_RTT!=null){
 						vScaling = vScaling*(1+that.AVG_RTT/GameConstants.FRAME_RATE);
 					}
@@ -597,8 +601,8 @@ var Engine = function() {
 		  
 			if(xPush!=0 || yPush!=0 ){
 				if(that.AVG_RTT!=null){
-					//local lag (divide 1.8 for jitter)
-					setTimeout(that.pushPlayerShape,that.AVG_RTT/1.8,currentPlayerShapeID,xPush,yPush);
+					//local lag (times 0.6 for jitter)
+					setTimeout(that.pushPlayerShape,that.AVG_RTT*0.6,currentPlayerShapeID,xPush,yPush);
 				}else{
 					that.pushPlayerShape(currentPlayerShapeID,xPush,yPush);
 				}
@@ -648,14 +652,21 @@ var Engine = function() {
 			//set velocity first, which will change afterwards
 			targetPlayerShape.SetLinearVelocity(new b2Vec2(vx,vy));
 			
-			//x and y must increase by vx and vy according to RTT
+			
 			shapes[shapeID].serverX = x;
 			shapes[shapeID].serverY = y;
+			
+			if(that.AVG_RTT!=null){
+				//x and y must increase by vx and vy according to RTT
+				//Divided by 60 because in every step, we set the world.step as 1/60 of a second
+				shapes[shapeID].serverX+= vx*(that.AVG_RTT/GameConstants.FRAME_RATE)/60;
+				shapes[shapeID].serverY+= vy*(that.AVG_RTT/GameConstants.FRAME_RATE)/60;
+			}
 			
 			//If reset to middle, just reset
 			if(x==0 && y==0){
 				targetPlayerShape.SetPosition(new b2Vec2(x,y));
-			}else if(shapes[shapeID].isFalling==false && getDistance(targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y,x,y)>GameConstants.CONVERGENCE_SENSITIVITY){
+			}else if(shapes[shapeID].isFalling==false && getDistance(targetPlayerShape.GetPosition().x,targetPlayerShape.GetPosition().y,shapes[shapeID].serverX,shapes[shapeID].serverY)>GameConstants.CONVERGENCE_SENSITIVITY){
 				targetPlayerShape.SetPosition(new b2Vec2(x,y));
 				console.log("disruptive convergence");
 			}
@@ -880,25 +891,6 @@ var Engine = function() {
         return color;
 	}
 	
-	var darkerShade = function(hex, lum) {
-       // validate hex string
-       hex = String(hex).replace(/[^0-9a-f]/gi, '');
-        if (hex.length < 6) {
-          hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-        }
-        lum = lum || 0;
-
-        // convert to decimal and change luminosity
-        var rgb = "#", c, i;
-        for (i = 0; i < 3; i++) {
-          c = parseInt(hex.substr(i*2,2), 16);
-          c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
-          rgb += ("00"+c).substr(c.length);
-        }
-
-        return rgb;
-	}
-	
 	//Conversion helper of shape to box2d elements
 	var box2d = {
       addToWorld: function(shape) {
@@ -1025,13 +1017,7 @@ var Engine = function() {
         ctx.rotate(this.angle);
         ctx.translate(-newX, -newY);
 
-        //ctx.fillStyle = this.color;
 		ctx.fillStyle = this.color;
-		//temporary remove gradient as it slows down firefox
-        /*var grd=ctx.createRadialGradient(this.x * SCALE*0.9,this.y * SCALE*0.9,this.radius*SCALE*0.1,this.x * SCALE,this.y * SCALE,this.radius*SCALE);
-        grd.addColorStop(0,this.color);
-        grd.addColorStop(1,darkerShade(this.color, 0.1));
-        ctx.fillStyle=grd;*/
         ctx.beginPath();
         ctx.arc(newX, newY, this.radius * SCALE, 0, Math.PI * 2, true);
         ctx.closePath();
@@ -1210,23 +1196,18 @@ var Engine = function() {
 	//For Client only
 	var sendToServer = function(msg){
 		if(!that.bol_Server && global.engineSocket!=null){
-			global.engineSocket.send(JSON.stringify(msg));
-			
 			if(that.pingTime == null){
 				that.pingTime = Date.now();
-				//piggybag ping pong on sending anything to server during in game to determine RTT
-				global.engineSocket.send(JSON.stringify({type:"ping"}));
 			}
+			//piggybag ping pong on sending anything to server during in game to determine RTT
+			//Don't need to include anything, Server will automatically pong back, not required to send "ping" anymore
+			//global.engineSocket.send(JSON.stringify({type:"ping"}));
+			global.engineSocket.send(JSON.stringify(msg));
 		}
 	}
 	
 	//Draw bitmap following a shape
-	var drawSpriteOnShape = function(shape){
-		//Do not draw if shape is dead
-		if(shape.dead==true){
-			return;
-		}
-	
+	var drawSpriteOnShape = function(shape){	
 		var img;
 		//Do not use canvas context to reverse the image, it requires CPU power that will lag the mobile
 		//Change image according to direction it is moving

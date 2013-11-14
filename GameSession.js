@@ -177,7 +177,7 @@ function GameSession(id) {
 	
 	//Detect only if score change then send score
 	var checkIfUpdateServerScoresNeeded = function(){
-		if(scoreSync==null || scoreSync!=gameEngine.getPlayerScores()){
+		if(gameEngine!=null && (scoreSync==null || scoreSync!=gameEngine.getPlayerScores())){
 			updateServerScores();
 			scoreSync = gameEngine.getPlayerScores();
 		}

@@ -718,9 +718,8 @@ function Client(){
                             if(gameEngine.AVG_RTT == null){
                                 gameEngine.AVG_RTT = gameEngine.RTT;
                             }else{
-                              gameEngine.AVG_RTT = Math.round(gameEngine.AVG_RTT*0.8 + gameEngine.RTT*0.2);
+								gameEngine.AVG_RTT = Math.round(gameEngine.AVG_RTT*0.8 + gameEngine.RTT*0.2);
                             }
-                            //console.log("RTT is: "+gameEngine.AVG_RTT);
                         }
                     break;
                     default: 
