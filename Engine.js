@@ -752,19 +752,26 @@ var Engine = function() {
 			if(!that.bol_Server){
 				var highestScore=0;
 				var highestNames="";
+				var isDraw=false;
 				//find the names for highscore
 				for(var i in shapes){
 					if(shapes[i].score==highestScore){
 						if(highestNames.length>0){
 							highestNames+=", ";
+							isDraw=true;
 						}
 						highestNames+=shapes[i].displayName;
 					}else if(shapes[i].score>highestScore){
 						highestScore=shapes[i].score;
 						highestNames=shapes[i].displayName;
+						isDraw = false;
 					}
 				}
-				middleText = highestNames+" has won the game!";
+				if (isDraw) {
+					middleText = highestNames+" has tied the game!";
+				} else {
+					middleText = highestNames+" has won the game!"
+				}
 			}
 		}
 	}
@@ -829,7 +836,7 @@ var Engine = function() {
 				if(foundAliveID==null || shapes[foundAliveID].isFalling==true){
 					//everybody loses if no one is alive or the last one alive is falling as well
 					console.log("everybody lost");
-					middleText = "Everybody Lost :(";
+					middleText = "It's a tie!";
 				}else{
 					//one player wins the round
 					console.log(shapes[foundAliveID].displayName+" won the round!");
@@ -853,19 +860,26 @@ var Engine = function() {
 				console.log("Game ended");
 				var highestScore=0;
 				var highestNames="";
+				var isDraw=false;
 				//find the names for highscore
 				for(var i in shapes){
 					if(shapes[i].score==highestScore){
 						if(highestNames.length>0){
 							highestNames+=", ";
+							isDraw = true;
 						}
 						highestNames+=shapes[i].displayName;
 					}else if(shapes[i].score>highestScore){
 						highestScore=shapes[i].score;
 						highestNames=shapes[i].displayName;
+						isDraw = false;
 					}
 				}
-				middleText = highestNames+" has won the game!";
+				if(isDraw) {
+					middleText = highestNames+" has tied the game!";
+				} else {
+					middleText = highestNames+" has won the game!";
+				}
 			}
 		}
 
