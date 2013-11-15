@@ -8,8 +8,8 @@ function GameSession(id) {
     //Private variables
     var playersArray =  new Array();
     //Array that stores the players
-    var readyArray =  new Array();
-    //contains ID only
+    var readyArray =  new Array(); //contains ID only
+    
     //Public variables
     this.sessionName;
     //Name of the session (can be duplicate)
@@ -30,6 +30,9 @@ function GameSession(id) {
 	//Score sync
 	var scoreSync = null;
 	
+	//AI
+	var numOfAI = 0;
+	
     this.broadcast = function (msg) {
         for (var i = 0; i < playersArray.length; i++) {
             playersArray[i].socket.write(JSON.stringify(msg));
@@ -40,7 +43,7 @@ function GameSession(id) {
     }
     this.addPlayer = function (player) {
         //Restrict number of players
-        if (playersArray.length >= GameConstants.NUM_OF_PLAYERS || this.bol_isPlaying == true) {
+        if (playersArray.length + numOfAI >= GameConstants.NUM_OF_PLAYERS || this.bol_isPlaying == true) {
             return false;
         }
         //Check if name already exist, return false if exist, else return true
@@ -94,7 +97,7 @@ function GameSession(id) {
         player.shapeID = null;
     }
     this.canStartGame = function () {
-        return (playersArray.length == GameConstants.NUM_OF_PLAYERS && playersArray.length == readyArray.length);
+        return (playersArray.length + numOfAI == GameConstants.NUM_OF_PLAYERS && playersArray.length == readyArray.length);
     }
     this.hasNoPlayers = function () {
         return (playersArray.length == 0);
@@ -175,6 +178,18 @@ function GameSession(id) {
         }
     }
 	
+	this.addAIPlayer = function(){
+		if(numOfAI + playersArray.length < GameConstants.NUM_OF_PLAYERS){
+			numOfAI++;
+		}
+	}
+	
+	this.removeAIPlayer = function(){
+		if(numOfAI>0){
+			numOfAI--;
+		}
+	}
+	
 	//Detect only if score change then send score
 	var checkIfUpdateServerScoresNeeded = function(){
 		if(gameEngine!=null && (scoreSync==null || scoreSync!=gameEngine.getPlayerScores())){
@@ -222,7 +237,7 @@ function GameSession(id) {
         for (var i = 0; i < playersArray.length; i++) {
             playerIDs.push(playersArray[i].playerID);
         }
-        return {id : this.sessionID, name : this.sessionName, 'playerIDs' : playerIDs, 'readyIDs' : readyArray, 'isPlaying' : this.bol_isPlaying, 'gameMode' : game_Mode};
+        return {id : this.sessionID, name : this.sessionName, 'playerIDs' : playerIDs, 'readyIDs' : readyArray, 'isPlaying' : this.bol_isPlaying, 'gameMode' : game_Mode, 'numOfAI' : numOfAI};
     }
 }
 //for bucket sync

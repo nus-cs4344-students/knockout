@@ -146,9 +146,9 @@ function Server(){
 				//Has to make all of them start at the same time
 				var currentGameSession = currentPlayer.currentGameSession;
 				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false && currentGameSession.canStartGame()){
-				//Game updates all handled by GameSession
-				currentGameSession.startGame();
-				gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+					//Game updates all handled by GameSession
+					currentGameSession.startGame();
+					gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
 				}
 			break;
 			
@@ -158,6 +158,22 @@ function Server(){
 				if(currentGameSession!=null && currentGameSession.bol_isPlaying==true){
 					currentGameSession.updatePlayerState(currentPlayer.playerID,message);
 					unicast(conn, {type:"pong"});
+				}
+			break;
+			
+			case "addAI":
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
+					currentGameSession.addAIPlayer();
+					gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
+				}
+			break;
+			
+			case "removeAI":
+				var currentGameSession = currentPlayer.currentGameSession;
+				if(currentGameSession!=null && currentGameSession.bol_isPlaying==false){
+					currentGameSession.removeAIPlayer();
+					gameLobby.broadcast({type:"updateSingleLobbySession", content:currentGameSession.getAbstractGameSessionText()});
 				}
 			break;
 			

@@ -210,7 +210,7 @@ function Client(){
                     html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
                 }
                 html+='<h6>'+abstractSessionArray[i].sessionName+'</h6>';
-                html+='<h2>'+abstractSessionArray[i].abstractPlayersArray.length+'/'+GameConstants.NUM_OF_PLAYERS+'</h2>';
+                html+='<h2>'+(abstractSessionArray[i].abstractPlayersArray.length+abstractSessionArray[i].numOfAI)+'/'+GameConstants.NUM_OF_PLAYERS+'</h2>';
                 if(abstractSessionArray[i].bol_isPlaying==false){
                     html+='<h3>Waiting</h3>';
                 }else{
@@ -221,7 +221,7 @@ function Client(){
                 $('#sessionDisplay').append(html);
                 $('a[sessionID='+abstractSessionArray[i].sessionID+']').unbind();
 
-                if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
+                if(abstractSessionArray[i].abstractPlayersArray.length+abstractSessionArray[i].numOfAI < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
                     //Only allow clicking it if some details satisfy
                     $('a[sessionID='+abstractSessionArray[i].sessionID+']').button().click( function(event){
                         event.preventDefault();
@@ -244,6 +244,8 @@ function Client(){
             var currentSession = getSessionWithID(currentSessionID);
             if(currentSessionID!=null){
                 //this session is the abstractGameSession
+				
+				//create boxes for players
                 for(var i=0;i<currentSession.abstractPlayersArray.length;i++){  
                     //check if id is inside readyID list
                     var ready = false;
@@ -271,6 +273,19 @@ function Client(){
 
                     $('#playerDisplay').append(html);
                 }
+				
+				//create boxes for AI
+				for(var i=1;i<=currentSession.numOfAI;i++){  
+					var html="";
+                    html+='<li>';
+                    html+='<a class="success button disabled grid" href="#">';
+                    html+='<h2>'+'AI'+i+'</h2>';
+                    html+='<h3>Ready</h3>';
+                    html+='</a>';
+                    html+='</li>';
+
+                    $('#playerDisplay').append(html);
+				}
             }else{
                 alert("oh no, current session ID is null!");
             }
@@ -296,8 +311,6 @@ function Client(){
                 leaveGameSession();
                 initLobby();
             });
-
-
 
             $('#btn_start').button().click( function(event){
                 event.preventDefault();
@@ -342,6 +355,16 @@ function Client(){
                     }
                 }
             }
+			
+			$('#btn_addAI').button().click( function(event){
+                event.preventDefault();
+                addAIToCurrentSession();
+            });
+			
+			$('#btn_removeAI').button().click( function(event){
+                event.preventDefault();
+                removeAIFromCurrentSession();
+            });
 
             refreshSessionPlayersDisplay();
         });
@@ -550,6 +573,7 @@ function Client(){
                             newAbstractGameSession.abstractReadyArray = message.abstractGameSessions[i].readyIDs;
                             newAbstractGameSession.bol_isPlaying = message.abstractGameSessions[i].isPlaying;
                             newAbstractGameSession.game_Mode = message.abstractGameSessions[i].gameMode;
+							newAbstractGameSession.numOfAI = message.abstractGameSessions[i].numOfAI;
                             abstractSessionArray.push(newAbstractGameSession);
                         }
                         refreshSessionDisplay();
@@ -584,6 +608,7 @@ function Client(){
                             tempGameSession.abstractReadyArray = message.content.readyIDs;
                             tempGameSession.bol_isPlaying = message.content.isPlaying;
                             tempGameSession.game_Mode = message.content.gameMode;
+							tempGameSession.numOfAI = message.content.numOfAI;
                             console.log("edit game session");
 
                             if(currentSessionID!=null && message.content.id == currentSessionID){
@@ -627,6 +652,7 @@ function Client(){
                             newAbstractGameSession.abstractReadyArray = message.content.readyIDs;
                             newAbstractGameSession.bol_isPlaying = message.content.isPlaying;
                             newAbstractGameSession.game_Mode = message.content.gameMode;
+							newAbstractGameSession.numOfAI = message.content.numOfAI;
                             abstractSessionArray.push(newAbstractGameSession);
                             console.log("create new game session");
                         }
@@ -789,6 +815,27 @@ function Client(){
         return null;
     }
 
+	var addAIToCurrentSession = function(){
+		var currentSession = getSessionWithID(currentSessionID);
+		if(currentSession==null || currentSession.numOfAI + currentSession.abstractPlayersArray>=GameConstants.NUM_OF_PLAYERS){
+			console.log("Max players reached, unable to add more AI");
+			return;
+		}
+		currentSession.numOfAI++;
+		//Server knows the current session ID
+		sendToServer({type:"addAI"});
+	}
+	
+	var removeAIFromCurrentSession = function(){
+		var currentSession = getSessionWithID(currentSessionID);
+		if(currentSession==null || currentSession.numOfAI==0){
+			return;
+		}
+		currentSession.numOfAI--;
+		//Server knows the current session ID
+		sendToServer({type:"removeAI"});
+	}
+	
     this.start = function(){
         setTimeout(initNetwork,100);
     }	

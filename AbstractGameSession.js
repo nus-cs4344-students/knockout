@@ -14,6 +14,7 @@ function AbstractGameSession(name, id) {
 	//Constructor
 	this.sessionName = name;
 	this.sessionID = id;
+	this.numOfAI = 0;
 	
 	//accepts abstractPlayer, not just id
 	this.addAbstractPlayer = function(abstractplayer){
