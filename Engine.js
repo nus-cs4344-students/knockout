@@ -1466,9 +1466,11 @@ var Engine = function() {
 		for(i in shapes){
 			if(shapes[i].isAI==true && shapes[i].moveTimeout==null && shapes[i].isFalling==false){
 				//perform AI stuff here
-				var xDir = 0;
-				var yDir = 0;
 				
+				//Reset target if target is falling
+				if(shapes[i].aimPlayer!=null && shapes[shapes[i].aimPlayer].isFalling==true){
+					shapes[i].aimPlayer = null;
+				}
 				//Pick a random player to aim
 				if(shapes[i].aimPlayer == null || shapes[i].aimPlayer == shapes[i].lastPlayerTouched){
 					shapes[i].aimPlayer = null;
@@ -1492,6 +1494,9 @@ var Engine = function() {
 					//Go to middle of ground if null
 					shapes[i].aimPlayer = 'id_Ground';
 				}
+				
+				var xDir = 0;
+				var yDir = 0;
 				
 				if(shapes[shapes[i].aimPlayer].x < shapes[i].x){
 					xDir = -1;
