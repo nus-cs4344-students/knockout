@@ -12,9 +12,10 @@ var GameConstants = {
 	PLATFORM_RADIUS : 10,
 	PLAYER_RADIUS : 1.4,
 	FRAME_RATE : 1000/60,
+	OPTIMAL_INTERVAL : 100,
 	CONVERGENCE_SENSITIVITY : 1.0, //if server position player is <CONVERGENCE_SENSITIVITY> pixels away then converge
 	SERVER_ADDRESS : "", //for clients to connect to (can only be initialized later)
-	NUM_OF_PLAYERS : 2
+	NUM_OF_PLAYERS : 4
 }
 
 // For node.js require

@@ -438,7 +438,6 @@ var Engine = function() {
 			updateShapeUIFromBox2D();
 			updateCustomGravity();
 			
-			//Check after draw
 			if(gameMode==0){
 				checkToResetForClassic();
 			}else if(gameMode==1){
@@ -448,6 +447,8 @@ var Engine = function() {
 		if(!that.bol_Server){
 			draw();
 			convergeClient();
+		}else{
+			moveAI();
 		}
 	}
 	
@@ -547,7 +548,7 @@ var Engine = function() {
 	//Checks for key press and do actions based on key press
 	var checkKeysAndOrientation = function(){
 		//Framerate is 1000/60, we do not want to send the data over so frequently
-		var keysTimer = 100;  //100 feels the most responsive
+		var keysTimer = GameConstants.OPTIMAL_INTERVAL;  //100 feels the most responsive
 		if(that.AVG_RTT!=null){
 			keysTimer-=that.AVG_RTT*0.6;
 			if(keysTimer<GameConstants.FRAME_RATE){
@@ -645,8 +646,13 @@ var Engine = function() {
 		}
 		
 		var myDisk = bodies[shapeID];
-		if(myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
+		if(typeof myDisk!== 'undefined' && myDisk!= null && shapes[myDisk.GetUserData()].isFalling==false){
 			myDisk.ApplyForce(new b2Vec2(xPush,yPush),myDisk.GetWorldCenter());
+		}
+		
+		//For AI
+		if(typeof shapes[shapeID]!=='undefined' && shapes[shapeID].isAI==true){
+			shapes[shapeID].moveTimeout = null;
 		}
 	}
 	
@@ -723,6 +729,8 @@ var Engine = function() {
 					shapes[b.GetUserData()].fallDirection = 0;
 					shapes[b.GetUserData()].dead = false;
 					shapes[b.GetUserData()].lastPlayerTouched = null;
+					//For AI
+					shapes[b.GetUserData()].aimPlayer = null;
 					//remove touching others
 					for(var i in shapes){
 						if(shapes[i].lastPlayerTouched == b.GetUserData()){
@@ -792,6 +800,8 @@ var Engine = function() {
 				shapes[i].isFalling = false;
 				shapes[i].fallDirection = 0;
 				shapes[i].dead = false;
+				//For AI
+				shapes[i].aimPlayer = null;
 				
 				var b = bodies[i];
 				//Stop movements
@@ -1017,6 +1027,11 @@ var Engine = function() {
 	  this.displayName = "";
 	  this.lastPlayerTouched = null; //id for contact in points mode
 	  
+	  //AI
+	  this.isAI = false; //only set to true on server side, has no effect on client side
+	  this.aimPlayer = null;
+	  this.moveTimeout = null;
+	  
 	  //For sync
 	  this.serverX = null;
 	  this.serverY = null;
@@ -1137,7 +1152,19 @@ var Engine = function() {
 	
 	//Set the displayName of a shape with shapeID
 	this.setShapeName = function(shapeID, name){
+		//for client side only
+		if(that.bol_Server){
+			return;
+		}
 		shapes[shapeID].displayName = name;
+	}
+	
+	//Used by Server to set AI
+	this.setAI = function(shapeID){
+		if(!that.bol_Server){
+			return;
+		}
+		shapes[shapeID].isAI = true;
 	}
 	
 	//Used for server to generate scores to send to players
@@ -1428,6 +1455,59 @@ var Engine = function() {
 		}
 		
 		ctx.restore();
+	}
+
+	var moveAI = function(){
+		//For Server only
+		if(!that.bol_Server){
+			return;
+		}
+		
+		for(i in shapes){
+			if(shapes[i].isAI==true && shapes[i].moveTimeout==null && shapes[i].isFalling==false){
+				//perform AI stuff here
+				var xDir = 0;
+				var yDir = 0;
+				
+				//Pick a random player to aim
+				if(shapes[i].aimPlayer == null || shapes[i].aimPlayer == shapes[i].lastPlayerTouched){
+					shapes[i].aimPlayer = null;
+					//Find players who are still alive
+					var stillAlive = [];
+					for(j in shapes){
+						if(shapes[j].id !='id_Ground' && j!=i && shapes[j].isFalling==false && shapes[j].dead==false){
+							stillAlive.push(shapes[j]);
+						}
+					}
+					
+					if(stillAlive.length>0){
+						var aimIndex = Math.floor((Math.random()*(stillAlive.length-1)));
+						//console.log("size: "+stillAlive.length);
+						shapes[i].aimPlayer = stillAlive[aimIndex].id;
+						//console.log("aimming: "+shapes[i].aimPlayer);
+					}
+				}
+				
+				if(shapes[i].aimPlayer==null){
+					//Go to middle of ground if null
+					shapes[i].aimPlayer = 'id_Ground';
+				}
+				
+				if(shapes[shapes[i].aimPlayer].x < shapes[i].x){
+					xDir = -1;
+				}else{
+					xDir = 1;
+				}
+				
+				if(shapes[shapes[i].aimPlayer].y < shapes[i].y){
+					yDir = -1;
+				}else{
+					yDir = 1;
+				}
+				
+				shapes[i].moveTimeout = setTimeout(that.pushPlayerShape,GameConstants.OPTIMAL_INTERVAL,i,xDir,yDir);
+			}
+		}
 	}
 }
 

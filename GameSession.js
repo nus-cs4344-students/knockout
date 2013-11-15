@@ -124,7 +124,13 @@ function GameSession(id) {
         for (var i = 0; i < playersArray.length; i++) {
             playersArray[i].shapeID = GameConstants.SHAPE_NAME + (i + 1);
         }
-         intervalBucket = setInterval(processBucket, 100);
+		
+		//init AI
+		for (var i = 0; i < numOfAI ; i++){
+			gameEngine.setAI(GameConstants.SHAPE_NAME + (i+playersArray.length+ 1));
+		}
+		
+         intervalBucket = setInterval(processBucket, GameConstants.OPTIMAL_INTERVAL);
         //100 because client checks keys at 100 interval
         if (game_Mode == 0) {
             if (intervalShrink != null) {
@@ -140,7 +146,7 @@ function GameSession(id) {
                 }
                 else {
                     clearInterval(intervalShrink);
-                     intervalShrink = null;
+                    intervalShrink = null;
                 }
             }
             , 2000);

@@ -204,7 +204,7 @@ function Client(){
                 var html="";
                 html+='<li>';
                 //Only allow clicking the room if it has less than the number of players needed and the game has not started yet
-                if(abstractSessionArray[i].abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
+                if(abstractSessionArray[i].abstractPlayersArray.length + abstractSessionArray[i].numOfAI< GameConstants.NUM_OF_PLAYERS && abstractSessionArray[i].bol_isPlaying==false){
                     html+='<a class="success button grid" href="#" sessionID="' +abstractSessionArray[i].sessionID+ '" >';
                 }else{
                     html+='<a class="alert button disabled grid" sessionID="'+ abstractSessionArray[i].sessionID +'" >';
@@ -275,11 +275,25 @@ function Client(){
                 }
 				
 				//create boxes for AI
-				for(var i=1;i<=currentSession.numOfAI;i++){  
+				for(var i=0;i<currentSession.numOfAI;i++){  
 					var html="";
                     html+='<li>';
                     html+='<a class="success button disabled grid" href="#">';
-                    html+='<h2>'+'AI'+i+'</h2>';
+					//Seal , Penguin, Bear ,Eskimo
+					switch(i+currentSession.abstractPlayersArray.length){
+						case 1:
+							html+='<h2>'+'Penguin(AI)'+'</h2>';
+						break;
+						case 2:
+							html+='<h2>'+'Bear(AI)'+'</h2>';
+						break;
+						case 3:
+							html+='<h2>'+'Eskimo(AI)'+'</h2>';
+						break;
+						default:
+							html+='<h2>'+'AI_'+(i+1)+'</h2>';
+						break;
+					}
                     html+='<h3>Ready</h3>';
                     html+='</a>';
                     html+='</li>';
@@ -317,7 +331,7 @@ function Client(){
                 var currentSession = getSessionWithID(currentSessionID);
                 if(currentSession!=null){
                     $('#btn_start').tooltip('close');
-                    if(currentSession.abstractPlayersArray.length < GameConstants.NUM_OF_PLAYERS){
+                    if(currentSession.abstractPlayersArray.length + currentSession.numOfAI < GameConstants.NUM_OF_PLAYERS){
                         $('#btn_start').prop('title', 'Require '+GameConstants.NUM_OF_PLAYERS+' players to start the game');
                         $('#btn_start').tooltip('open');
                     }else if(currentSession.abstractPlayersArray.length != currentSession.abstractReadyArray.length){
@@ -461,6 +475,28 @@ function Client(){
                 gameEngine.setShapeName(GameConstants.SHAPE_NAME+(i+1),currentSession.abstractPlayersArray[i].playerName);
                 currentSession.abstractPlayersArray[i].shapeID = GameConstants.SHAPE_NAME+(i+1);
             }
+			
+			//Set AI name
+			for(var i=0;i<currentSession.numOfAI;i++){
+			
+				var AI_Name = "";
+				switch(i+currentSession.abstractPlayersArray.length){
+					case 1:
+						AI_Name='Penguin(AI)';
+					break;
+					case 2:
+						AI_Name='Bear(AI)';
+					break;
+					case 3:
+						AI_Name='Eskimo(AI)';
+					break;
+					default:
+						AI_Name='AI_'+(i+1);
+					break;
+				}
+				
+				gameEngine.setShapeName(GameConstants.SHAPE_NAME+(i+currentSession.abstractPlayersArray.length+1),AI_Name);
+			}
         }
     }
 
