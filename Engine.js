@@ -1095,7 +1095,10 @@ var Engine = function() {
 	//Use to clean up after game games
 	this.stopAndDestroyWorld = function(){
 		bol_Stop = true;
-		audio.pause();
+		if(audio!=null){
+			audio.pause();
+			audio=null;
+		}
 		if(intervalUpdateTimer!=null){
 			clearInterval(intervalUpdateTimer);
 			intervalUpdateTimer = null;
