@@ -161,6 +161,7 @@ function Server(){
 				}
 			break;
 			
+			//Leave this here in case we forget why there is no ping message
 			//Ping from Client Engine, reply with pong
 			/*case "ping":
 				 unicast(conn, {type:"pong"});

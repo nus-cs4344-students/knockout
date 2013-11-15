@@ -201,7 +201,11 @@ function GameSession(id) {
         for (var j = 0; j < BucketList.length; j++) {
             for (var i = 0; i < playersArray.length; i++) {
                 if (playersArray[i].playerID == BucketList[j].id) {
-                    gameEngine.pushPlayerShape(GameConstants.SHAPE_NAME + (i + 1), BucketList[j].message.moveX, BucketList[j].message.moveY);
+					if(playersArray[i].shapeID!=null){
+						gameEngine.pushPlayerShape(playersArray[i].shapeID, BucketList[j].message.moveX, BucketList[j].message.moveY);
+					}else{
+						console.log("failed to process playerID: "+playersArray[i].playerName+"'s bucket due to null shapeID");
+					}
                     break;
                 }
             }
